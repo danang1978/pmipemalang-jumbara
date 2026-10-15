@@ -27,9 +27,20 @@ if ($method === 'POST' && ($action === 'upload' || $action === 'upload-jumbotron
         jsonResponse(['error' => 'Data gambar base64 wajib diisi.'], 400);
     }
 
+    $uploadDir = __DIR__ . '/../uploads/';
+    if (!is_dir($uploadDir)) {
+        @mkdir($uploadDir, 0777, true);
+    }
+    if (!is_writable($uploadDir)) {
+        @chmod($uploadDir, 0777);
+    }
+    if (!is_writable($uploadDir)) {
+        jsonResponse(['error' => 'Folder uploads/ di server hosting tidak memiliki izin tulis (Permission Denied). Jalankan perintah berikut di terminal server: sudo chown -R www:www uploads && sudo chmod -R 775 uploads'], 500);
+    }
+
     $relativeUrl = saveBase64File($fileData, $type);
     if (!$relativeUrl) {
-        jsonResponse(['error' => 'Gagal mengunggah berkas. Format harus berupa gambar JPG, PNG, WEBP, atau SVG valid.'], 400);
+        jsonResponse(['error' => 'Gagal mengunggah berkas. Format harus berupa gambar JPG, PNG, WEBP, atau SVG valid (Maks. 10MB).'], 400);
     }
     
     if ($action === 'upload-jumbotron' || $type === 'jumbotron') {

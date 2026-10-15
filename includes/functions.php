@@ -225,7 +225,10 @@ if (!function_exists('saveBase64File')) {
 
         $uploadDir = __DIR__ . '/../uploads/';
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+            @mkdir($uploadDir, 0777, true);
+        }
+        if (!is_writable($uploadDir)) {
+            @chmod($uploadDir, 0777);
         }
 
         $safePrefix = preg_replace('/[^a-zA-Z0-9_-]/', '', $prefix);
@@ -233,8 +236,8 @@ if (!function_exists('saveBase64File')) {
         $fileName = $safePrefix . '_' . time() . '_' . $randomHex . '.' . $ext;
         $filePath = $uploadDir . $fileName;
 
-        if (file_put_contents($filePath, $decoded) !== false) {
-            @chmod($filePath, 0644);
+        if (@file_put_contents($filePath, $decoded) !== false) {
+            @chmod($filePath, 0666);
             return 'uploads/' . $fileName;
         }
         return null;
