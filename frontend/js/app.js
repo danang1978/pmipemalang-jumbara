@@ -27,6 +27,7 @@ const App = {
   },
   jumbotronSlideIndex: 0,
   jumbotronIntervalId: null,
+  jumbotronProgressInterval: null,
 
   async init() {
     this.currentUser = API.getUser();
@@ -331,21 +332,56 @@ const App = {
 
   startJumbotronCarousel() {
     if (this.jumbotronIntervalId) clearInterval(this.jumbotronIntervalId);
+    if (this.jumbotronProgressInterval) clearInterval(this.jumbotronProgressInterval);
 
     const slides = document.querySelectorAll('.jumbotron-bg-slide');
     const dots = document.querySelectorAll('.carousel-dot');
-    if (!slides.length || slides.length <= 1) return;
+    const progressBar = document.getElementById('jumbotronProgressBar');
+    if (!slides.length || slides.length <= 1) {
+      if (progressBar) progressBar.style.width = '100%';
+      return;
+    }
 
-    this.jumbotronSlideIndex = 0;
-    this.jumbotronIntervalId = setInterval(() => {
-      slides[this.jumbotronSlideIndex].classList.remove('active');
-      if (dots[this.jumbotronSlideIndex]) dots[this.jumbotronSlideIndex].classList.remove('active');
+    const duration = 5000; // 5 seconds per slide transition
+    const step = 40;       // update progress every 40ms for silky smooth animation
+    let elapsed = 0;
 
-      this.jumbotronSlideIndex = (this.jumbotronSlideIndex + 1) % slides.length;
+    const resetProgressBar = () => {
+      elapsed = 0;
+      if (progressBar) {
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+      }
+    };
 
-      slides[this.jumbotronSlideIndex].classList.add('active');
-      if (dots[this.jumbotronSlideIndex]) dots[this.jumbotronSlideIndex].classList.add('active');
-    }, 4500);
+    const updateProgressBar = () => {
+      if (progressBar) {
+        const pct = Math.min(100, (elapsed / duration) * 100);
+        progressBar.style.width = pct + '%';
+      }
+    };
+
+    resetProgressBar();
+
+    this.jumbotronProgressInterval = setInterval(() => {
+      elapsed += step;
+      updateProgressBar();
+
+      if (elapsed >= duration) {
+        slides[this.jumbotronSlideIndex].classList.remove('active');
+        if (dots[this.jumbotronSlideIndex]) dots[this.jumbotronSlideIndex].classList.remove('active');
+
+        this.jumbotronSlideIndex = (this.jumbotronSlideIndex + 1) % slides.length;
+
+        slides[this.jumbotronSlideIndex].classList.add('active');
+        if (dots[this.jumbotronSlideIndex]) dots[this.jumbotronSlideIndex].classList.add('active');
+
+        const numEl = document.getElementById('currentSlideNum');
+        if (numEl) numEl.textContent = this.jumbotronSlideIndex + 1;
+
+        resetProgressBar();
+      }
+    }, step);
   },
 
   setJumbotronSlide(index) {
@@ -359,6 +395,26 @@ const App = {
     this.jumbotronSlideIndex = index;
     slides[index].classList.add('active');
     if (dots[index]) dots[index].classList.add('active');
+
+    const numEl = document.getElementById('currentSlideNum');
+    if (numEl) numEl.textContent = index + 1;
+
+    // Restart timer and smoothly fill from 0% for the selected slide
+    this.startJumbotronCarousel();
+  },
+
+  prevJumbotronSlide() {
+    const slides = document.querySelectorAll('.jumbotron-bg-slide');
+    if (!slides.length) return;
+    let prevIdx = (this.jumbotronSlideIndex - 1 + slides.length) % slides.length;
+    this.setJumbotronSlide(prevIdx);
+  },
+
+  nextJumbotronSlide() {
+    const slides = document.querySelectorAll('.jumbotron-bg-slide');
+    if (!slides.length) return;
+    let nextIdx = (this.jumbotronSlideIndex + 1) % slides.length;
+    this.setJumbotronSlide(nextIdx);
   },
 
   // =========================================================================
@@ -424,34 +480,56 @@ const App = {
       <div class="jumbotron-bg-slide ${idx === 0 ? 'active' : ''}" style="background-image: url('${imgUrl}');"></div>
     `).join('');
 
-    const dotsHtml = heroImgs.length > 1 ? `
-      <div class="jumbotron-carousel-dots">
-        ${heroImgs.map((_, idx) => `<span class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="App.setJumbotronSlide(${idx})"></span>`).join('')}
-      </div>
-    ` : '';
+    const dotsHtml = heroImgs.length > 1 ? heroImgs.map((_, idx) => `
+      <span class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="App.setJumbotronSlide(${idx})"></span>
+    `).join('') : '';
 
     container.innerHTML = `
       <section class="jumbotron-hero" id="beranda">
         <div class="jumbotron-bg-slider">
           ${slidesHtml}
         </div>
-        ${dotsHtml}
         <div class="jumbotron-overlay"></div>
         <div class="jumbotron-content">
-          <div class="jumbotron-badge">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>PORTAL RESMI JUMBARA PMR KABUPATEN</span>
-          </div>
+          <div class="jumbotron-inner-box">
+            <div class="jumbotron-badge">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>PORTAL RESMI JUMBARA PMR KABUPATEN</span>
+            </div>
 
-          <div>${deadlineBadgeHtml}</div>
+            <div>${deadlineBadgeHtml}</div>
 
-          <h2 class="jumbotron-title" id="jumbotronTitle">${Utils.escapeHtml(s.jumbotron_title || 'JUMBARA XII PMR PMI KABUPATEN PEMALANG')}</h2>
-          <p class="jumbotron-subtitle" id="jumbotronSubtitle">${Utils.escapeHtml(s.jumbotron_subtitle || 'Ajang Jumpa Bakti Gembira Palang Merah Remaja - Cerdas, Ceria, Bersahabat')}</p>
-          
-          <div class="hero-btns">
-            ${regBtnHtml}
-            <button class="btn btn-secondary" onclick="App.openLoginModal()">${Icons.login(18)} Login Portal Admin & Peserta</button>
+            <h2 class="jumbotron-title" id="jumbotronTitle">${Utils.escapeHtml(s.jumbotron_title || 'JUMBARA XII PMR PMI KABUPATEN PEMALANG')}</h2>
+            <p class="jumbotron-subtitle" id="jumbotronSubtitle">${Utils.escapeHtml(s.jumbotron_subtitle || 'Ajang Jumpa Bakti Gembira Palang Merah Remaja - Cerdas, Ceria, Bersahabat')}</p>
+            
+            <div class="hero-btns">
+              ${regBtnHtml}
+              <button class="btn btn-secondary" onclick="App.openLoginModal()">${Icons.login(18)} Login Portal Admin & Peserta</button>
+            </div>
           </div>
+        </div>
+
+        ${heroImgs.length > 1 ? `
+          <button type="button" class="carousel-nav-btn prev" onclick="App.prevJumbotronSlide()" aria-label="Slide Sebelumnya">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button type="button" class="carousel-nav-btn next" onclick="App.nextJumbotronSlide()" aria-label="Slide Berikutnya">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+
+          <div class="jumbotron-carousel-controls">
+            <div class="jumbotron-carousel-dots">
+              ${dotsHtml}
+            </div>
+            <div class="carousel-counter">
+              <span id="currentSlideNum">1</span> / <span id="totalSlidesNum">${heroImgs.length}</span>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Progress Pergantian Slide -->
+        <div class="jumbotron-progress-container">
+          <div class="jumbotron-progress-bar" id="jumbotronProgressBar"></div>
         </div>
       </section>
 

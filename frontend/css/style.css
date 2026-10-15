@@ -623,17 +623,25 @@ input:focus, select:focus, textarea:focus {
   padding: 1.25rem 1.25rem;
 }
 
-/* Jumbotron Hero Banner - Contemporary Curved Hero */
+/* Jumbotron Hero Banner - Full Width Edge-to-Edge (Kiri ke Kanan Penuh, Tanpa Rounded) */
 .jumbotron-hero {
   position: relative;
-  border-radius: var(--radius-xl);
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  margin-top: -1.25rem;
+  margin-bottom: 2.25rem;
+  border-radius: 0 !important;
   overflow: hidden;
-  margin-bottom: 2rem;
-  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.12);
-  min-height: 400px;
+  min-height: 440px;
   display: flex;
   align-items: center;
   background: var(--secondary-dark);
+  border: none;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
 }
 
 .jumbotron-bg-slider {
@@ -661,19 +669,53 @@ input:focus, select:focus, textarea:focus {
   opacity: 1;
 }
 
-.jumbotron-carousel-dots {
+/* Slide Transition Progress Bar (Garis Indikator Waktu Slide) */
+.jumbotron-progress-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.jumbotron-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 60%, #fca5a5 100%);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.95);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Floating Carousel Controls & Dots */
+.jumbotron-carousel-controls {
   position: absolute;
   bottom: 1.25rem;
-  right: 1.75rem;
-  z-index: 5;
+  right: 2.5rem;
+  z-index: 6;
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.jumbotron-carousel-dots {
+  display: flex;
+  gap: 0.45rem;
   align-items: center;
 }
 
 .carousel-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.45);
   cursor: pointer;
@@ -682,9 +724,63 @@ input:focus, select:focus, textarea:focus {
 
 .carousel-dot.active {
   background: #ef4444;
-  width: 28px;
+  width: 26px;
   border-radius: var(--radius-full);
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+}
+
+.carousel-counter {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  padding-left: 0.5rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Previous / Next Arrow Buttons */
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  opacity: 0.35;
+}
+
+.jumbotron-hero:hover .carousel-nav-btn {
+  opacity: 0.9;
+}
+
+.carousel-nav-btn:hover {
+  opacity: 1 !important;
+  background: rgba(220, 38, 38, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-nav-btn.prev {
+  left: 2rem;
+}
+
+.carousel-nav-btn.next {
+  right: 2rem;
 }
 
 .jumbotron-overlay {
@@ -704,9 +800,15 @@ input:focus, select:focus, textarea:focus {
 .jumbotron-content {
   position: relative;
   z-index: 2;
-  padding: 3rem 2.8rem;
-  max-width: 860px;
+  padding: 3.5rem 1.25rem;
+  max-width: 1300px;
+  width: 100%;
+  margin: 0 auto;
   color: white;
+}
+
+.jumbotron-inner-box {
+  max-width: 860px;
 }
 
 .jumbotron-badge {
@@ -1718,19 +1820,30 @@ body.user-logged-in #navToggleBtn,
     justify-content: center;
   }
   .jumbotron-hero {
-    min-height: auto;
+    min-height: 400px;
+    margin-top: -1.25rem !important;
+    border-radius: 0 !important;
   }
   .jumbotron-content {
-    padding: 1.25rem 1rem;
+    padding: 2.5rem 1.25rem 3.5rem 1.25rem;
+  }
+  .carousel-nav-btn {
+    display: none !important;
+  }
+  .jumbotron-carousel-controls {
+    right: 1.25rem !important;
+    bottom: 1rem !important;
   }
   .jumbotron-title {
-    font-size: 1.3rem;
+    font-size: 1.35rem;
   }
   .jumbotron-subtitle {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
   }
   .hero-btns {
     flex-direction: column;
+    width: 100%;
+  }
     width: 100%;
   }
   .hero-btns .btn {
