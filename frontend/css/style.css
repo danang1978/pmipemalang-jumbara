@@ -2822,52 +2822,80 @@ body:not(.user-logged-in) .jumbotron-hero {
   padding: 0 1.5rem;
 }
 
-/* Section Header Typography */
-.landing-section-header {
-  text-align: center;
-  max-width: 760px;
-  margin: 0 auto 3rem auto;
+/* ==========================================================================
+   MODERN MINIMALIST SECTION HEADERS (CRISP & KEKINIAN)
+   ========================================================================== */
+.sec-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 2px solid #f1f5f9;
 }
 
-.landing-section-pill {
+.sec-header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.sec-kicker {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 1.1rem;
-  border-radius: 9999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--primary);
-  margin-bottom: 0.85rem;
-  border: 1px solid rgba(220, 38, 38, 0.18);
+  gap: 0.45rem;
 }
 
-.landing-section-title {
-  font-size: 2.25rem;
+.sec-kicker-red { color: #dc2626; }
+.sec-kicker-blue { color: #0284c7; }
+.sec-kicker-gold { color: #d97706; }
+.sec-kicker-green { color: #059669; }
+
+.sec-title {
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--secondary, #0f172a);
-  letter-spacing: -0.8px;
-  line-height: 1.25;
-  margin-bottom: 0.75rem;
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+  margin: 0;
   font-family: var(--font-heading);
 }
 
-.landing-section-subtitle {
-  font-size: 1.05rem;
-  color: var(--text-muted, #64748b);
-  line-height: 1.6;
-  margin: 0;
+.sec-meta-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #ffffff;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
-.landing-section-divider {
-  width: 60px;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary), #f87171);
-  margin: 1.1rem auto 0 auto;
-  border-radius: 2px;
+.section-alt .sec-meta-badge {
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .sec-header-modern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1rem;
+  }
+  .sec-title {
+    font-size: 1.5rem;
+  }
 }
 
 /* Responsive Grids for Events & Announcements */

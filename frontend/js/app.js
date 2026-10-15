@@ -629,11 +629,14 @@ const App = {
       <!-- SECTION 2: AGENDA & RUNDOWN KEGIATAN -->
       <section class="landing-section" id="kegiatan">
         <div class="landing-section-inner">
-          <div class="landing-section-header">
-            <div class="landing-section-pill"><i class="fa-solid fa-calendar-days"></i> Rundown Acara</div>
-            <h2 class="landing-section-title">Agenda & Jadwal Kegiatan Jumbara</h2>
-            <p class="landing-section-subtitle">Rangkaian evaluasi keterampilan, bakti sosial kemanusiaan, dan wahana jumpa gembira kontingen PMR.</p>
-            <div class="landing-section-divider"></div>
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-red"><i class="fa-solid fa-calendar-days"></i> AGENDA UTAMA</span>
+              <h2 class="sec-title">Jadwal & Rundown Acara</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-regular fa-clock"></i> Zona Waktu WIB</span>
+            </div>
           </div>
           <div id="publicEventsList">
             <p style="color: var(--text-muted); text-align: center;">Memuat jadwal kegiatan...</p>
@@ -644,11 +647,14 @@ const App = {
       <!-- SECTION 3: PENGUMUMAN & INFORMASI -->
       <section class="landing-section section-alt" id="pengumuman">
         <div class="landing-section-inner">
-          <div class="landing-section-header">
-            <div class="landing-section-pill" style="color: #0284c7; background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.2);"><i class="fa-solid fa-bullhorn"></i> Informasi Resmi</div>
-            <h2 class="landing-section-title">Papan Pengumuman & Berita</h2>
-            <p class="landing-section-subtitle">Pemberitahuan terkini, edaran teknis panitia, dan informasi penting untuk seluruh kontingen sekolah.</p>
-            <div class="landing-section-divider" style="background: linear-gradient(90deg, #0284c7, #38bdf8);"></div>
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-blue"><i class="fa-solid fa-bullhorn"></i> PAPAN PENGUMUMAN</span>
+              <h2 class="sec-title">Informasi & Edaran Resmi</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-circle-check"></i> Terverifikasi Panitia</span>
+            </div>
           </div>
           <div id="publicAnnouncementsList">
             <p style="color: var(--text-muted); text-align: center;">Memuat pengumuman...</p>
@@ -659,11 +665,14 @@ const App = {
       <!-- SECTION 4: KLASEMEN MEDALI -->
       <section class="landing-section" id="klasemen">
         <div class="landing-section-inner">
-          <div class="landing-section-header">
-            <div class="landing-section-pill" style="color: #d97706; background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.2);"><i class="fa-solid fa-trophy"></i> Perolehan Medali</div>
-            <h2 class="landing-section-title">Klasemen Kontingen Jumbara</h2>
-            <p class="landing-section-subtitle">Rekapitulasi perolehan medali emas, perak, dan perunggu kontingen sekolah secara langsung dan transparan.</p>
-            <div class="landing-section-divider" style="background: linear-gradient(90deg, #d97706, #fbbf24);"></div>
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-gold"><i class="fa-solid fa-trophy"></i> LEADERBOARD</span>
+              <h2 class="sec-title">Klasemen Perolehan Medali</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-medal"></i> Juara Umum PMR</span>
+            </div>
           </div>
           <div id="publicStandingsList">
             <p style="color: var(--text-muted); text-align: center;">Memuat klasemen...</p>
@@ -674,11 +683,14 @@ const App = {
       <!-- SECTION 5: DAFTAR KONTINGEN UNIT -->
       <section class="landing-section section-alt" id="unit">
         <div class="landing-section-inner">
-          <div class="landing-section-header">
-            <div class="landing-section-pill" style="color: #059669; background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.2);"><i class="fa-solid fa-school"></i> Peserta Sekolah</div>
-            <h2 class="landing-section-title">Daftar Kontingen Unit PMR</h2>
-            <p class="landing-section-subtitle">Seluruh unit Palang Merah Remaja (Mula, Madya, Wira) yang terdaftar mengikuti kegiatan Jumbara XII.</p>
-            <div class="landing-section-divider" style="background: linear-gradient(90deg, #059669, #34d399);"></div>
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-green"><i class="fa-solid fa-school"></i> KONTINGEN PMR</span>
+              <h2 class="sec-title">Daftar Unit Sekolah</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-users"></i> Mula • Madya • Wira</span>
+            </div>
           </div>
           <div id="publicUnitsList">
             <p style="color: var(--text-muted); text-align: center;">Memuat daftar unit...</p>
@@ -689,11 +701,14 @@ const App = {
       <!-- SECTION 6: LOKASI & PETA KEGIATAN -->
       <section class="landing-section" id="lokasi">
         <div class="landing-section-inner">
-          <div class="landing-section-header">
-            <div class="landing-section-pill" style="color: #dc2626; background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.2);"><i class="fa-solid fa-map-location-dot"></i> Venue & Peta</div>
-            <h2 class="landing-section-title">Lokasi & Panduan Arah</h2>
-            <p class="landing-section-subtitle">Titik kumpul perkemahan, markas kegiatan, dan rute navigasi menuju Bumi Perkemahan Utama.</p>
-            <div class="landing-section-divider"></div>
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-red"><i class="fa-solid fa-map-location-dot"></i> VENUE & PETA</span>
+              <h2 class="sec-title">Lokasi & Panduan Arah</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-compass"></i> Titik Kumpul Buperta</span>
+            </div>
           </div>
           <div class="location-map-grid" style="padding: 0;">
             <div class="map-embed-wrapper" style="box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius: var(--radius-lg);">
