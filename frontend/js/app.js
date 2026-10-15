@@ -398,6 +398,7 @@ const App = {
     if (isOpen) {
       deadlineBadgeHtml = `
         <div class="reg-deadline-banner" id="countdownBannerContainer">
+          <span class="live-pulse-dot"></span>
           <i class="fa-solid fa-clock"></i>
           <span>Sisa Waktu Pendaftaran: <strong id="cdTimeStr">-- Hari -- Jam -- Mnt</strong></span>
         </div>

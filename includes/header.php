@@ -71,6 +71,7 @@ else if ($favExt === 'png') $favType = 'image/png';
           <i class="fa-solid fa-location-dot"></i>
           <span>Buperta Utama PMI Kabupaten</span>
           <span class="divider">|</span>
+          <span class="live-pulse-dot" style="margin: 0 2px;"></span>
           <i class="fa-solid fa-calendar-range"></i>
           <strong id="topEventDates"><?php echo htmlspecialchars($settings['event_dates']); ?></strong>
         </div>
