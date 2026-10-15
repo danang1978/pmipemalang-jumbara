@@ -575,39 +575,56 @@ const App = {
         </div>
       </section>
 
-      <!-- SECTION 1: FLOATING STATS STRIP -->
-      <div class="landing-stats-bar">
-        <div class="landing-stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon icon-red">${Icons.unit(24, '#dc2626')}</div>
-            <div class="stat-info">
-              <h3 id="statTotalUnits">-</h3>
-              <p>Kontingen Unit PMR</p>
+      <!-- SECTION 1: METRICS STRIP (NON-CARD) -->
+      <section class="landing-metrics-strip">
+        <div class="landing-section-inner">
+          <div class="metrics-row">
+            <div class="metric-item">
+              <div class="metric-icon-wrap" style="color: #dc2626; background: rgba(220, 38, 38, 0.08);">
+                <i class="fa-solid fa-school-flag"></i>
+              </div>
+              <div class="metric-data">
+                <div class="metric-number" id="statTotalUnits">-</div>
+                <div class="metric-label">Kontingen Unit PMR</div>
+                <div class="metric-sub">Mula, Madya & Wira</div>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon icon-blue">${Icons.peserta(24, '#2563eb')}</div>
-            <div class="stat-info">
-              <h3 id="statTotalPeserta">-</h3>
-              <p>Peserta Terdaftar</p>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap" style="color: #2563eb; background: rgba(37, 99, 235, 0.08);">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <div class="metric-data">
+                <div class="metric-number" id="statTotalPeserta">-</div>
+                <div class="metric-label">Peserta Terdaftar</div>
+                <div class="metric-sub">Relawan Muda PMR</div>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon icon-green">${Icons.agenda(24, '#059669')}</div>
-            <div class="stat-info">
-              <h3 id="statTotalEvents">-</h3>
-              <p>Agenda Kegiatan</p>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap" style="color: #059669; background: rgba(5, 150, 105, 0.08);">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <div class="metric-data">
+                <div class="metric-number" id="statTotalEvents">-</div>
+                <div class="metric-label">Agenda Kegiatan</div>
+                <div class="metric-sub">Rangkaian Acara Jumbara</div>
+              </div>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon icon-purple">${Icons.trophy(24, '#7c3aed')}</div>
-            <div class="stat-info">
-              <h3>Tri Bakti</h3>
-              <p>Jumpa, Bakti, Gembira</p>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap" style="color: #7c3aed; background: rgba(124, 58, 237, 0.08);">
+                <i class="fa-solid fa-hands-holding-circle"></i>
+              </div>
+              <div class="metric-data">
+                <div class="metric-number" style="font-size: 1.85rem; letter-spacing: -0.5px; color: #7c3aed;">Tri Bakti</div>
+                <div class="metric-label">Prinsip Relawan PMR</div>
+                <div class="metric-sub">Jumpa, Bakti, Gembira</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- SECTION 2: AGENDA & RUNDOWN KEGIATAN -->
       <section class="landing-section" id="kegiatan">

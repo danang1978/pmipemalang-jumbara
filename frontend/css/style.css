@@ -2681,24 +2681,124 @@ body:not(.user-logged-in) .jumbotron-hero {
   margin-bottom: 0 !important;
 }
 
-/* Floating Stats Strip */
-.landing-stats-bar {
-  max-width: 1240px;
-  margin: -2.5rem auto 1.5rem auto;
-  padding: 0 1.5rem;
+/* ==========================================================================
+   LANDING METRICS RIBBON (NON-CARD ARCHITECTURE)
+   ========================================================================== */
+.landing-metrics-strip {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 2.25rem 0;
   position: relative;
-  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-.landing-stats-grid {
+.metrics-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 0;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
   gap: 1.25rem;
-  background: #ffffff;
-  padding: 1.5rem 1.75rem;
-  border-radius: var(--radius-xl, 16px);
-  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.1), 0 0 1px 1px rgba(15, 23, 42, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 0.5rem 1.75rem;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.metric-item:hover {
+  transform: translateY(-2px);
+}
+
+.metric-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, #e2e8f0 30%, #e2e8f0 70%, transparent);
+}
+
+.metric-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.metric-item:hover .metric-icon-wrap {
+  transform: scale(1.08);
+}
+
+.metric-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-number {
+  font-size: 2.35rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--secondary, #0f172a);
+  font-family: var(--font-heading);
+  letter-spacing: -1px;
+  margin-bottom: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.25;
+}
+
+.metric-sub {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 992px) {
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 0;
+  }
+  .metric-item:nth-child(2)::after {
+    display: none;
+  }
+  .metric-item {
+    padding: 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+    gap: 1.25rem 0;
+  }
+  .metric-item::after {
+    display: none !important;
+  }
+  .metric-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed #f1f5f9;
+  }
+  .metric-item:last-child {
+    border-bottom: none;
+  }
+  .metric-number {
+    font-size: 2rem;
+  }
 }
 
 /* Landing Section System */
@@ -2825,14 +2925,6 @@ body:not(.user-logged-in) .jumbotron-hero {
 }
 
 @media (max-width: 900px) {
-  .landing-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 1.25rem;
-    gap: 1rem;
-  }
-  .landing-stats-bar {
-    margin-top: -1.75rem;
-  }
   .landing-section {
     padding: 3.5rem 0;
   }
@@ -2849,9 +2941,6 @@ body:not(.user-logged-in) .jumbotron-hero {
 }
 
 @media (max-width: 576px) {
-  .landing-stats-grid {
-    grid-template-columns: 1fr;
-  }
   .landing-section {
     padding: 2.75rem 0;
   }
