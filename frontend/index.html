@@ -144,40 +144,58 @@
 
   <!-- 1. LOGIN MODAL -->
   <div class="modal-overlay" id="loginModal">
-    <div class="modal-container" style="max-width: 420px;">
-      <div class="modal-header">
-        <h3 class="modal-title"><i class="fa-solid fa-lock"></i> Login Portal JUMBARA</h3>
-        <button class="modal-close" onclick="App.closeModal('loginModal')">&times;</button>
+    <div class="modal-dialog login-dialog">
+      <div class="login-brand-header">
+        <button type="button" class="modal-close" onclick="App.closeModal('loginModal')" aria-label="Tutup Modal">&times;</button>
+        <div class="login-brand-logos">
+          <!-- Logo PMI -->
+          <img src="images/logo-pmi.svg" alt="Logo PMI" class="login-logo-img login-logo-pmi" title="Palang Merah Indonesia">
+          <div class="login-logo-divider"></div>
+          <!-- Logo Jumbara -->
+          <img src="images/logo-jumbara-xii.png" alt="Logo Kegiatan Jumbara" class="login-logo-img login-logo-jumbara" title="Logo Kegiatan Jumbara">
+        </div>
+        <h3 class="login-brand-title">Login Portal JUMBARA</h3>
+        <p class="login-brand-subtitle">Palang Merah Remaja PMI Kabupaten</p>
       </div>
-      <div class="modal-body">
-        <form id="loginForm" onsubmit="App.handleLogin(event)">
-          <div class="form-group" style="margin-bottom: 1.2rem;">
-            <label class="form-label">Username atau Email</label>
+
+      <form id="loginForm" onsubmit="App.handleLogin(event)">
+        <div class="modal-body" style="padding: 1.5rem 1.75rem 1.25rem 1.75rem;">
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-weight: 600; margin-bottom: 0.4rem; display: block;">Username atau ID Pengguna *</label>
             <div class="input-icon-wrapper">
               <i class="fa-solid fa-user input-icon"></i>
-              <input type="text" id="loginUsername" placeholder="Username / Email" required>
+              <input type="text" id="loginUsername" placeholder="Masukkan username Anda..." required autocomplete="username">
             </div>
-          </div>
-          <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label class="form-label">Password</label>
-            <div class="input-icon-wrapper">
-              <i class="fa-solid fa-key input-icon"></i>
-              <input type="password" id="loginPassword" placeholder="••••••••" required>
-            </div>
-          </div>
-          
-          <div class="demo-box">
-            <strong><i class="fa-solid fa-circle-info"></i> Fast Demo Accounts:</strong><br>
-            • Admin Kabupaten: <code>admin_kab</code> / <code>admin123</code><br>
-            • Admin Unit PMR: <code>admin_sman1</code> / <code>unit123</code><br>
-            • Peserta PMR: <code>peserta_wira</code> / <code>peserta123</code>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-            <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Portal
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-weight: 600; margin-bottom: 0.4rem; display: block;">Password *</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-solid fa-lock input-icon"></i>
+              <input type="password" id="loginPassword" class="has-icon-right" placeholder="Masukkan kata sandi..." required autocomplete="current-password">
+              <button type="button" class="input-icon-right" onclick="(function(){ const p = document.getElementById('loginPassword'); const icon = document.getElementById('loginPassEye'); if (p.type === 'password') { p.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } else { p.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); } })()" title="Tampilkan/Sembunyikan Password" aria-label="Toggle password visibility">
+                <i class="fa-solid fa-eye" id="loginPassEye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary login-btn-submit">
+            <i class="fa-solid fa-right-to-bracket"></i> Masuk Sekarang
           </button>
-        </form>
-      </div>
+
+          <div class="login-helper-links">
+            <span style="color: #64748b;">Belum daftar peserta?</span>
+            <a href="javascript:void(0)" onclick="App.closeModal('loginModal'); App.openRegisterModal();">
+              <i class="fa-solid fa-user-plus"></i> Daftar Mandiri
+            </a>
+          </div>
+
+          <div class="login-footer-security">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Portal Resmi Terverifikasi • Palang Merah Indonesia</span>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 

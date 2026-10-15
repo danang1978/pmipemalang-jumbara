@@ -181,14 +181,14 @@ const App = {
 
     // 2. Dynamic PMI Logo Update from Database
     if (s.app_logo) {
-      document.querySelectorAll('.navbar-logo-pmi, .footer-logo').forEach(img => {
+      document.querySelectorAll('.navbar-logo-pmi, .footer-logo, .login-logo-pmi').forEach(img => {
         img.src = s.app_logo;
       });
     }
 
     // Dynamic Logo Kegiatan Jumbara Update from Database
     if (s.event_logo) {
-      document.querySelectorAll('.navbar-logo-jumbara').forEach(img => {
+      document.querySelectorAll('.navbar-logo-jumbara, .login-logo-jumbara').forEach(img => {
         img.src = s.event_logo;
       });
     }
