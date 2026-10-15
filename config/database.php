@@ -1,19 +1,44 @@
 <?php
 // ==========================================================================
-// JUMBARA PMR 2026 - PDO MYSQL DATABASE CONFIGURATION
+// JUMBARA PMR 2026 - SMART DUAL ENVIRONMENT DATABASE CONFIGURATION
+// Otomatis mengenali Server Hosting (Produksi) vs Komputer Lokal (MAMP/XAMPP)
+// Bebas konflik saat update git push & git pull!
 // ==========================================================================
 
-// Load local database configuration if exists (e.g. on production hosting)
+// 1. Prioritas Utama: Muat konfigurasi manual khusus jika ada (database.local.php)
 if (file_exists(__DIR__ . '/database.local.php')) {
     require_once __DIR__ . '/database.local.php';
 }
 
-// Default configuration (MAMP / Local Development)
-if (!defined('DB_HOST')) define('DB_HOST', '127.0.0.1');
-if (!defined('DB_PORT')) define('DB_PORT', '8889');
-if (!defined('DB_NAME')) define('DB_NAME', 'jumbara_db');
-if (!defined('DB_USER')) define('DB_USER', 'root');
-if (!defined('DB_PASS')) define('DB_PASS', 'root');
+// 2. Deteksi Otomatis Lingkungan (Server Hosting vs Local MAMP)
+if (!defined('DB_NAME')) {
+    $httpHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+    $dirPath  = __DIR__;
+
+    // Cek apakah sedang berjalan di server hosting jumbara.pmipemalang.or.id atau direktori /www/wwwroot
+    $isHosting = (
+        strpos($httpHost, 'pmipemalang.or.id') !== false ||
+        strpos($dirPath, '/www/wwwroot') !== false ||
+        strpos($dirPath, '/var/www') !== false
+    );
+
+    if ($isHosting) {
+        // --- KONFIGURASI SERVER HOSTING (PRODUKSI) ---
+        define('DB_HOST', '127.0.0.1');
+        define('DB_PORT', '3306');
+        define('DB_NAME', 'sql_jumbara_pmipemalang_or_id');
+        define('DB_USER', 'sql_jumbara_pmipemalang_or_id');
+        define('DB_PASS', 'e827ebce734fa');
+    } else {
+        // --- KONFIGURASI LOCAL DEVELOPMENT (MAMP / XAMPP) ---
+        $isMamp = file_exists('/Applications/MAMP');
+        define('DB_HOST', '127.0.0.1');
+        define('DB_PORT', $isMamp ? '8889' : '3306');
+        define('DB_NAME', 'jumbara_db');
+        define('DB_USER', 'root');
+        define('DB_PASS', $isMamp ? 'root' : '');
+    }
+}
 
 function getPDOConnection() {
     static $pdo = null;
@@ -33,10 +58,11 @@ function getPDOConnection() {
         ];
 
         try {
+            // Koneksi langsung sesuai konfigurasi aktif
             $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
             $pdo = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
-            // Fallback 1: Try default port 3306 if 8889 fails
+            // Fallback 1: Jika di lokal MAMP port 8889 gagal, coba port standar 3306
             if ($port === '8889') {
                 try {
                     $dsnFallback = "mysql:host={$host};port=3306;dbname={$dbname};charset=utf8mb4";
@@ -45,8 +71,8 @@ function getPDOConnection() {
                 } catch (PDOException $e2) {}
             }
 
-            // Fallback 2: Try localhost socket
-            if ($host === '127.0.0.1') {
+            // Fallback 2: Coba koneksi via socket UNIX lokal jika TCP dibatasi oleh server
+            if ($host === '127.0.0.1' || $host === 'localhost') {
                 try {
                     $dsnSocket = "mysql:host=localhost;dbname={$dbname};charset=utf8mb4";
                     $pdo = new PDO($dsnSocket, $user, $pass, $options);
