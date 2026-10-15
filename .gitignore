@@ -24,6 +24,11 @@ Thumbs.db
 *.swo
 *~
 
+# Local environment & Database configs
+config/database.local.php
+.env
+.env.local
+
 # Temporary & Log files
 *.log
 scratch/tmp/
