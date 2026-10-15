@@ -114,7 +114,7 @@ else if ($favExt === 'png') $favType = 'image/png';
         </nav>
         
         <div class="nav-actions" id="navActions">
-          <button class="btn btn-primary btn-sm" onclick="App.openLoginModal()"><i class="fa-solid fa-right-to-bracket"></i> Login Portal</button>
+          <button class="btn btn-primary btn-sm" onclick="App.openLoginModal()"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
         </div>
       </div>
     </div>

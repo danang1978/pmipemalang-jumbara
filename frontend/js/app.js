@@ -294,7 +294,7 @@ const App = {
 
       if (container) {
         container.innerHTML = `
-          <button class="btn btn-primary btn-sm" onclick="App.openLoginModal()">${Icons.login(18)} Login Portal</button>
+          <button class="btn btn-primary btn-sm" onclick="App.openLoginModal()">${Icons.login(15)} Login</button>
         `;
       }
     }
@@ -461,7 +461,7 @@ const App = {
       `;
 
       regBtnHtml = `
-        <button class="btn btn-primary btn-sm" onclick="App.openRegisterModal()">${Icons.userPlus(15)} Pendaftaran Mandiri</button>
+        <button class="btn btn-primary btn-sm" onclick="App.openRegisterModal()">${Icons.userPlus(14)} Daftar</button>
       `;
     } else {
       deadlineBadgeHtml = `
@@ -472,7 +472,7 @@ const App = {
       `;
 
       regBtnHtml = `
-        <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Pendaftaran Ditutup</button>
+        <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Ditutup</button>
       `;
     }
 
@@ -499,7 +499,7 @@ const App = {
             
             <div class="hero-btns">
               ${regBtnHtml}
-              <button class="btn btn-secondary btn-sm" onclick="App.openLoginModal()">${Icons.login(15)} Login Portal</button>
+              <button class="btn btn-secondary btn-sm" onclick="App.openLoginModal()">${Icons.login(14)} Login</button>
             </div>
           </div>
         </div>

@@ -891,13 +891,20 @@ input:focus, select:focus, textarea:focus {
   gap: 0.65rem;
   flex-wrap: wrap;
   align-items: center;
+  width: auto;
 }
 
 .hero-btns .btn {
-  padding: 0.45rem 1.1rem;
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.42rem 1.05rem;
+  font-size: 0.8rem;
   font-weight: 700;
   border-radius: var(--radius-full);
+  width: auto !important;
+  max-width: fit-content;
 }
 
 .hero-btns .btn-primary {
@@ -1836,17 +1843,19 @@ body.user-logged-in #navToggleBtn,
   .jumbotron-title {
     font-size: 1.35rem;
   }
-  .jumbotron-subtitle {
-    font-size: 0.85rem;
-  }
   .hero-btns {
-    flex-direction: column;
-    width: 100%;
-  }
-    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    width: auto;
   }
   .hero-btns .btn {
-    width: 100%;
+    width: auto !important;
+    max-width: fit-content;
+    padding: 0.38rem 0.95rem;
+    font-size: 0.78rem;
   }
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
