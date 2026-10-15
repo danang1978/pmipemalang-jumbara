@@ -185,7 +185,7 @@ if (!function_exists('saveBase64File')) {
         $mime = strtolower(trim($matches[1]));
         $base64 = $matches[2];
 
-        // Safe extension mapping
+        // Safe extension mapping (JPG and PNG are primary formats)
         $ext = null;
         if (strpos($mime, 'jpeg') !== false || strpos($mime, 'jpg') !== false) {
             $ext = 'jpg';
@@ -193,9 +193,11 @@ if (!function_exists('saveBase64File')) {
             $ext = 'png';
         } else if (strpos($mime, 'webp') !== false) {
             $ext = 'webp';
+        } else if ((strpos($mime, 'icon') !== false || strpos($mime, 'ico') !== false) && $prefix === 'favicon') {
+            $ext = 'ico';
         } else if (strpos($mime, 'pdf') !== false && ($prefix === 'surattugas' || $prefix === 'file')) {
             $ext = 'pdf';
-        } else if (strpos($mime, 'svg') !== false && ($prefix === 'logo' || $prefix === 'favicon' || $prefix === 'event_logo' || $prefix === 'jumbara_logo')) {
+        } else if (strpos($mime, 'svg') !== false && ($prefix === 'logo' || $prefix === 'favicon' || $prefix === 'event_logo' || $prefix === 'jumbara_logo' || $prefix === 'kop' || $prefix === 'app_kop')) {
             $ext = 'svg';
         }
 

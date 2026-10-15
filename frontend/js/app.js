@@ -5072,14 +5072,14 @@ const App = {
           <!-- Grid Preview Banner Images -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
             ${heroImgs.map((imgUrl, idx) => `
-              <div style="position: relative; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; background: #000;">
-                <img src="${imgUrl}" alt="Banner ${idx + 1}" style="width: 100%; height: 100px; object-fit: cover; opacity: 0.85;">
-                <div style="position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">
-                  Slide #${idx + 1}
+              <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; background: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <img src="${imgUrl}" alt="Banner ${idx + 1}" style="width: 100%; height: 105px; object-fit: cover; opacity: 0.9;">
+                <div style="position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.75); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600;">
+                  <i class="fa-solid fa-layer-group" style="margin-right: 3px;"></i> Slide #${idx + 1}
                 </div>
                 ${heroImgs.length > 1 ? `
-                  <button class="btn btn-danger btn-sm" onclick="App.removeJumbotronImage(${idx})" style="position: absolute; top: 4px; right: 4px; padding: 2px 6px; font-size: 0.7rem;" title="Hapus Gambar">
-                    &times;
+                  <button type="button" class="btn btn-danger btn-sm" onclick="App.removeJumbotronImage(${idx})" style="position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.4);" title="Hapus Gambar Banner">
+                    <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
                   </button>
                 ` : ''}
               </div>
@@ -5087,10 +5087,10 @@ const App = {
           </div>
 
           <!-- Upload Form New Jumbotron Image -->
-          <div style="display: flex; gap: 1rem; align-items: center; background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
-            <input type="file" id="jumbotronFileInput" accept="image/*" style="font-size: 0.85rem; flex: 1;">
-            <button class="btn btn-primary btn-sm" onclick="App.handleUploadJumbotronBanner()">
-              <i class="fa-solid fa-plus"></i> Unggah Gambar Banner Baru
+          <div style="display: flex; gap: 0.75rem; align-items: center; background: white; padding: 0.85rem; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
+            <input type="file" id="jumbotronFileInput" accept="image/jpeg,image/png,image/webp" style="font-size: 0.85rem; flex: 1; min-width: 220px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="App.handleUploadJumbotronBanner()" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; font-weight: 600; border-radius: 6px;">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Unggah Banner Baru (JPG/PNG)
             </button>
           </div>
         </div>
@@ -5119,103 +5119,136 @@ const App = {
         </div>
 
         <!-- Section 3: Direct File Upload Cards Logo, Favicon & Kop Surat -->
+        <div style="margin-bottom: 1rem;">
+          <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-palette" style="color: var(--primary);"></i> Logo, Favicon & Identitas Visual
+          </h4>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Unggah file gambar logo dan identitas resmi kegiatan. Format utama yang didukung: <strong>JPG, JPEG, PNG, WEBP</strong> (dan SVG/ICO).
+          </p>
+        </div>
+
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
           
-          <!-- Box Upload Logo Utama PMI -->
-          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-            <h4 style="color: var(--secondary); font-size: 0.95rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-image" style="color: var(--primary);"></i> Unggah Logo Instansi (PMI)
-            </h4>
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
-              <img id="logoPreviewImg" src="${s.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Preview Logo PMI" style="height: 45px; object-fit: contain; background: white; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0;">
-              <div>
-                <small style="color: var(--text-muted); display: block;">Logo PMI Aktif:</small>
-                <code style="font-size: 0.78rem; word-break: break-all;">${Utils.escapeHtml(s.app_logo || 'frontend/images/logo-pmi.svg')}</code>
+          <!-- Box 1: Logo Instansi (PMI) -->
+          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h5 style="color: var(--secondary); font-size: 0.92rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-shield-heart" style="color: #dc2626;"></i> Logo Instansi (PMI)
+                </h5>
+                <span style="font-size: 0.7rem; background: #fee2e2; color: #991b1b; padding: 2px 7px; border-radius: 4px; font-weight: 700;">JPG / PNG</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <img id="logoPreviewImg" src="${s.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Preview Logo PMI" style="height: 48px; width: 48px; object-fit: contain; background: white; padding: 4px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="overflow: hidden; flex: 1;">
+                  <small style="color: #64748b; font-size: 0.72rem; display: block; font-weight: 600;">Logo PMI Aktif:</small>
+                  <code style="font-size: 0.75rem; word-break: break-all; color: #334155;">${Utils.escapeHtml(s.app_logo || 'frontend/images/logo-pmi.svg')}</code>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.85rem;">
+                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Pilih File Logo Baru (JPG / PNG):</label>
+                <input type="file" id="logoFileInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" onchange="App.handlePreviewSettingFile('logo', this)" style="font-size: 0.82rem; width: 100%;">
               </div>
             </div>
-            <div class="form-group" style="margin-bottom: 0.8rem;">
-              <input type="file" id="logoFileInput" accept="image/png,image/svg+xml,image/jpeg,image/webp" style="font-size: 0.85rem;">
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-primary btn-sm" onclick="App.handleUploadFile('logo')" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Simpan Logo PMI
+            <div style="display: flex; gap: 0.5rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="App.handleUploadFile('logo')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.6rem; font-weight: 600; font-size: 0.82rem; border-radius: 6px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Logo
               </button>
-              <button class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('logo')" title="Reset ke Default Logo PMI">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('logo')" title="Reset ke Default Logo PMI" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.5rem 0.6rem; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.82rem; border-radius: 6px; background: white;">
                 <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
           </div>
 
-          <!-- Box Upload Logo Kegiatan Jumbara -->
-          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-            <h4 style="color: var(--secondary); font-size: 0.95rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-award" style="color: var(--primary);"></i> Unggah Logo Kegiatan Jumbara
-            </h4>
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
-              <img id="eventLogoPreviewImg" src="${s.event_logo || 'frontend/images/logo-jumbara-xii.png'}" alt="Preview Logo Jumbara" style="height: 45px; object-fit: contain; background: white; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0;">
-              <div>
-                <small style="color: var(--text-muted); display: block;">Logo Jumbara Aktif:</small>
-                <code style="font-size: 0.78rem; word-break: break-all;">${Utils.escapeHtml(s.event_logo || 'frontend/images/logo-jumbara-xii.png')}</code>
+          <!-- Box 2: Logo Kegiatan Jumbara -->
+          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h5 style="color: var(--secondary); font-size: 0.92rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-award" style="color: #0284c7;"></i> Logo Kegiatan Jumbara
+                </h5>
+                <span style="font-size: 0.7rem; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 4px; font-weight: 700;">JPG / PNG</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <img id="eventLogoPreviewImg" src="${s.event_logo || 'frontend/images/logo-jumbara-xii.png'}" alt="Preview Logo Jumbara" style="height: 48px; width: 48px; object-fit: contain; background: white; padding: 4px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="overflow: hidden; flex: 1;">
+                  <small style="color: #64748b; font-size: 0.72rem; display: block; font-weight: 600;">Logo Jumbara Aktif:</small>
+                  <code style="font-size: 0.75rem; word-break: break-all; color: #334155;">${Utils.escapeHtml(s.event_logo || 'frontend/images/logo-jumbara-xii.png')}</code>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.85rem;">
+                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Pilih File Logo Jumbara (JPG / PNG):</label>
+                <input type="file" id="eventLogoFileInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" onchange="App.handlePreviewSettingFile('event_logo', this)" style="font-size: 0.82rem; width: 100%;">
               </div>
             </div>
-            <div class="form-group" style="margin-bottom: 0.8rem;">
-              <input type="file" id="eventLogoFileInput" accept="image/png,image/svg+xml,image/jpeg,image/webp" style="font-size: 0.85rem;">
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-primary btn-sm" onclick="App.handleUploadFile('event_logo')" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Simpan Logo Jumbara
+            <div style="display: flex; gap: 0.5rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="App.handleUploadFile('event_logo')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.6rem; font-weight: 600; font-size: 0.82rem; border-radius: 6px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Logo
               </button>
-              <button class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('event_logo')" title="Reset ke Default Logo Jumbara">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('event_logo')" title="Reset ke Default Logo Jumbara" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.5rem 0.6rem; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.82rem; border-radius: 6px; background: white;">
                 <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
           </div>
 
-          <!-- Box Upload Favicon -->
-          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-            <h4 style="color: var(--secondary); font-size: 0.95rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-window-maximize" style="color: var(--primary);"></i> Unggah Favicon Tab Browser
-            </h4>
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
-              <img id="faviconPreviewImg" src="${s.app_favicon || 'frontend/favicon.svg'}" alt="Preview Favicon" style="width: 32px; height: 32px; object-fit: contain; background: white; padding: 2px; border-radius: 4px; border: 1px solid #e2e8f0;">
-              <div>
-                <small style="color: var(--text-muted); display: block;">Favicon Aktif saat ini:</small>
-                <code style="font-size: 0.78rem; word-break: break-all;">${Utils.escapeHtml(s.app_favicon || 'frontend/favicon.svg')}</code>
+          <!-- Box 3: Favicon Tab Browser -->
+          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h5 style="color: var(--secondary); font-size: 0.92rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-window-maximize" style="color: #059669;"></i> Favicon Tab Browser
+                </h5>
+                <span style="font-size: 0.7rem; background: #d1fae5; color: #065f46; padding: 2px 7px; border-radius: 4px; font-weight: 700;">PNG / ICO / JPG</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <img id="faviconPreviewImg" src="${s.app_favicon || 'frontend/favicon.svg'}" alt="Preview Favicon" style="width: 38px; height: 38px; object-fit: contain; background: white; padding: 3px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="overflow: hidden; flex: 1;">
+                  <small style="color: #64748b; font-size: 0.72rem; display: block; font-weight: 600;">Favicon Aktif:</small>
+                  <code style="font-size: 0.75rem; word-break: break-all; color: #334155;">${Utils.escapeHtml(s.app_favicon || 'frontend/favicon.svg')}</code>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.85rem;">
+                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Pilih Favicon Baru (PNG / ICO / JPG):</label>
+                <input type="file" id="faviconFileInput" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/jpeg,image/webp,image/svg+xml" onchange="App.handlePreviewSettingFile('favicon', this)" style="font-size: 0.82rem; width: 100%;">
               </div>
             </div>
-            <div class="form-group" style="margin-bottom: 0.8rem;">
-              <input type="file" id="faviconFileInput" accept="image/png,image/jpeg,image/jpg,image/webp,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" style="font-size: 0.85rem;">
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-primary btn-sm" onclick="App.handleUploadFile('favicon')" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Simpan Favicon ke Database
+            <div style="display: flex; gap: 0.5rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="App.handleUploadFile('favicon')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.6rem; font-weight: 600; font-size: 0.82rem; border-radius: 6px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Favicon
               </button>
-              <button class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('favicon')" title="Reset ke Default Favicon">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('favicon')" title="Reset ke Default Favicon" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.5rem 0.6rem; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.82rem; border-radius: 6px; background: white;">
                 <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
           </div>
 
-          <!-- Box Upload Kop Surat Gambar -->
-          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-            <h4 style="color: var(--secondary); font-size: 0.95rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Unggah Gambar Kop Surat Resmi
-            </h4>
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
-              <img id="kopPreviewImg" src="${s.app_kop || s.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Preview Kop Surat" style="height: 45px; max-width: 120px; object-fit: contain; background: white; padding: 2px; border-radius: 4px; border: 1px solid #e2e8f0;">
-              <div>
-                <small style="color: var(--text-muted); display: block;">File Kop Surat Aktif:</small>
-                <code style="font-size: 0.78rem; word-break: break-all;">${s.app_kop ? Utils.escapeHtml(s.app_kop) : '(Layout Text Default)'}</code>
+          <!-- Box 4: Kop Surat Gambar -->
+          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h5 style="color: var(--secondary); font-size: 0.92rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-file-invoice" style="color: #d97706;"></i> Gambar Kop Surat
+                </h5>
+                <span style="font-size: 0.7rem; background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 4px; font-weight: 700;">JPG / PNG</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <img id="kopPreviewImg" src="${s.app_kop || s.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Preview Kop Surat" style="height: 48px; max-width: 110px; object-fit: contain; background: white; padding: 3px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <div style="overflow: hidden; flex: 1;">
+                  <small style="color: #64748b; font-size: 0.72rem; display: block; font-weight: 600;">Kop Surat Aktif:</small>
+                  <code style="font-size: 0.75rem; word-break: break-all; color: #334155;">${s.app_kop ? Utils.escapeHtml(s.app_kop) : '(Teks Kop Default)'}</code>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.85rem;">
+                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Pilih File Kop Surat (JPG / PNG):</label>
+                <input type="file" id="kopFileInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" onchange="App.handlePreviewSettingFile('kop', this)" style="font-size: 0.82rem; width: 100%;">
               </div>
             </div>
-            <div class="form-group" style="margin-bottom: 0.8rem;">
-              <input type="file" id="kopFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="font-size: 0.85rem;">
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-outline btn-sm" onclick="App.handleUploadFile('kop')" style="flex: 1; border-color: var(--primary); color: var(--primary);">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Simpan Kop Surat ke Database
+            <div style="display: flex; gap: 0.5rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="App.handleUploadFile('kop')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.6rem; font-weight: 600; font-size: 0.82rem; border-radius: 6px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Kop
               </button>
-              <button class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('kop')" title="Reset ke Default Text Kop">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.handleResetSettingFile('kop')" title="Reset ke Default Text Kop" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.5rem 0.6rem; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.82rem; border-radius: 6px; background: white;">
                 <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
@@ -5281,26 +5314,26 @@ const App = {
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 0.8rem;">
                 <div class="form-group">
                   <label class="form-label" style="font-size: 0.8rem;">Path Logo Utama (PMI)</label>
-                  <input type="text" id="setAppLogo" value="${Utils.escapeHtml(s.app_logo || '')}" placeholder="frontend/images/logo-pmi.svg" style="font-size: 0.82rem;">
+                  <input type="text" id="setAppLogo" value="${Utils.escapeHtml(s.app_logo || '')}" placeholder="contoh: uploads/logo_pmi.png atau .jpg" style="font-size: 0.82rem;">
                 </div>
                 <div class="form-group">
                   <label class="form-label" style="font-size: 0.8rem;">Path Logo Kegiatan Jumbara</label>
-                  <input type="text" id="setEventLogo" value="${Utils.escapeHtml(s.event_logo || '')}" placeholder="frontend/images/logo-jumbara-xii.png" style="font-size: 0.82rem;">
+                  <input type="text" id="setEventLogo" value="${Utils.escapeHtml(s.event_logo || '')}" placeholder="contoh: frontend/images/logo-jumbara-xii.png atau .jpg" style="font-size: 0.82rem;">
                 </div>
                 <div class="form-group">
                   <label class="form-label" style="font-size: 0.8rem;">Path Favicon Tab Browser</label>
-                  <input type="text" id="setAppFavicon" value="${Utils.escapeHtml(s.app_favicon || '')}" placeholder="frontend/favicon.svg" style="font-size: 0.82rem;">
+                  <input type="text" id="setAppFavicon" value="${Utils.escapeHtml(s.app_favicon || '')}" placeholder="contoh: frontend/favicon.png atau .ico" style="font-size: 0.82rem;">
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                   <label class="form-label" style="font-size: 0.8rem;">Path Gambar Kop Surat</label>
-                  <input type="text" id="setAppKop" value="${Utils.escapeHtml(s.app_kop || '')}" placeholder="uploads/kop_xxx.jpg atau kosongkan" style="font-size: 0.82rem;">
+                  <input type="text" id="setAppKop" value="${Utils.escapeHtml(s.app_kop || '')}" placeholder="contoh: uploads/kop_surat.jpg atau .png" style="font-size: 0.82rem;">
                 </div>
               </div>
             </details>
 
-            <div style="text-align: right; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
-              <button type="submit" class="btn btn-primary btn-lg" style="padding: 0.6rem 1.8rem;">
-                <i class="fa-solid fa-floppy-disk"></i> Simpan Seluruh Pengaturan ke MySQL
+            <div style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 1.25rem; margin-top: 1rem;">
+              <button type="submit" class="btn btn-primary" style="padding: 0.65rem 2rem; font-size: 0.95rem; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Seluruh Pengaturan
               </button>
             </div>
           </form>
@@ -5356,6 +5389,26 @@ const App = {
       }
     } catch (err) {
       Utils.showToast(err.message, 'error');
+    }
+  },
+
+  handlePreviewSettingFile(type, inputElement) {
+    if (!inputElement || !inputElement.files || !inputElement.files[0]) return;
+    const file = inputElement.files[0];
+    const previewMap = {
+      'logo': 'logoPreviewImg',
+      'event_logo': 'eventLogoPreviewImg',
+      'favicon': 'faviconPreviewImg',
+      'kop': 'kopPreviewImg'
+    };
+    const imgId = previewMap[type];
+    const imgEl = document.getElementById(imgId);
+    if (imgEl && (file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp|ico|svg)$/i))) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imgEl.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   },
 
