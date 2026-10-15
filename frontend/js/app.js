@@ -858,26 +858,103 @@ const App = {
       const evContainer = document.getElementById('publicEventsList');
       if (evContainer) {
         if (!events.length) {
-          evContainer.innerHTML = '<p style="color: var(--text-muted);">Belum ada jadwal kegiatan.</p>';
+          evContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Belum ada jadwal kegiatan terdaftar.</p>';
         } else {
-          evContainer.innerHTML = events.map(e => `
-            <div class="timeline-card">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.4rem;">
-                <h4 style="font-size: 1.05rem; color: var(--secondary); font-weight: 800;">${Utils.escapeHtml(e.title)}</h4>
-                ${Utils.getLevelBadgeHtml(e.pmr_level)}
-              </div>
-              <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> ${Utils.escapeHtml(e.location)}</span>
-                <span><i class="fa-regular fa-clock" style="color: var(--accent-gold);"></i> ${e.start_time} - ${e.end_time} WIB</span>
-                <span><i class="fa-solid fa-user-lock" style="color: #b45309;"></i> Kuota: <strong>${e.max_participants_per_unit > 0 ? e.max_participants_per_unit + ' Peserta/Unit' : 'Tanpa Batas'}</strong></span>
-              </div>
-              <div>
-                <button type="button" class="btn btn-outline btn-sm" style="font-weight: 700; font-size: 0.8rem; color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff;" onclick="App.openRegisteredParticipantsModal(${e.id})">
-                  <i class="fa-solid fa-users"></i> 📋 Lihat Peserta Terdaftar
+          const desktopTableRows = events.map(e => {
+            const d = new Date(e.event_date);
+            const formattedDate = !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) : (e.event_date || '-');
+            return `
+              <tr>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a; font-size: 0.92rem; white-space: nowrap;">
+                    <i class="fa-regular fa-clock" style="color: var(--primary); margin-right: 4px;"></i> ${e.start_time || '-'} - ${e.end_time || '-'} WIB
+                  </div>
+                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px; white-space: nowrap;">
+                    <i class="fa-regular fa-calendar" style="margin-right: 4px;"></i> ${formattedDate}
+                  </div>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; line-height: 1.35; margin-bottom: 4px;">
+                    ${Utils.escapeHtml(e.title)}
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    ${e.category ? `<span class="badge badge-unit" style="font-size: 0.72rem; padding: 2px 7px;"><i class="fa-solid fa-tag"></i> ${Utils.escapeHtml(e.category)}</span>` : ''}
+                    ${e.description ? `<span style="font-size: 0.8rem; color: #64748b;">${Utils.escapeHtml(e.description)}</span>` : ''}
+                  </div>
+                </td>
+                <td>
+                  ${Utils.getLevelBadgeHtml(e.pmr_level)}
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.4rem; color: #334155; font-size: 0.88rem;">
+                    <i class="fa-solid fa-location-dot" style="color: var(--primary); font-size: 0.95rem;"></i>
+                    <span>${Utils.escapeHtml(e.location || 'Buperta Utama')}</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-size: 0.82rem; font-weight: 600; color: ${e.max_participants_per_unit > 0 ? '#b45309' : '#059669'}; white-space: nowrap;">
+                    <i class="fa-solid ${e.max_participants_per_unit > 0 ? 'fa-user-lock' : 'fa-users'}"></i>
+                    ${e.max_participants_per_unit > 0 ? e.max_participants_per_unit + ' / Unit' : 'Tanpa Batas'}
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <button type="button" class="btn btn-outline btn-sm" style="font-weight: 600; font-size: 0.8rem; padding: 0.35rem 0.75rem; white-space: nowrap;" onclick="App.openRegisteredParticipantsModal(${e.id})">
+                    <i class="fa-solid fa-users"></i> Lihat Peserta
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          const mobileRows = events.map(e => {
+            const d = new Date(e.event_date);
+            const formattedDate = !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }) : (e.event_date || '-');
+            return `
+              <div class="schedule-mobile-row">
+                <div class="schedule-mobile-time">
+                  <span class="time-badge"><i class="fa-regular fa-clock" style="color: var(--primary);"></i> ${e.start_time || '-'} - ${e.end_time || '-'} WIB</span>
+                  <span><i class="fa-regular fa-calendar"></i> ${formattedDate}</span>
+                </div>
+                <div class="schedule-mobile-title">${Utils.escapeHtml(e.title)}</div>
+                <div class="schedule-mobile-meta">
+                  <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> ${Utils.escapeHtml(e.location || 'Buperta')}</span>
+                  ${Utils.getLevelBadgeHtml(e.pmr_level)}
+                  <span style="color: ${e.max_participants_per_unit > 0 ? '#b45309' : '#059669'}; font-weight: 600; font-size: 0.8rem;">
+                    <i class="fa-solid ${e.max_participants_per_unit > 0 ? 'fa-user-lock' : 'fa-users'}"></i>
+                    ${e.max_participants_per_unit > 0 ? e.max_participants_per_unit + ' Peserta/Unit' : 'Tanpa Batas'}
+                  </span>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" style="font-weight: 600; font-size: 0.8rem;" onclick="App.openRegisteredParticipantsModal(${e.id})">
+                  <i class="fa-solid fa-users"></i> Lihat Peserta Terdaftar
                 </button>
               </div>
+            `;
+          }).join('');
+
+          evContainer.innerHTML = `
+            <div class="schedule-desktop-view">
+              <div class="schedule-table-wrap table-responsive">
+                <table class="data-table schedule-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 170px;"><i class="fa-regular fa-clock" style="margin-right: 5px; color: var(--primary);"></i> Waktu & Tanggal</th>
+                      <th><i class="fa-solid fa-list-check" style="margin-right: 5px; color: var(--primary);"></i> Agenda Kegiatan</th>
+                      <th style="width: 130px;"><i class="fa-solid fa-layer-group" style="margin-right: 5px; color: var(--primary);"></i> Tingkat PMR</th>
+                      <th><i class="fa-solid fa-location-dot" style="margin-right: 5px; color: var(--primary);"></i> Lokasi / Venue</th>
+                      <th style="width: 140px;"><i class="fa-solid fa-user-lock" style="margin-right: 5px; color: var(--primary);"></i> Kuota</th>
+                      <th style="width: 150px; text-align: center;">Daftar Peserta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${desktopTableRows}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          `).join('');
+            <div class="schedule-mobile-view">
+              ${mobileRows}
+            </div>
+          `;
         }
       }
 
