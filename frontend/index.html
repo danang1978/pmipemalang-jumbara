@@ -31,14 +31,15 @@
       <div class="top-bar-container">
         <div class="top-info-item">
           <i class="fa-solid fa-location-dot"></i>
-          <span>Buperta Utama PMI Kabupaten</span>
+          <span id="topEventLocation">Buperta Utama PMI Kabupaten</span>
           <span class="divider">|</span>
+          <span class="live-pulse-dot" style="margin: 0 2px;"></span>
           <i class="fa-solid fa-calendar-range"></i>
           <strong id="topEventDates">15 - 17 Oktober 2026</strong>
         </div>
         <div class="top-info-contact">
-          <span><i class="fa-solid fa-phone"></i> (021) 555-PMR-2026</span>
-          <span><i class="fa-solid fa-envelope"></i> sekretariat@jumbara-pmi.or.id</span>
+          <span id="topContactPhoneWrapper"><i class="fa-solid fa-phone"></i> <span id="topContactPhone">(021) 555-PMR-2026</span></span>
+          <span id="topContactEmailWrapper"><i class="fa-solid fa-envelope"></i> <span id="topContactEmail">sekretariat@jumbara-pmi.or.id</span></span>
         </div>
       </div>
     </div>
@@ -85,30 +86,32 @@
     <div class="container footer-grid">
       <div class="footer-col">
         <div class="footer-brand">
-          <img src="/images/logo-pmi.svg" alt="Logo PMI" class="footer-logo">
-          <h3 id="footerAppName">JUMBARA PMR 2026</h3>
+          <img src="images/logo-pmi.svg" alt="Logo PMI" class="footer-logo">
+          <h3><span id="footerAppName">JUMBARA PMR 2026</span></h3>
         </div>
-        <p class="footer-desc">
-          Sistem Informasi & Management Kegiatan Jumpa Bakti Gembira (JUMBARA) Palang Merah Remaja PMI Kabupaten.
+        <p class="footer-desc" id="footerAbout">
+          Ajang evaluasi dan pembinaan generasi muda Palang Merah Remaja (Mula, Madya, Wira) dalam mewujudkan Tri Bakti PMR.
         </p>
       </div>
       <div class="footer-col">
-        <h4 class="footer-title">Tingkat Pembinaan PMR</h4>
+        <h4 class="footer-title">Link Cepat</h4>
         <ul class="footer-list">
-          <li><span class="dot mula"></span> PMR Mula (Sekolah Dasar / SD)</li>
-          <li><span class="dot madya"></span> PMR Madya (Sekolah Menengah Pertama / SMP)</li>
-          <li><span class="dot wira"></span> PMR Wira (Sekolah Menengah Atas / SMA / SMK)</li>
+          <li><a href="#beranda" onclick="App.scrollToSection('beranda')">Beranda & Jumbotron</a></li>
+          <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan')">Jadwal & Rundown</a></li>
+          <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman')">Papan Pengumuman</a></li>
+          <li><a href="#klasemen" onclick="App.scrollToSection('klasemen')">Perolehan Medali</a></li>
         </ul>
       </div>
       <div class="footer-col">
-        <h4 class="footer-title">7 Prinsip Dasar PMI</h4>
-        <p class="footer-prinsip">
-          Kemanusiaan • Kesamaan • Netralitas • Kemandirian • Kesukarelaan • Kesatuan • Kesemestaan
-        </p>
+        <h4 class="footer-title">Sekretariat PMI</h4>
+        <p><i class="fa-solid fa-location-dot"></i> <span id="footerAddress">Jl. Palang Merah No. 1, Markas PMI Kabupaten</span></p>
+        <p><i class="fa-solid fa-phone"></i> <span id="footerPhone">(021) 555-PMR-2026</span></p>
+        <p><i class="fa-solid fa-envelope"></i> <span id="footerEmail">sekretariat@jumbara-pmi.or.id</span></p>
+        <p><i class="fa-solid fa-clock"></i> <span id="footerHours">Senin - Jumat: 08.00 - 16.00 WIB</span></p>
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Palang Merah Indonesia (PMI) Kabupaten. Hak Cipta Dilindungi Undang-Undang.
+      <p id="footerCopyright">&copy; 2026 Palang Merah Indonesia Kabupaten. Structured Native PHP & MySQL Application.</p>
     </div>
   </footer>
 

@@ -9,7 +9,7 @@ $settings = getAppSettings();
           <img src="<?php echo htmlspecialchars($settings['app_logo']); ?>" alt="Logo PMI" class="footer-logo">
           <h3><span id="footerAppName"><?php echo htmlspecialchars($settings['app_name']); ?></span></h3>
         </div>
-        <p>Ajang evaluasi dan pembinaan generasi muda Palang Merah Remaja (Mula, Madya, Wira) dalam mewujudkan Tri Bakti PMR.</p>
+        <p id="footerAbout"><?php echo htmlspecialchars($settings['footer_about'] ?? 'Ajang evaluasi dan pembinaan generasi muda Palang Merah Remaja (Mula, Madya, Wira) dalam mewujudkan Tri Bakti PMR.'); ?></p>
       </div>
 
       <div class="footer-col">
@@ -24,13 +24,16 @@ $settings = getAppSettings();
 
       <div class="footer-col">
         <h4>Sekretariat PMI</h4>
-        <p><i class="fa-solid fa-location-dot"></i> Jl. Palang Merah No. 1, Markas PMI Kabupaten</p>
-        <p><i class="fa-solid fa-phone"></i> (021) 555-PMR-2026</p>
-        <p><i class="fa-solid fa-envelope"></i> info@pmikabupaten.or.id</p>
+        <p><i class="fa-solid fa-location-dot"></i> <span id="footerAddress"><?php echo htmlspecialchars($settings['contact_address'] ?? 'Jl. Palang Merah No. 1, Markas PMI Kabupaten'); ?></span></p>
+        <p><i class="fa-solid fa-phone"></i> <span id="footerPhone"><?php echo htmlspecialchars($settings['contact_phone'] ?? '(021) 555-PMR-2026'); ?></span></p>
+        <p><i class="fa-solid fa-envelope"></i> <span id="footerEmail"><?php echo htmlspecialchars($settings['contact_email'] ?? 'sekretariat@jumbara-pmi.or.id'); ?></span></p>
+        <?php if (!empty($settings['contact_hours'])): ?>
+          <p><i class="fa-solid fa-clock"></i> <span id="footerHours"><?php echo htmlspecialchars($settings['contact_hours']); ?></span></p>
+        <?php endif; ?>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 Palang Merah Indonesia Kabupaten. Structured Native PHP & MySQL Application.</p>
+      <p id="footerCopyright"><?php echo htmlspecialchars($settings['footer_copyright'] ?? '© 2026 Palang Merah Indonesia Kabupaten. Structured Native PHP & MySQL Application.'); ?></p>
     </div>
   </footer>
 

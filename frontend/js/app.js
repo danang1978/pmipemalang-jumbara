@@ -13,6 +13,14 @@ const App = {
     jumbotron_title: 'JUMBARA XII PMR PMI KABUPATEN PEMALANG',
     jumbotron_subtitle: 'Ajang Jumpa Bakti Gembira Palang Merah Remaja - Cerdas, Ceria, Bersahabat',
     event_dates: '15 - 17 Oktober 2026',
+    event_location: 'Buperta Utama PMI Kabupaten',
+    contact_phone: '(021) 555-PMR-2026',
+    contact_email: 'sekretariat@jumbara-pmi.or.id',
+    contact_address: 'Jl. Palang Merah No. 1, Markas PMI Kabupaten',
+    contact_hours: 'Senin - Jumat: 08.00 - 16.00 WIB',
+    contact_wa: '081234567890',
+    footer_about: 'Ajang evaluasi dan pembinaan generasi muda Palang Merah Remaja (Mula, Madya, Wira) dalam mewujudkan Tri Bakti PMR.',
+    footer_copyright: '© 2026 Palang Merah Indonesia Kabupaten. Structured Native PHP & MySQL Application.',
     app_logo: 'frontend/images/logo-pmi.svg',
     event_logo: 'frontend/images/logo-jumbara-xii.png',
     app_favicon: 'frontend/favicon.svg',
@@ -154,12 +162,30 @@ const App = {
     const brandOrgEl = document.getElementById('brandOrganizer');
     const footerNameEl = document.getElementById('footerAppName');
     const datesEl = document.getElementById('topEventDates');
+    const locEl = document.getElementById('topEventLocation');
+    const phoneEl = document.getElementById('topContactPhone');
+    const emailEl = document.getElementById('topContactEmail');
+    const footerAboutEl = document.getElementById('footerAbout');
+    const footerAddressEl = document.getElementById('footerAddress');
+    const footerPhoneEl = document.getElementById('footerPhone');
+    const footerEmailEl = document.getElementById('footerEmail');
+    const footerHoursEl = document.getElementById('footerHours');
+    const footerCopyrightEl = document.getElementById('footerCopyright');
 
-    if (titleEl) titleEl.textContent = `${s.app_name} - Palang Merah Indonesia`;
-    if (brandNameEl) brandNameEl.textContent = s.app_name;
-    if (brandOrgEl) brandOrgEl.textContent = s.organizer_name;
-    if (footerNameEl) footerNameEl.textContent = s.app_name;
-    if (datesEl) datesEl.textContent = s.event_dates;
+    if (titleEl && s.app_name) titleEl.textContent = `${s.app_name} - Palang Merah Indonesia`;
+    if (brandNameEl && s.app_name) brandNameEl.textContent = s.app_name;
+    if (brandOrgEl && s.organizer_name) brandOrgEl.textContent = s.organizer_name;
+    if (footerNameEl && s.app_name) footerNameEl.textContent = s.app_name;
+    if (datesEl && s.event_dates) datesEl.textContent = s.event_dates;
+    if (locEl && s.event_location) locEl.textContent = s.event_location;
+    if (phoneEl && s.contact_phone) phoneEl.textContent = s.contact_phone;
+    if (emailEl && s.contact_email) emailEl.textContent = s.contact_email;
+    if (footerAboutEl && s.footer_about) footerAboutEl.textContent = s.footer_about;
+    if (footerAddressEl && s.contact_address) footerAddressEl.textContent = s.contact_address;
+    if (footerPhoneEl && s.contact_phone) footerPhoneEl.textContent = s.contact_phone;
+    if (footerEmailEl && s.contact_email) footerEmailEl.textContent = s.contact_email;
+    if (footerHoursEl && s.contact_hours) footerHoursEl.textContent = s.contact_hours;
+    if (footerCopyrightEl && s.footer_copyright) footerCopyrightEl.textContent = s.footer_copyright;
 
     // 1. Dynamic Favicon Update from Database (Supports PNG, JPG, WEBP, ICO, SVG)
     if (s.app_favicon) {
@@ -5335,39 +5361,93 @@ const App = {
         <!-- Section 4: Text Form Settings -->
         <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
           <h4 style="color: var(--secondary); font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
-            <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Pengaturan Teks & Informasi Penyelenggara
+            <i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Pengaturan Header, Footer & Informasi Penyelenggara
           </h4>
 
           <form id="settingsForm" onsubmit="App.handleSaveSettings(event)">
             
-            <!-- Sub-group 1: Informasi Umum -->
-            <div style="margin-bottom: 1.5rem;">
-              <h5 style="font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 0.8rem; display: flex; align-items: center;">
-                <i class="fa-solid fa-circle-info" style="color: #0284c7; margin-right: 0.4rem;"></i> Informasi Umum & Tanggal Kegiatan
+            <!-- Sub-group 1: Header & Kontak Top-Bar -->
+            <div style="margin-bottom: 1.75rem;">
+              <h5 style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-window-maximize" style="color: #0284c7;"></i> 1. Pengaturan Header & Top-Bar Website
               </h5>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
                 <div class="form-group">
                   <label class="form-label">Nama Aplikasi & Kegiatan *</label>
                   <input type="text" id="setAppName" value="${Utils.escapeHtml(s.app_name)}" required style="width: 100%;">
+                  <span class="form-help">Ditampilkan pada title browser, navbar brand, dan header</span>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">Organisasi Penyelenggara *</label>
                   <input type="text" id="setOrganizerName" value="${Utils.escapeHtml(s.organizer_name)}" required style="width: 100%;">
+                  <span class="form-help">Sub-judul organisasi di bawah nama aplikasi navbar</span>
                 </div>
 
-                <div class="form-group" style="grid-column: 1 / -1;">
+                <div class="form-group">
+                  <label class="form-label">Lokasi Buperta / Venue Kegiatan *</label>
+                  <input type="text" id="setEventLocation" value="${Utils.escapeHtml(s.event_location || 'Buperta Utama PMI Kabupaten')}" required style="width: 100%;">
+                  <span class="form-help">Ditampilkan pada Top-Bar Header paling atas</span>
+                </div>
+
+                <div class="form-group">
                   <label class="form-label">Tanggal Pelaksanaan Kegiatan *</label>
                   <input type="text" id="setEventDates" value="${Utils.escapeHtml(s.event_dates)}" required style="width: 100%;">
-                  <span class="form-help">Contoh: 14 - 18 Oktober 2026 | Gedung PMI Kota Yogyakarta</span>
+                  <span class="form-help">Contoh: 15 - 17 Oktober 2026</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Nomor Telepon Kontak Resmi *</label>
+                  <input type="text" id="setContactPhone" value="${Utils.escapeHtml(s.contact_phone || '(021) 555-PMR-2026')}" required style="width: 100%;">
+                  <span class="form-help">Ditampilkan di Top-Bar Header dan Kolom Footer</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email Resmi Sekretariat *</label>
+                  <input type="email" id="setContactEmail" value="${Utils.escapeHtml(s.contact_email || 'sekretariat@jumbara-pmi.or.id')}" required style="width: 100%;">
+                  <span class="form-help">Ditampilkan di Top-Bar Header dan Kolom Footer</span>
                 </div>
               </div>
             </div>
 
-            <!-- Sub-group 2: Banner Hero Homepage -->
-            <div style="margin-bottom: 1.5rem; border-top: 1px dashed #e2e8f0; padding-top: 1.2rem;">
-              <h5 style="font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 0.8rem; display: flex; align-items: center;">
-                <i class="fa-solid fa-heading" style="color: #0284c7; margin-right: 0.4rem;"></i> Teks Banner Jumbotron Hero Homepage
+            <!-- Sub-group 2: Footer & Sekretariat PMI -->
+            <div style="margin-bottom: 1.75rem; border-top: 1px dashed #e2e8f0; padding-top: 1.25rem;">
+              <h5 style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-shoe-prints" style="color: #059669;"></i> 2. Pengaturan Footer Website & Markas PMI
+              </h5>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">Deskripsi Singkat / Tentang di Footer *</label>
+                  <textarea id="setFooterAbout" rows="2" required style="width: 100%; resize: vertical;">${Utils.escapeHtml(s.footer_about || 'Ajang evaluasi dan pembinaan generasi muda Palang Merah Remaja (Mula, Madya, Wira) dalam mewujudkan Tri Bakti PMR.')}</textarea>
+                  <span class="form-help">Penjelasan profil kegiatan di kolom kiri bawah footer</span>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">Alamat Lengkap Markas / Sekretariat PMI *</label>
+                  <input type="text" id="setContactAddress" value="${Utils.escapeHtml(s.contact_address || 'Jl. Palang Merah No. 1, Markas PMI Kabupaten')}" required style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Jam Layanan / Operasional Sekretariat</label>
+                  <input type="text" id="setContactHours" value="${Utils.escapeHtml(s.contact_hours || 'Senin - Jumat: 08.00 - 16.00 WIB')}" placeholder="Senin - Jumat: 08.00 - 16.00 WIB" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Nomor WhatsApp Hotline / Panitia</label>
+                  <input type="text" id="setContactWa" value="${Utils.escapeHtml(s.contact_wa || '081234567890')}" placeholder="081234567890" style="width: 100%;">
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">Teks Hak Cipta / Copyright Footer *</label>
+                  <input type="text" id="setFooterCopyright" value="${Utils.escapeHtml(s.footer_copyright || '© 2026 Palang Merah Indonesia Kabupaten. Structured Native PHP & MySQL Application.')}" required style="width: 100%;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-group 3: Banner Hero Homepage -->
+            <div style="margin-bottom: 1.75rem; border-top: 1px dashed #e2e8f0; padding-top: 1.25rem;">
+              <h5 style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-heading" style="color: #d97706;"></i> 3. Teks Banner Jumbotron Hero Homepage
               </h5>
               <div class="form-group" style="margin-bottom: 1rem;">
                 <label class="form-label">Judul Utama Jumbotron *</label>
@@ -5376,11 +5456,11 @@ const App = {
 
               <div class="form-group">
                 <label class="form-label">Sub-Judul Jumbotron *</label>
-                <textarea id="setJumbotronSubtitle" rows="3" required style="width: 100%; resize: vertical;">${Utils.escapeHtml(s.jumbotron_subtitle)}</textarea>
+                <textarea id="setJumbotronSubtitle" rows="2" required style="width: 100%; resize: vertical;">${Utils.escapeHtml(s.jumbotron_subtitle)}</textarea>
               </div>
             </div>
 
-            <!-- Sub-group 3: Jalur File Aset (Advanced Path Links) -->
+            <!-- Sub-group 4: Jalur File Aset (Advanced Path Links) -->
             <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem 1rem; margin-bottom: 1.5rem;">
               <summary style="font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; user-select: none;">
                 <i class="fa-solid fa-link" style="margin-right: 0.4rem; color: #64748b;"></i> Jalur / URL File Aset Database MySQL (Opsional)
@@ -5553,13 +5633,21 @@ const App = {
     const payload = {
       app_name: document.getElementById('setAppName').value.trim(),
       organizer_name: document.getElementById('setOrganizerName').value.trim(),
+      event_location: document.getElementById('setEventLocation').value.trim(),
+      event_dates: document.getElementById('setEventDates').value.trim(),
+      contact_phone: document.getElementById('setContactPhone').value.trim(),
+      contact_email: document.getElementById('setContactEmail').value.trim(),
+      footer_about: document.getElementById('setFooterAbout').value.trim(),
+      contact_address: document.getElementById('setContactAddress').value.trim(),
+      contact_hours: document.getElementById('setContactHours')?.value.trim() || '',
+      contact_wa: document.getElementById('setContactWa')?.value.trim() || '',
+      footer_copyright: document.getElementById('setFooterCopyright').value.trim(),
       app_logo: document.getElementById('setAppLogo')?.value.trim() || 'frontend/images/logo-pmi.svg',
       event_logo: document.getElementById('setEventLogo')?.value.trim() || this.appSettings.event_logo || 'frontend/images/logo-jumbara-xii.png',
       app_favicon: document.getElementById('setAppFavicon')?.value.trim() || 'frontend/favicon.svg',
       app_kop: document.getElementById('setAppKop')?.value.trim() || '',
       jumbotron_title: document.getElementById('setJumbotronTitle').value.trim(),
       jumbotron_subtitle: document.getElementById('setJumbotronSubtitle').value.trim(),
-      event_dates: document.getElementById('setEventDates').value.trim(),
       reg_deadline: document.getElementById('setRegDeadline').value,
       reg_active: document.getElementById('setRegActive').value
     };

@@ -40,22 +40,38 @@ router.post('/', authenticateToken, async (req, res) => {
 
   const {
     app_name, organizer_name, jumbotron_title, jumbotron_subtitle,
-    event_dates, app_logo, app_favicon
+    event_dates, event_location, contact_phone, contact_email,
+    contact_address, contact_hours, contact_wa,
+    footer_about, footer_copyright,
+    app_logo, app_favicon, event_logo, app_kop,
+    reg_deadline, reg_active
   } = req.body;
 
   try {
     const pool = getPool();
     const query = `INSERT INTO settings (\`key\`, \`value\`) VALUES (?, ?) ON DUPLICATE KEY UPDATE \`value\` = VALUES(\`value\`)`;
     
-    if (app_name) await pool.query(query, ['app_name', app_name]);
-    if (organizer_name) await pool.query(query, ['organizer_name', organizer_name]);
-    if (jumbotron_title) await pool.query(query, ['jumbotron_title', jumbotron_title]);
-    if (jumbotron_subtitle) await pool.query(query, ['jumbotron_subtitle', jumbotron_subtitle]);
-    if (event_dates) await pool.query(query, ['event_dates', event_dates]);
-    if (app_logo) await pool.query(query, ['app_logo', app_logo]);
-    if (app_favicon) await pool.query(query, ['app_favicon', app_favicon]);
+    if (app_name !== undefined) await pool.query(query, ['app_name', app_name]);
+    if (organizer_name !== undefined) await pool.query(query, ['organizer_name', organizer_name]);
+    if (event_location !== undefined) await pool.query(query, ['event_location', event_location]);
+    if (event_dates !== undefined) await pool.query(query, ['event_dates', event_dates]);
+    if (contact_phone !== undefined) await pool.query(query, ['contact_phone', contact_phone]);
+    if (contact_email !== undefined) await pool.query(query, ['contact_email', contact_email]);
+    if (contact_address !== undefined) await pool.query(query, ['contact_address', contact_address]);
+    if (contact_hours !== undefined) await pool.query(query, ['contact_hours', contact_hours]);
+    if (contact_wa !== undefined) await pool.query(query, ['contact_wa', contact_wa]);
+    if (footer_about !== undefined) await pool.query(query, ['footer_about', footer_about]);
+    if (footer_copyright !== undefined) await pool.query(query, ['footer_copyright', footer_copyright]);
+    if (jumbotron_title !== undefined) await pool.query(query, ['jumbotron_title', jumbotron_title]);
+    if (jumbotron_subtitle !== undefined) await pool.query(query, ['jumbotron_subtitle', jumbotron_subtitle]);
+    if (app_logo !== undefined) await pool.query(query, ['app_logo', app_logo]);
+    if (event_logo !== undefined) await pool.query(query, ['event_logo', event_logo]);
+    if (app_favicon !== undefined) await pool.query(query, ['app_favicon', app_favicon]);
+    if (app_kop !== undefined) await pool.query(query, ['app_kop', app_kop]);
+    if (reg_deadline !== undefined) await pool.query(query, ['reg_deadline', reg_deadline]);
+    if (reg_active !== undefined) await pool.query(query, ['reg_active', reg_active]);
 
-    res.json({ message: 'Pengaturan, Logo, dan Favicon berhasil diperbarui ke MySQL!' });
+    res.json({ message: 'Pengaturan Header, Footer, Logo, dan Informasi Penyelenggara berhasil diperbarui ke MySQL!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

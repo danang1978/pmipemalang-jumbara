@@ -69,15 +69,15 @@ else if ($favExt === 'png') $favType = 'image/png';
       <div class="top-bar-container">
         <div class="top-info-item">
           <i class="fa-solid fa-location-dot"></i>
-          <span>Buperta Utama PMI Kabupaten</span>
+          <span id="topEventLocation"><?php echo htmlspecialchars($settings['event_location'] ?? 'Buperta Utama PMI Kabupaten'); ?></span>
           <span class="divider">|</span>
           <span class="live-pulse-dot" style="margin: 0 2px;"></span>
           <i class="fa-solid fa-calendar-range"></i>
-          <strong id="topEventDates"><?php echo htmlspecialchars($settings['event_dates']); ?></strong>
+          <strong id="topEventDates"><?php echo htmlspecialchars($settings['event_dates'] ?? '15 - 17 Oktober 2026'); ?></strong>
         </div>
         <div class="top-info-contact">
-          <span><i class="fa-solid fa-phone"></i> (021) 555-PMR-2026</span>
-          <span><i class="fa-solid fa-envelope"></i> sekretariat@jumbara-pmi.or.id</span>
+          <span id="topContactPhoneWrapper"><i class="fa-solid fa-phone"></i> <span id="topContactPhone"><?php echo htmlspecialchars($settings['contact_phone'] ?? '(021) 555-PMR-2026'); ?></span></span>
+          <span id="topContactEmailWrapper"><i class="fa-solid fa-envelope"></i> <span id="topContactEmail"><?php echo htmlspecialchars($settings['contact_email'] ?? 'sekretariat@jumbara-pmi.or.id'); ?></span></span>
         </div>
       </div>
     </div>
