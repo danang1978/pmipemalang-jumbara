@@ -461,7 +461,7 @@ const App = {
       `;
 
       regBtnHtml = `
-        <button class="btn btn-primary" onclick="App.openRegisterModal()">${Icons.userPlus(18)} Pendaftaran Peserta Mandiri</button>
+        <button class="btn btn-primary btn-sm" onclick="App.openRegisterModal()">${Icons.userPlus(15)} Pendaftaran Mandiri</button>
       `;
     } else {
       deadlineBadgeHtml = `
@@ -472,7 +472,7 @@ const App = {
       `;
 
       regBtnHtml = `
-        <button class="btn btn-secondary" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Pendaftaran Mandiri Ditutup</button>
+        <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Pendaftaran Ditutup</button>
       `;
     }
 
@@ -492,11 +492,6 @@ const App = {
         <div class="jumbotron-overlay"></div>
         <div class="jumbotron-content">
           <div class="jumbotron-inner-box">
-            <div class="jumbotron-badge">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>PORTAL RESMI JUMBARA PMR KABUPATEN</span>
-            </div>
-
             <div>${deadlineBadgeHtml}</div>
 
             <h2 class="jumbotron-title" id="jumbotronTitle">${Utils.escapeHtml(s.jumbotron_title || 'JUMBARA XII PMR PMI KABUPATEN PEMALANG')}</h2>
@@ -504,7 +499,7 @@ const App = {
             
             <div class="hero-btns">
               ${regBtnHtml}
-              <button class="btn btn-secondary" onclick="App.openLoginModal()">${Icons.login(18)} Login Portal Admin & Peserta</button>
+              <button class="btn btn-secondary btn-sm" onclick="App.openLoginModal()">${Icons.login(15)} Login Portal</button>
             </div>
           </div>
         </div>
