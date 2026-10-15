@@ -575,94 +575,111 @@ const App = {
         </div>
       </section>
 
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon icon-red">${Icons.unit(24, '#dc2626')}</div>
-          <div class="stat-info">
-            <h3 id="statTotalUnits">-</h3>
-            <p>Kontingen Unit PMR</p>
+      <!-- SECTION 1: FLOATING STATS STRIP -->
+      <div class="landing-stats-bar">
+        <div class="landing-stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon icon-red">${Icons.unit(24, '#dc2626')}</div>
+            <div class="stat-info">
+              <h3 id="statTotalUnits">-</h3>
+              <p>Kontingen Unit PMR</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-blue">${Icons.peserta(24, '#2563eb')}</div>
+            <div class="stat-info">
+              <h3 id="statTotalPeserta">-</h3>
+              <p>Peserta Terdaftar</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-green">${Icons.agenda(24, '#059669')}</div>
+            <div class="stat-info">
+              <h3 id="statTotalEvents">-</h3>
+              <p>Agenda Kegiatan</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-purple">${Icons.trophy(24, '#7c3aed')}</div>
+            <div class="stat-info">
+              <h3>Tri Bakti</h3>
+              <p>Jumpa, Bakti, Gembira</p>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon icon-blue">${Icons.peserta(24, '#2563eb')}</div>
-          <div class="stat-info">
-            <h3 id="statTotalPeserta">-</h3>
-            <p>Peserta Terdaftar</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon icon-green">${Icons.agenda(24, '#059669')}</div>
-          <div class="stat-info">
-            <h3 id="statTotalEvents">-</h3>
-            <p>Agenda Kegiatan</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon icon-purple">${Icons.trophy(24, '#7c3aed')}</div>
-          <div class="stat-info">
-            <h3>Tri Bakti</h3>
-            <p>Jumpa, Bakti, Gembira</p>
-          </div>
-        </div>
-      </section>
+      </div>
 
-      <!-- SECTION 2: AGENDA UTAMA JUMBARA -->
-      <section class="landing-section" id="kegiatan" style="margin-top: 2rem;">
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 class="panel-title">${Icons.agenda(22, 'var(--primary)')} Agenda & Rundown Utama Jumbara</h3>
+      <!-- SECTION 2: AGENDA & RUNDOWN KEGIATAN -->
+      <section class="landing-section" id="kegiatan">
+        <div class="landing-section-inner">
+          <div class="landing-section-header">
+            <div class="landing-section-pill"><i class="fa-solid fa-calendar-days"></i> Rundown Acara</div>
+            <h2 class="landing-section-title">Agenda & Jadwal Kegiatan Jumbara</h2>
+            <p class="landing-section-subtitle">Rangkaian evaluasi keterampilan, bakti sosial kemanusiaan, dan wahana jumpa gembira kontingen PMR.</p>
+            <div class="landing-section-divider"></div>
           </div>
           <div id="publicEventsList">
-            <p style="color: var(--text-muted);">Memuat jadwal...</p>
+            <p style="color: var(--text-muted); text-align: center;">Memuat jadwal kegiatan...</p>
           </div>
         </div>
       </section>
 
       <!-- SECTION 3: PENGUMUMAN & INFORMASI -->
-      <section class="landing-section" id="pengumuman" style="margin-top: 2.5rem;">
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 class="panel-title">${Icons.announcement(22, 'var(--primary)')} Papan Pengumuman & Informasi Terbaru</h3>
+      <section class="landing-section section-alt" id="pengumuman">
+        <div class="landing-section-inner">
+          <div class="landing-section-header">
+            <div class="landing-section-pill" style="color: #0284c7; background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.2);"><i class="fa-solid fa-bullhorn"></i> Informasi Resmi</div>
+            <h2 class="landing-section-title">Papan Pengumuman & Berita</h2>
+            <p class="landing-section-subtitle">Pemberitahuan terkini, edaran teknis panitia, dan informasi penting untuk seluruh kontingen sekolah.</p>
+            <div class="landing-section-divider" style="background: linear-gradient(90deg, #0284c7, #38bdf8);"></div>
           </div>
           <div id="publicAnnouncementsList">
-            <p style="color: var(--text-muted);">Memuat pengumuman...</p>
+            <p style="color: var(--text-muted); text-align: center;">Memuat pengumuman...</p>
           </div>
         </div>
       </section>
 
       <!-- SECTION 4: KLASEMEN MEDALI -->
-      <section class="landing-section" id="klasemen" style="margin-top: 2.5rem;">
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 class="panel-title">${Icons.trophy(22, 'var(--accent-gold)')} Klasemen & Rekap Perolehan Medali</h3>
+      <section class="landing-section" id="klasemen">
+        <div class="landing-section-inner">
+          <div class="landing-section-header">
+            <div class="landing-section-pill" style="color: #d97706; background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.2);"><i class="fa-solid fa-trophy"></i> Perolehan Medali</div>
+            <h2 class="landing-section-title">Klasemen Kontingen Jumbara</h2>
+            <p class="landing-section-subtitle">Rekapitulasi perolehan medali emas, perak, dan perunggu kontingen sekolah secara langsung dan transparan.</p>
+            <div class="landing-section-divider" style="background: linear-gradient(90deg, #d97706, #fbbf24);"></div>
           </div>
           <div id="publicStandingsList">
-            <p style="color: var(--text-muted);">Memuat klasemen...</p>
+            <p style="color: var(--text-muted); text-align: center;">Memuat klasemen...</p>
           </div>
         </div>
       </section>
 
       <!-- SECTION 5: DAFTAR KONTINGEN UNIT -->
-      <section class="landing-section" id="unit" style="margin-top: 2.5rem;">
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 class="panel-title">${Icons.unit(22, 'var(--secondary)')} Daftar Kontingen Unit PMR Sekolah</h3>
+      <section class="landing-section section-alt" id="unit">
+        <div class="landing-section-inner">
+          <div class="landing-section-header">
+            <div class="landing-section-pill" style="color: #059669; background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.2);"><i class="fa-solid fa-school"></i> Peserta Sekolah</div>
+            <h2 class="landing-section-title">Daftar Kontingen Unit PMR</h2>
+            <p class="landing-section-subtitle">Seluruh unit Palang Merah Remaja (Mula, Madya, Wira) yang terdaftar mengikuti kegiatan Jumbara XII.</p>
+            <div class="landing-section-divider" style="background: linear-gradient(90deg, #059669, #34d399);"></div>
           </div>
           <div id="publicUnitsList">
-            <p style="color: var(--text-muted);">Memuat daftar unit...</p>
+            <p style="color: var(--text-muted); text-align: center;">Memuat daftar unit...</p>
           </div>
         </div>
       </section>
 
       <!-- SECTION 6: LOKASI & PETA KEGIATAN -->
-      <section class="landing-section" id="lokasi" style="margin-top: 2.5rem;">
-        <div class="panel-card location-map-card">
-          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-            <h3 class="panel-title"><i class="fa-solid fa-map-location-dot" style="color: var(--primary); font-size: 1.25rem;"></i> Lokasi & Peta Kegiatan Jumbara</h3>
-            <span class="badge badge-primary"><i class="fa-solid fa-compass"></i> Titik Kumpul & Buperta</span>
+      <section class="landing-section" id="lokasi">
+        <div class="landing-section-inner">
+          <div class="landing-section-header">
+            <div class="landing-section-pill" style="color: #dc2626; background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.2);"><i class="fa-solid fa-map-location-dot"></i> Venue & Peta</div>
+            <h2 class="landing-section-title">Lokasi & Panduan Arah</h2>
+            <p class="landing-section-subtitle">Titik kumpul perkemahan, markas kegiatan, dan rute navigasi menuju Bumi Perkemahan Utama.</p>
+            <div class="landing-section-divider"></div>
           </div>
-          <div class="location-map-grid">
-            <div class="map-embed-wrapper">
+          <div class="location-map-grid" style="padding: 0;">
+            <div class="map-embed-wrapper" style="box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius: var(--radius-lg);">
               <iframe 
                 id="eventMapIframe"
                 src="${s.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed'}"
@@ -672,33 +689,33 @@ const App = {
                 title="Peta Lokasi Kegiatan Jumbara">
               </iframe>
             </div>
-            <div class="location-details-box">
+            <div class="location-details-box" style="background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem;">
               <div>
                 <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
                   <i class="fa-solid fa-campground"></i> Informasi Venue
                 </div>
-                <h4 id="mapVenueTitle" style="font-size: 1.2rem; font-weight: 700; color: var(--text-main, #1e293b); margin-bottom: 0.75rem;">
+                <h4 id="mapVenueTitle" style="font-size: 1.35rem; font-weight: 800; color: var(--secondary, #1e293b); margin-bottom: 0.75rem; letter-spacing: -0.3px;">
                   ${Utils.escapeHtml(s.event_location || 'Buperta Utama PMI Kabupaten')}
                 </h4>
-                <p id="mapVenueAddress" style="color: var(--text-muted, #64748b); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                <p id="mapVenueAddress" style="color: var(--text-muted, #64748b); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
                   ${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang')}
                 </p>
-                <div style="border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-bottom: 1.25rem;">
-                  <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.88rem; color: var(--text-main, #334155);">
-                    <i class="fa-solid fa-calendar-days" style="color: var(--primary); width: 18px; text-align: center;"></i>
+                <div style="border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1.25rem; margin-bottom: 1.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; font-size: 0.9rem; color: var(--text-main, #334155);">
+                    <i class="fa-solid fa-calendar-days" style="color: var(--primary); width: 20px; text-align: center; font-size: 1.1rem;"></i>
                     <span><strong>Jadwal:</strong> ${Utils.escapeHtml(s.event_dates || '15 - 17 Oktober 2026')}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: var(--text-main, #334155);">
-                    <i class="fa-solid fa-phone" style="color: var(--primary); width: 18px; text-align: center;"></i>
+                  <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--text-main, #334155);">
+                    <i class="fa-solid fa-phone" style="color: var(--primary); width: 20px; text-align: center; font-size: 1.1rem;"></i>
                     <span><strong>Kontak Posko:</strong> ${Utils.escapeHtml(s.contact_phone || s.contact_wa || '(021) 555-PMR-2026')}</span>
                   </div>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-                <a id="eventMapBtn" href="${s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <a id="eventMapBtn" href="${s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; padding: 0.75rem 1rem; font-weight: 700;">
                   <i class="fa-solid fa-diamond-turn-right"></i> Buka Petunjuk Arah
                 </a>
-                <button type="button" class="btn btn-outline" onclick="App.copyLocationAddress()" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <button type="button" class="btn btn-outline" onclick="App.copyLocationAddress()" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; font-weight: 600;">
                   <i class="fa-solid fa-copy"></i> Salin Alamat
                 </button>
               </div>

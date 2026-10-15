@@ -2661,6 +2661,205 @@ body.has-mobile-portal #mainContainer {
   }
 }
 
+/* ==========================================================================
+   MODERN FULL-WIDTH LANDING PAGE SECTIONS (NON-CARD ARCHITECTURE)
+   ========================================================================== */
+body:not(.user-logged-in) #mainContainer.container {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+body:not(.user-logged-in) .jumbotron-hero {
+  width: 100% !important;
+  left: auto !important;
+  right: auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Floating Stats Strip */
+.landing-stats-bar {
+  max-width: 1240px;
+  margin: -2.5rem auto 1.5rem auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 20;
+}
+
+.landing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  background: #ffffff;
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.1), 0 0 1px 1px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+/* Landing Section System */
+.landing-section {
+  width: 100%;
+  padding: 5rem 0;
+  position: relative;
+  scroll-margin-top: 75px;
+  background: #ffffff;
+}
+
+.landing-section.section-alt {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.landing-section-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Section Header Typography */
+.landing-section-header {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 3rem auto;
+}
+
+.landing-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1.1rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--primary);
+  margin-bottom: 0.85rem;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.landing-section-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--secondary, #0f172a);
+  letter-spacing: -0.8px;
+  line-height: 1.25;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-heading);
+}
+
+.landing-section-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.landing-section-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), #f87171);
+  margin: 1.1rem auto 0 auto;
+  border-radius: 2px;
+}
+
+/* Responsive Grids for Events & Announcements */
+#publicEventsList,
+#publicAnnouncementsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.5rem;
+}
+
+.landing-section .timeline-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-top: 4px solid var(--primary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-section .timeline-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+  border-color: rgba(203, 213, 225, 0.95);
+}
+
+.landing-section .announcement-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-left: 4px solid #0284c7;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-section .announcement-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+.landing-section .table-responsive {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+  .landing-stats-bar {
+    margin-top: -1.75rem;
+  }
+  .landing-section {
+    padding: 3.5rem 0;
+  }
+  .landing-section-title {
+    font-size: 1.75rem;
+  }
+  .landing-section-header {
+    margin-bottom: 2rem;
+  }
+  #publicEventsList,
+  #publicAnnouncementsList {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .landing-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-section {
+    padding: 2.75rem 0;
+  }
+  .landing-section-title {
+    font-size: 1.5rem;
+  }
+}
+
 
 
 
