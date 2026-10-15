@@ -1,0 +1,43 @@
+# ==============================================================================
+# GITIGNORE - JUMBARA PMR PMI KABUPATEN
+# ==============================================================================
+
+# Node dependencies
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Code Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary & Log files
+*.log
+scratch/tmp/
+
+# Uploaded participant data (privacy & size protection)
+uploads/pasfoto_*
+uploads/surattugas_*
+
+# Keep upload directory structure and branding/system templates
+!uploads/
+!uploads/.htaccess
+!uploads/.gitkeep
+!uploads/logo_*
+!uploads/favicon_*
+!uploads/kop_*
+!uploads/idcard_template_*
+!uploads/piagam_*

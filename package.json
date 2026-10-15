@@ -1,0 +1,22 @@
+{
+  "name": "jumbara-pmr-app",
+  "version": "2.0.0",
+  "description": "Aplikasi Pengelolaan Kegiatan JUMBARA PMR PMI Kabupaten (Clean Separated Backend & Frontend)",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "seed": "node backend/db/seed.js"
+  },
+  "keywords": ["jumbara", "pmr", "pmi", "express", "mysql", "frontend"],
+  "author": "Palang Merah Indonesia Kabupaten",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.3",
+    "qrcode": "^1.5.4"
+  }
+}

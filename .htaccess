@@ -1,0 +1,8 @@
+# Set default index file to index.php for Apache MAMP
+DirectoryIndex index.php
+
+# Prevent directory browsing
+Options -Indexes
+
+# Set UTF-8 encoding
+AddDefaultCharset UTF-8

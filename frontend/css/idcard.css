@@ -1,0 +1,453 @@
+/* ==========================================================================
+   KARTU TANDA PESERTA JUMBARA PMR - OFFICIAL MODEL STYLES
+   ========================================================================== */
+
+.idcard-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+/* Official Card Container (CR80 Vertical Format) */
+.pmi-template-card {
+  width: 350px;
+  height: 520px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #cbd5e1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+/* 1. Header (Logo Event & Logo PMI) */
+.pmi-card-top-header {
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  height: 65px;
+  box-sizing: border-box;
+}
+
+.pmi-event-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.pmi-event-logo {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmi-event-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.pmi-event-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+}
+
+.pmi-event-subtitle {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.pmi-official-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pmi-logo-badge {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmi-official-text {
+  display: flex;
+  flex-direction: column;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.58rem;
+  line-height: 1.05;
+  color: #0f172a;
+  text-transform: uppercase;
+}
+
+/* 2. Full Width Yellow Category Band */
+.pmi-category-band-yellow {
+  width: 100%;
+  height: 34px;
+  background: #ffe600;
+  color: #000000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+/* 3. Body Content (2 Column Layout) */
+.pmi-card-body-content {
+  flex: 1;
+  display: flex;
+  padding: 0.85rem 0.85rem 0.4rem 0.85rem;
+  gap: 0.85rem;
+  background: #ffffff;
+  position: relative;
+}
+
+/* Left Column: Pas Foto 3x4 */
+.pmi-photo-column {
+  width: 110px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pmi-photo-frame {
+  width: 110px;
+  height: 145px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f8fafc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.pmi-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Right Column: Participant Info & Barcode */
+.pmi-detail-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.pmi-field-group {
+  margin-bottom: 0.4rem;
+}
+
+.pmi-field-value {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmi-field-name {
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+  line-height: 1.15;
+}
+
+.pmi-field-unit {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pmi-field-underline {
+  width: 100%;
+  height: 1px;
+  background: #cbd5e1;
+  margin: 3px 0 2px 0;
+}
+
+.pmi-field-label {
+  font-size: 0.6rem;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: right;
+  line-height: 1;
+}
+
+/* Barcode */
+.pmi-barcode-group {
+  margin-top: auto;
+  text-align: center;
+  padding: 0.2rem 0;
+}
+
+.pmi-barcode-svg {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmi-barcode-number {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #000000;
+  margin-top: 1px;
+}
+
+/* Location & Date */
+.pmi-location-date {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #334155;
+  text-align: right;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+/* 4. Footer Section */
+.pmi-card-footer {
+  height: 75px;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Multi-color top strip */
+.pmi-footer-color-strip {
+  display: flex;
+  height: 5px;
+  width: 100%;
+}
+
+.pmi-footer-color-strip .strip-1 { flex: 1; background: #dc2626; }
+.pmi-footer-color-strip .strip-2 { flex: 1; background: #ef4444; }
+.pmi-footer-color-strip .strip-3 { flex: 1; background: #f87171; }
+.pmi-footer-color-strip .strip-4 { flex: 1; background: #fca5a5; }
+
+.pmi-footer-body {
+  position: relative;
+  height: 70px;
+  padding: 0.4rem 0.75rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.pmi-candi-silhouette {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 160px;
+  height: 60px;
+  pointer-events: none;
+  opacity: 0.9;
+  z-index: 1;
+}
+
+.pmi-footer-hashtag {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.78rem;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0.2rem;
+}
+
+.pmi-footer-mascots {
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0.2rem;
+}
+
+.mascot-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  margin-left: -7px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-size: cover;
+}
+
+.mascot-1 { background: #15803d; margin-left: 0; }
+.mascot-2 { background: #dc2626; }
+.mascot-3 { background: #eab308; }
+.mascot-4 { background: #1e40af; }
+
+/* ==========================================================================
+   CUSTOM UPLOADED TEMPLATE OVERLAY MODE (Nama, Asal, Foto, QR Code, Kategori)
+   ========================================================================== */
+.pmi-template-card.has-custom-template {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0;
+  position: relative;
+}
+
+.pmi-template-card.has-custom-template .pmi-category-band-yellow {
+  width: 100%;
+}
+
+.pmi-custom-template-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0.5rem 0.85rem;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex;
+  gap: 0.85rem;
+  margin: 10px 6px 0 6px;
+}
+
+.pmi-template-card.has-custom-template .pmi-field-value {
+  color: #0f172a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.pmi-template-card.has-custom-template .pmi-field-label {
+  color: #334155;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.pmi-qrcode-only-box {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.pmi-qr-img-only {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+  background: transparent;
+}
+
+.pmi-qr-code-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+/* Legacy fallback classes for backwards compatibility */
+.idcard {
+  width: 350px;
+  height: 520px;
+}
+
+/* Print Sheet & Paper Size Styling */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .printable-area, .printable-area *,
+  #idCardModalContent, #idCardModalContent * {
+    visibility: visible !important;
+  }
+  .printable-area, #idCardModalContent {
+    position: absolute !important;
+    left: 50% !important;
+    top: 20px !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .modal, .modal-dialog {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .modal-header, .modal-footer, .modal-close {
+    display: none !important;
+  }
+  .idcard-batch-grid, .printable-area {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+    page-break-after: always !important;
+  }
+  .printable-area.grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .printable-area.grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+  .pmi-template-card {
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+
