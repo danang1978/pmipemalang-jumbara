@@ -2608,6 +2608,59 @@ body.has-mobile-portal #mainContainer {
   text-align: right;
 }
 
+/* ==========================================================================
+   LOCATION & INTERACTIVE MAP SECTION
+   ========================================================================== */
+.location-map-card {
+  overflow: hidden;
+}
+
+.location-map-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  padding: 1.25rem;
+}
+
+.map-embed-wrapper {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color);
+  min-height: 400px;
+  position: relative;
+  background: #f1f5f9;
+}
+
+.map-embed-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  border: 0;
+  display: block;
+}
+
+.location-details-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #f8fafc;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .location-map-grid {
+    grid-template-columns: 1fr !important;
+    padding: 1rem;
+  }
+  .map-embed-wrapper,
+  .map-embed-wrapper iframe {
+    min-height: 280px !important;
+  }
+}
+
 
 
 

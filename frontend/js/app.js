@@ -14,6 +14,9 @@ const App = {
     jumbotron_subtitle: 'Ajang Jumpa Bakti Gembira Palang Merah Remaja - Cerdas, Ceria, Bersahabat',
     event_dates: '15 - 17 Oktober 2026',
     event_location: 'Buperta Utama PMI Kabupaten',
+    event_location_address: 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
+    event_map_embed: 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    event_map_url: 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
     contact_phone: '(021) 555-PMR-2026',
     contact_email: 'sekretariat@jumbara-pmi.or.id',
     contact_address: 'Jl. Palang Merah No. 1, Markas PMI Kabupaten',
@@ -187,6 +190,23 @@ const App = {
     if (footerHoursEl && s.contact_hours) footerHoursEl.textContent = s.contact_hours;
     if (footerCopyrightEl && s.footer_copyright) footerCopyrightEl.textContent = s.footer_copyright;
 
+    // Map & Location Elements Dynamic Update
+    const mapVenueTitleEl = document.getElementById('mapVenueTitle');
+    const mapVenueAddressEl = document.getElementById('mapVenueAddress');
+    const eventMapIframeEl = document.getElementById('eventMapIframe');
+    const eventMapBtnEl = document.getElementById('eventMapBtn');
+
+    if (mapVenueTitleEl && s.event_location) mapVenueTitleEl.textContent = s.event_location;
+    if (mapVenueAddressEl && (s.event_location_address || s.contact_address)) {
+      mapVenueAddressEl.textContent = s.event_location_address || s.contact_address;
+    }
+    if (eventMapIframeEl && s.event_map_embed) {
+      if (eventMapIframeEl.src !== s.event_map_embed) {
+        eventMapIframeEl.src = s.event_map_embed;
+      }
+    }
+    if (eventMapBtnEl && s.event_map_url) eventMapBtnEl.href = s.event_map_url;
+
     // 1. Dynamic Favicon Update from Database (Supports PNG, JPG, WEBP, ICO, SVG)
     if (s.app_favicon) {
       let favLink = document.querySelector("link[rel*='icon']");
@@ -310,6 +330,7 @@ const App = {
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
           <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Rekap Medali</a>
           <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen Unit</a>
+          <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
         `;
         publicNavMenu.style.display = '';
       }
@@ -632,6 +653,59 @@ const App = {
           </div>
         </div>
       </section>
+
+      <!-- SECTION 6: LOKASI & PETA KEGIATAN -->
+      <section class="landing-section" id="lokasi" style="margin-top: 2.5rem;">
+        <div class="panel-card location-map-card">
+          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <h3 class="panel-title"><i class="fa-solid fa-map-location-dot" style="color: var(--primary); font-size: 1.25rem;"></i> Lokasi & Peta Kegiatan Jumbara</h3>
+            <span class="badge badge-primary"><i class="fa-solid fa-compass"></i> Titik Kumpul & Buperta</span>
+          </div>
+          <div class="location-map-grid">
+            <div class="map-embed-wrapper">
+              <iframe 
+                id="eventMapIframe"
+                src="${s.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed'}"
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Peta Lokasi Kegiatan Jumbara">
+              </iframe>
+            </div>
+            <div class="location-details-box">
+              <div>
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
+                  <i class="fa-solid fa-campground"></i> Informasi Venue
+                </div>
+                <h4 id="mapVenueTitle" style="font-size: 1.2rem; font-weight: 700; color: var(--text-main, #1e293b); margin-bottom: 0.75rem;">
+                  ${Utils.escapeHtml(s.event_location || 'Buperta Utama PMI Kabupaten')}
+                </h4>
+                <p id="mapVenueAddress" style="color: var(--text-muted, #64748b); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                  ${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang')}
+                </p>
+                <div style="border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-bottom: 1.25rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.88rem; color: var(--text-main, #334155);">
+                    <i class="fa-solid fa-calendar-days" style="color: var(--primary); width: 18px; text-align: center;"></i>
+                    <span><strong>Jadwal:</strong> ${Utils.escapeHtml(s.event_dates || '15 - 17 Oktober 2026')}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: var(--text-main, #334155);">
+                    <i class="fa-solid fa-phone" style="color: var(--primary); width: 18px; text-align: center;"></i>
+                    <span><strong>Kontak Posko:</strong> ${Utils.escapeHtml(s.contact_phone || s.contact_wa || '(021) 555-PMR-2026')}</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                <a id="eventMapBtn" href="${s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
+                  <i class="fa-solid fa-diamond-turn-right"></i> Buka Petunjuk Arah
+                </a>
+                <button type="button" class="btn btn-outline" onclick="App.copyLocationAddress()" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-copy"></i> Salin Alamat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     `;
 
     this.loadPublicData();
@@ -642,6 +716,20 @@ const App = {
     setTimeout(() => {
       this.startJumbotronCarousel();
     }, 100);
+  },
+
+  copyLocationAddress() {
+    const s = this.appSettings || {};
+    const textToCopy = s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        Utils.showToast('Alamat lokasi kegiatan berhasil disalin ke clipboard!', 'success');
+      }).catch(() => {
+        Utils.showToast('Alamat: ' + textToCopy, 'info');
+      });
+    } else {
+      Utils.showToast('Alamat: ' + textToCopy, 'info');
+    }
   },
 
   startCountdownTimer(deadlineStr) {
@@ -5444,10 +5532,36 @@ const App = {
               </div>
             </div>
 
-            <!-- Sub-group 3: Banner Hero Homepage -->
+            <!-- Sub-group 3: Lokasi & Google Maps Embed -->
             <div style="margin-bottom: 1.75rem; border-top: 1px dashed #e2e8f0; padding-top: 1.25rem;">
               <h5 style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-heading" style="color: #d97706;"></i> 3. Teks Banner Jumbotron Hero Homepage
+                <i class="fa-solid fa-map-location-dot" style="color: #dc2626;"></i> 3. Pengaturan Lokasi & Google Maps Interaktif
+              </h5>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">Alamat Lengkap Venue / Buperta Kegiatan *</label>
+                  <input type="text" id="setEventLocationAddress" value="${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang')}" required style="width: 100%;">
+                  <span class="form-help">Alamat detail yang ditampilkan pada kartu info lokasi dan saat pengguna menekan tombol "Salin Alamat".</span>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">URL Embed Google Maps (iframe src) *</label>
+                  <input type="url" id="setEventMapEmbed" value="${Utils.escapeHtml(s.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed')}" required style="width: 100%;">
+                  <span class="form-help">URL Google Maps interaktif (format embed). Contoh: <code>https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed</code></span>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label">URL Petunjuk Arah Langsung Google Maps *</label>
+                  <input type="url" id="setEventMapUrl" value="${Utils.escapeHtml(s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang')}" required style="width: 100%;">
+                  <span class="form-help">Tautan langsung ke Google Maps saat tombol "Buka Petunjuk Arah" ditekan. Contoh: <code>https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang</code></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-group 4: Banner Hero Homepage -->
+            <div style="margin-bottom: 1.75rem; border-top: 1px dashed #e2e8f0; padding-top: 1.25rem;">
+              <h5 style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-heading" style="color: #d97706;"></i> 4. Teks Banner Jumbotron Hero Homepage
               </h5>
               <div class="form-group" style="margin-bottom: 1rem;">
                 <label class="form-label">Judul Utama Jumbotron *</label>
@@ -5634,6 +5748,9 @@ const App = {
       app_name: document.getElementById('setAppName').value.trim(),
       organizer_name: document.getElementById('setOrganizerName').value.trim(),
       event_location: document.getElementById('setEventLocation').value.trim(),
+      event_location_address: document.getElementById('setEventLocationAddress')?.value.trim() || '',
+      event_map_embed: document.getElementById('setEventMapEmbed')?.value.trim() || '',
+      event_map_url: document.getElementById('setEventMapUrl')?.value.trim() || '',
       event_dates: document.getElementById('setEventDates').value.trim(),
       contact_phone: document.getElementById('setContactPhone').value.trim(),
       contact_email: document.getElementById('setContactEmail').value.trim(),

@@ -40,7 +40,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
   const {
     app_name, organizer_name, jumbotron_title, jumbotron_subtitle,
-    event_dates, event_location, contact_phone, contact_email,
+    event_dates, event_location, event_location_address, event_map_embed, event_map_url,
+    contact_phone, contact_email,
     contact_address, contact_hours, contact_wa,
     footer_about, footer_copyright,
     app_logo, app_favicon, event_logo, app_kop,
@@ -54,6 +55,9 @@ router.post('/', authenticateToken, async (req, res) => {
     if (app_name !== undefined) await pool.query(query, ['app_name', app_name]);
     if (organizer_name !== undefined) await pool.query(query, ['organizer_name', organizer_name]);
     if (event_location !== undefined) await pool.query(query, ['event_location', event_location]);
+    if (event_location_address !== undefined) await pool.query(query, ['event_location_address', event_location_address]);
+    if (event_map_embed !== undefined) await pool.query(query, ['event_map_embed', event_map_embed]);
+    if (event_map_url !== undefined) await pool.query(query, ['event_map_url', event_map_url]);
     if (event_dates !== undefined) await pool.query(query, ['event_dates', event_dates]);
     if (contact_phone !== undefined) await pool.query(query, ['contact_phone', contact_phone]);
     if (contact_email !== undefined) await pool.query(query, ['contact_email', contact_email]);

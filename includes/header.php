@@ -68,8 +68,8 @@ else if ($favExt === 'png') $favType = 'image/png';
     <div class="top-bar">
       <div class="top-bar-container">
         <div class="top-info-item">
-          <i class="fa-solid fa-location-dot"></i>
-          <span id="topEventLocation"><?php echo htmlspecialchars($settings['event_location'] ?? 'Buperta Utama PMI Kabupaten'); ?></span>
+          <i class="fa-solid fa-location-dot" style="cursor: pointer;" onclick="App.scrollToSection('lokasi', event)"></i>
+          <span id="topEventLocation" onclick="App.scrollToSection('lokasi', event)" style="cursor: pointer;" title="Klik untuk melihat peta lokasi"><?php echo htmlspecialchars($settings['event_location'] ?? 'Buperta Utama PMI Kabupaten'); ?></span>
           <span class="divider">|</span>
           <span class="live-pulse-dot" style="margin: 0 2px;"></span>
           <i class="fa-solid fa-calendar-range"></i>
@@ -111,6 +111,7 @@ else if ($favExt === 'png') $favType = 'image/png';
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
           <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Rekap Medali</a>
           <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen Unit</a>
+          <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
         </nav>
         
         <div class="nav-actions" id="navActions">
