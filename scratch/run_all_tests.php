@@ -28,8 +28,10 @@ function testEndpoint($file, $method = 'GET', $get = [], $post = [], $session = 
 }
 
 echo "1. Testing lookup_target in scores.php:" . PHP_EOL;
-$r1 = testEndpoint(__DIR__ . '/../api/scores.php', 'GET', ['action' => 'lookup_target', 'q' => 'pmr']);
-echo "Exit: {$r1['code']} | Stdout: {$r1['stdout']}" . PHP_EOL;
+$r1_anon = testEndpoint(__DIR__ . '/../api/scores.php', 'GET', ['action' => 'lookup_target', 'q' => 'pmr']);
+echo "Exit (Anon): {$r1_anon['code']} | Stdout: {$r1_anon['stdout']}" . PHP_EOL;
+$r1_auth = testEndpoint(__DIR__ . '/../api/scores.php', 'GET', ['action' => 'lookup_target', 'q' => 'Rizky'], [], ['user' => ['role' => 'penilai', 'id' => 1]]);
+echo "Exit (Auth): {$r1_auth['code']} | Found: " . (strpos($r1_auth['stdout'], 'results') !== false ? 'YES' : 'NO') . PHP_EOL;
 
 echo "2. Testing GET events.php:" . PHP_EOL;
 $r2 = testEndpoint(__DIR__ . '/../api/events.php', 'GET');
@@ -60,4 +62,22 @@ if (!empty($d6['data'])) {
 }
 echo "Exit: {$r6['code']} | Isolated to Unit 1?: " . ($allFromUnit1 ? 'YES' : 'NO') . PHP_EOL;
 
+echo "7. Testing unauthenticated GET settings.php (Fonnte token protection):" . PHP_EOL;
+$r7 = testEndpoint(__DIR__ . '/../api/settings.php', 'GET');
+$d7 = json_decode($r7['stdout'], true);
+echo "Exit: {$r7['code']} | fonnte_token leaked?: " . (isset($d7['fonnte_token']) ? 'LEAK!' : 'PROTECTED (Not Leaked)') . PHP_EOL;
+
+echo "8. Testing unauthenticated ID Card access (IDOR protection):" . PHP_EOL;
+$r8 = testEndpoint(__DIR__ . '/../api/participants.php', 'GET', ['action' => 'idcard', 'id' => 1]);
+echo "Exit: {$r8['code']} | Rejected with 401?: " . (strpos($r8['stdout'], 'Silakan login terlebih dahulu') !== false ? 'YES (Protected)' : 'LEAK!') . PHP_EOL;
+
+echo "9. Testing unauthenticated Certificate participants access:" . PHP_EOL;
+$r9 = testEndpoint(__DIR__ . '/../api/certificates.php', 'GET', ['action' => 'participants']);
+echo "Exit: {$r9['code']} | Rejected with 401?: " . (strpos($r9['stdout'], 'Silakan login terlebih dahulu') !== false ? 'YES (Protected)' : 'LEAK!') . PHP_EOL;
+
+echo "10. Testing unauthenticated Attendance registered_participants access:" . PHP_EOL;
+$r10 = testEndpoint(__DIR__ . '/../api/attendance.php', 'GET', ['action' => 'registered_participants', 'event_id' => 1]);
+echo "Exit: {$r10['code']} | Rejected with 401?: " . (strpos($r10['stdout'], 'Silakan login terlebih dahulu') !== false ? 'YES (Protected)' : 'LEAK!') . PHP_EOL;
+
 echo PHP_EOL . "=== ALL TESTS VERIFIED ===" . PHP_EOL;
+

@@ -245,6 +245,7 @@ if ($method === 'GET' && $action === 'my_attendance') {
 }
 
 if ($method === 'GET' && $action === 'registered_participants') {
+    $user = requireUser(['kabupaten', 'unit', 'panitia', 'admin', 'penilai', 'juri']);
     $eventId = (int)($_GET['event_id'] ?? 0);
     if (!$eventId) jsonResponse(['event' => null, 'total' => 0, 'participants' => []]);
 
@@ -280,18 +281,38 @@ if ($method === 'GET' && $action === 'registered_participants') {
         $attMap[$pid]['last_scanned_at'] = $ar['scanned_at'];
     }
 
-    // Registered Participants
+    // Registered Participants: Explicit registrations
     $stmtRegPart = $pdo->prepare("SELECT participant_id FROM event_registrations WHERE event_id = ?");
     $stmtRegPart->execute([$eventId]);
     $registeredIds = array_map('intval', $stmtRegPart->fetchAll(PDO::FETCH_COLUMN));
 
-    $stmtAllVerified = $pdo->query("
+    // Multi-tenant isolation: unit admin can only see participants from their unit
+    $whereParts = ["p.status = 'verified_kabupaten'"];
+    $queryParams = [];
+    if ($user['role'] === 'unit') {
+        $whereParts[] = "p.unit_id = ?";
+        $queryParams[] = (int)$user['unit_id'];
+    } else if (!empty($_GET['unit_id'])) {
+        $whereParts[] = "p.unit_id = ?";
+        $queryParams[] = (int)$_GET['unit_id'];
+    }
+
+    // Filter by level when event is specific and no explicit list is loaded
+    if ($event['pmr_level'] !== 'Semua' && $event['category'] !== 'Umum' && empty($registeredIds)) {
+        $whereParts[] = "(LOWER(p.level) = LOWER(?) OR p.sub_categories LIKE ?)";
+        $queryParams[] = $event['pmr_level'];
+        $queryParams[] = '%' . $event['title'] . '%';
+    }
+
+    $whereSql = implode(' AND ', $whereParts);
+    $stmtAllVerified = $pdo->prepare("
         SELECT p.id, p.code, p.full_name, p.level, p.photo_url, p.phone, p.sub_categories, p.unit_id, un.name AS unit_name 
         FROM participants p 
         LEFT JOIN units un ON p.unit_id = un.id 
-        WHERE p.status = 'verified_kabupaten' 
+        WHERE $whereSql 
         ORDER BY p.full_name ASC
     ");
+    $stmtAllVerified->execute($queryParams);
     $allVerified = $stmtAllVerified->fetchAll();
 
     $maxQuota = (int)($event['max_participants_per_unit'] ?? 0);
@@ -411,40 +432,24 @@ if ($method === 'GET') {
     $stmtKeluar->execute([$eventId]);
     $totalKeluar = (int)$stmtKeluar->fetchColumn();
 
-    // 4. Calculate total registered / eligible participants for this event
-    $stmtRegPart = $pdo->prepare("SELECT participant_id FROM event_registrations WHERE event_id = ?");
+    // 4. Calculate total registered / eligible participants for this event (Optimized SQL)
+    $stmtRegPart = $pdo->prepare("SELECT COUNT(DISTINCT participant_id) FROM event_registrations WHERE event_id = ?");
     $stmtRegPart->execute([$eventId]);
-    $registeredIds = $stmtRegPart->fetchAll(PDO::FETCH_COLUMN);
+    $explicitCount = (int)$stmtRegPart->fetchColumn();
 
-    $stmtAllVerified = $pdo->query("SELECT id, full_name, code, level, sub_categories FROM participants WHERE status = 'verified_kabupaten'");
-    $allVerified = $stmtAllVerified->fetchAll();
-
-    $totalRegistered = 0;
-    foreach ($allVerified as $p) {
-        $isReg = false;
-        if (in_array($p['id'], $registeredIds)) {
-            $isReg = true;
-        }
-        if (!$isReg && !empty($p['sub_categories'])) {
-            $subs = is_string($p['sub_categories']) ? json_decode($p['sub_categories'], true) : $p['sub_categories'];
-            if (is_array($subs)) {
-                foreach ($subs as $s) {
-                    if ($event && (stripos($event['title'], $s) !== false || stripos($s, $event['title']) !== false || stripos($event['category'], $s) !== false)) {
-                        $isReg = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!$isReg && $event) {
-            if ($event['pmr_level'] === 'Semua' || $event['category'] === 'Umum') {
-                $isReg = true;
-            } else if (strtolower($event['pmr_level']) === strtolower($p['level'])) {
-                $isReg = true;
-            }
-        }
-        if ($isReg) {
-            $totalRegistered++;
+    if ($explicitCount > 0) {
+        $totalRegistered = $explicitCount;
+    } else {
+        if (!$event || $event['pmr_level'] === 'Semua' || $event['category'] === 'Umum') {
+            $stmtCount = $pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten'");
+            $totalRegistered = (int)$stmtCount->fetchColumn();
+        } else {
+            $stmtCount = $pdo->prepare("
+                SELECT COUNT(*) FROM participants 
+                WHERE status = 'verified_kabupaten' AND (LOWER(level) = LOWER(?) OR sub_categories LIKE ?)
+            ");
+            $stmtCount->execute([$event['pmr_level'], '%' . $event['title'] . '%']);
+            $totalRegistered = (int)$stmtCount->fetchColumn();
         }
     }
 

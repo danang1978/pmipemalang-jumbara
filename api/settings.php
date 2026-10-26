@@ -9,9 +9,16 @@ $pdo = getPDOConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
-// GET Settings
+// GET Settings (Public access allowed for branding & schedule, sensitive tokens filtered)
 if ($method === 'GET') {
     $settings = getAppSettings();
+    $user = getCurrentUser();
+
+    // Sensitive Data Protection: Never expose 3rd party API tokens to guests or non-super-admins
+    if (!$user || !in_array($user['role'] ?? '', ['kabupaten'])) {
+        unset($settings['fonnte_token']);
+    }
+
     jsonResponse($settings);
 }
 

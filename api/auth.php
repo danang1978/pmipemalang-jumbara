@@ -10,8 +10,36 @@ $pdo = getPDOConnection();
 $input = getJsonInput();
 
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Brute force protection: 5 failed attempts locks for 5 minutes
     $now = time();
+
+    // 1. IP-Based Anti-Brute-Force Rate Limiting (Cannot be bypassed by clearing cookies)
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ipParts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $clientIp = trim($ipParts[0]);
+    }
+    $rateLimitKey = md5('jmb_login_' . $clientIp);
+    $rateLimitFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'jmb_rl_' . $rateLimitKey . '.json';
+
+    $ipData = ['attempts' => 0, 'lockout' => 0];
+    if (file_exists($rateLimitFile)) {
+        $content = @file_get_contents($rateLimitFile);
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            $ipData = $decoded;
+        }
+    }
+
+    // Check IP lockout
+    if ($ipData['lockout'] > $now) {
+        $remainingSecs = $ipData['lockout'] - $now;
+        $mins = ceil($remainingSecs / 60);
+        jsonResponse([
+            'error' => "Terlalu banyak percobaan login gagal dari perangkat/jaringan ini. Akses login sementara dikunci demi keamanan. Silakan coba lagi dalam {$mins} menit."
+        ], 429);
+    }
+
+    // 2. Session-based lockout check (defense in depth)
     $lockoutTime = $_SESSION['login_lockout'] ?? 0;
     if ($lockoutTime > $now) {
         $remainingSecs = $lockoutTime - $now;
@@ -38,10 +66,24 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password'])) {
+        // Record failure on IP tracker
+        $ipAttempts = ($ipData['attempts'] ?? 0) + 1;
+        $ipData['attempts'] = $ipAttempts;
+        if ($ipAttempts >= 5) {
+            $ipData['lockout'] = $now + 300; // 5 mins lockout
+            @file_put_contents($rateLimitFile, json_encode($ipData));
+            $_SESSION['login_lockout'] = $now + 300;
+            jsonResponse([
+                'error' => 'Percobaan login gagal mencapai batas maksimal (5 kali). Sistem mengunci akses login selama 5 menit.'
+            ], 429);
+        }
+        @file_put_contents($rateLimitFile, json_encode($ipData));
+
+        // Record failure on session
         $attempts = ($_SESSION['login_failed_attempts'] ?? 0) + 1;
         $_SESSION['login_failed_attempts'] = $attempts;
         if ($attempts >= 5) {
-            $_SESSION['login_lockout'] = $now + 300; // 5 minutes lockout
+            $_SESSION['login_lockout'] = $now + 300;
             jsonResponse([
                 'error' => 'Percobaan login gagal mencapai batas maksimal (5 kali). Sistem mengunci akses login selama 5 menit.'
             ], 429);
@@ -49,7 +91,10 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         jsonResponse(['error' => 'Username atau password tidak cocok.'], 401);
     }
 
-    // Login success: Reset failed attempts & regenerate session ID to prevent Session Fixation
+    // Login success: Reset failed attempts & clear lockout tracker
+    if (file_exists($rateLimitFile)) {
+        @unlink($rateLimitFile);
+    }
     unset($_SESSION['login_failed_attempts'], $_SESSION['login_lockout']);
     session_regenerate_id(true);
 

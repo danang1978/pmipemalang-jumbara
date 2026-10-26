@@ -99,18 +99,26 @@ router.post('/upload', authenticateToken, async (req, res) => {
     }
 
     const extMatch = matches[1].match(/\/([a-zA-Z0-9+]+)$/);
-    let ext = extMatch ? extMatch[1] : 'png';
+    let ext = extMatch ? extMatch[1].toLowerCase() : 'png';
     if (ext === 'svg+xml') ext = 'svg';
     if (ext === 'x-icon' || ext === 'vnd.microsoft.icon') ext = 'ico';
+    if (ext === 'jpeg') ext = 'jpg';
 
+    // Strict extension whitelist
+    const allowedExts = ['jpg', 'png', 'webp', 'svg', 'ico'];
+    if (!allowedExts.includes(ext)) {
+      return res.status(400).json({ error: 'Format berkas tidak diizinkan. Hanya JPG, PNG, WEBP, SVG, atau ICO.' });
+    }
+
+    const cleanType = type.replace(/[^a-zA-Z0-9_-]/g, '');
     const buffer = Buffer.from(matches[2], 'base64');
-    const uploadDir = path.join(__dirname, '../../frontend/uploads');
+    const uploadDir = path.join(__dirname, '../../uploads');
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const fileName = `${type}_${Date.now()}.${ext}`;
+    const fileName = `${cleanType}_${Date.now()}.${ext}`;
     const filePath = path.join(uploadDir, fileName);
     fs.writeFileSync(filePath, buffer);
 

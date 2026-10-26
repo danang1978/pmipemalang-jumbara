@@ -1,14 +1,41 @@
-# Disable script execution in uploads directory
-Options -Indexes -ExecCGI
+# ==============================================================================
+# SECURITY: Disable All Script Execution in Uploads Directory
+# ==============================================================================
 
-<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|cgi|pl|py|sh|bash)$">
-    Order Deny,Allow
-    Deny from all
-</FilesMatch>
-
-<IfModule mod_php7.c>
-    php_flag engine off
-</IfModule>
+# Disable PHP Engine
 <IfModule mod_php.c>
     php_flag engine off
 </IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Force default handler (treat files as static downloads, not scripts)
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .pyc .pyo .asp .aspx .sh .bash
+SetHandler default-handler
+Options -ExecCGI -Indexes
+
+# Whitelist allowed media extensions only
+<FilesMatch "\.(?i:jpe?g|png|gif|webp|svg|ico|pdf)$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+# Block everything else
+<FilesMatch "(?i:\.(php.*|phar|phtml|cgi|pl|sh|bash|py|asp.*|exe|bat|cmd|js|html|htm))$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

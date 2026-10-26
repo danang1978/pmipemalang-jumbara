@@ -70,6 +70,7 @@ if ($method === 'POST' && $action === 'save_event_aspects') {
 // 3. GET: Lookup Target (Scan QR Code / Search NIK, Code, Peserta, Unit)
 // --------------------------------------------------------------------------
 if ($method === 'GET' && $action === 'lookup_target') {
+    $user = requireUser(['kabupaten', 'unit', 'panitia', 'admin', 'penilai', 'juri']);
     $q = trim($_GET['q'] ?? $_GET['code'] ?? '');
     $targetType = $_GET['target_type'] ?? 'peserta';
 
@@ -79,7 +80,7 @@ if ($method === 'GET' && $action === 'lookup_target') {
 
     if ($targetType === 'kontingen') {
         $stmt = $pdo->prepare("
-            SELECT u.*, u.id AS unit_id, u.name AS unit_name, u.level_category,
+            SELECT u.id, u.code, u.name, u.level_category, u.pembina_name, u.id AS unit_id, u.name AS unit_name,
                    (SELECT COUNT(*) FROM participants WHERE unit_id = u.id AND status = 'verified_kabupaten') AS participant_count
             FROM units u 
             WHERE u.name LIKE ? OR CAST(u.id AS CHAR) = ?
@@ -90,7 +91,7 @@ if ($method === 'GET' && $action === 'lookup_target') {
         jsonResponse(['target_type' => 'kontingen', 'results' => $units]);
     } else {
         $stmt = $pdo->prepare("
-            SELECT p.*, u.name AS unit_name, u.level_category
+            SELECT p.id, p.code, p.full_name, p.level, p.photo_url, p.unit_id, p.status, u.name AS unit_name, u.level_category
             FROM participants p
             JOIN units u ON p.unit_id = u.id
             WHERE p.code = ? OR p.nisn = ? OR p.full_name LIKE ?

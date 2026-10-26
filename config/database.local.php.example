@@ -1,0 +1,12 @@
+<?php
+// ==============================================================================
+// JUMBARA PMR - CONTOH KONFIGURASI DATABASE LOKAL KHUSUS (database.local.php)
+// ==============================================================================
+// Berkas ini otomatis diprioritaskan oleh config/database.php dan diabaikan oleh Git.
+// Salin berkas ini menjadi config/database.local.php lalu isi kredensial rahasia Anda.
+
+define('DB_HOST', '127.0.0.1');
+define('DB_PORT', '3306'); // Atau 8889 untuk MAMP
+define('DB_NAME', 'jumbara_db');
+define('DB_USER', 'root');
+define('DB_PASS', '');

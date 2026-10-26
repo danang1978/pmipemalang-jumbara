@@ -39,8 +39,9 @@ if ($method === 'GET' && $action === 'me') {
     jsonResponse($part);
 }
 
-// GET /api/participants.php?action=idcard&id=123
+// GET /api/participants.php?action=idcard&id=123 (Protected with Role & Ownership Authorization)
 if ($method === 'GET' && $action === 'idcard') {
+    $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri']);
     if (!$id) jsonResponse(['error' => 'ID Peserta wajib.'], 400);
 
     $stmt = $pdo->prepare("
@@ -53,7 +54,17 @@ if ($method === 'GET' && $action === 'idcard') {
     $part = $stmt->fetch();
     if (!$part) jsonResponse(['error' => 'Data peserta tidak ditemukan.'], 404);
 
-    // Generate QR Code URL using Google Chart API (no external lib required!)
+    // Multi-tenant & Role-based Authorization:
+    // Peserta can only view their own ID card
+    if ($user['role'] === 'peserta' && (int)($part['user_id'] ?? 0) !== (int)$user['id']) {
+        jsonResponse(['error' => 'Akses ditolak. Anda hanya dapat melihat ID Card Anda sendiri.'], 403);
+    }
+    // Unit admin can only view ID cards of participants belonging to their unit
+    if ($user['role'] === 'unit' && (int)($part['unit_id'] ?? 0) !== (int)($user['unit_id'] ?? 0)) {
+        jsonResponse(['error' => 'Akses ditolak. Anda hanya dapat mencetak ID Card peserta dari unit sekolah Anda sendiri.'], 403);
+    }
+
+    // Generate QR Code URL
     $qrData = $part['code'];
     $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($qrData);
     $part['qr_code_base64'] = $qrUrl;

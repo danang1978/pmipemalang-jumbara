@@ -24,19 +24,19 @@ if (!defined('DB_NAME')) {
 
     if ($isHosting) {
         // --- KONFIGURASI SERVER HOSTING (PRODUKSI) ---
-        define('DB_HOST', '127.0.0.1');
-        define('DB_PORT', '3306');
-        define('DB_NAME', 'sql_jumbara_pmipemalang_or_id');
-        define('DB_USER', 'sql_jumbara_pmipemalang_or_id');
-        define('DB_PASS', 'e827ebce734fa');
+        define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+        define('DB_PORT', getenv('DB_PORT') ?: '3306');
+        define('DB_NAME', getenv('DB_NAME') ?: 'sql_jumbara_pmipemalang_or_id');
+        define('DB_USER', getenv('DB_USER') ?: 'sql_jumbara_pmipemalang_or_id');
+        define('DB_PASS', getenv('DB_PASS') ?: 'e827ebce734fa');
     } else {
         // --- KONFIGURASI LOCAL DEVELOPMENT (MAMP / XAMPP) ---
         $isMamp = file_exists('/Applications/MAMP');
-        define('DB_HOST', '127.0.0.1');
-        define('DB_PORT', $isMamp ? '8889' : '3306');
-        define('DB_NAME', 'jumbara_db');
-        define('DB_USER', 'root');
-        define('DB_PASS', $isMamp ? 'root' : '');
+        define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+        define('DB_PORT', getenv('DB_PORT') ?: ($isMamp ? '8889' : '3306'));
+        define('DB_NAME', getenv('DB_NAME') ?: 'jumbara_db');
+        define('DB_USER', getenv('DB_USER') ?: 'root');
+        define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($isMamp ? 'root' : ''));
     }
 }
 
@@ -80,9 +80,13 @@ function getPDOConnection() {
                 } catch (PDOException $eSocket) {}
             }
 
+            error_log('[JUMBARA DB ERROR] ' . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['error' => 'Koneksi MySQL Gagal: ' . $e->getMessage()]);
+            // Cegah kebocoran path dan kredensial internal database di respon API
+            $isDev = (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false);
+            $errMsg = $isDev ? ('Koneksi MySQL Gagal: ' . $e->getMessage()) : 'Koneksi ke database server gagal. Silakan hubungi Administrator Sistem.';
+            echo json_encode(['error' => $errMsg]);
             exit;
         }
     }

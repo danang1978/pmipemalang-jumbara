@@ -157,7 +157,7 @@ if ($method === 'POST' && $action === 'generate_numbers') {
 // 5. GET /api/certificates.php?action=participants (List for preview/print selection)
 // --------------------------------------------------------------------------
 if ($method === 'GET' && $action === 'participants') {
-    $user = getCurrentUser();
+    $user = requireUser(['kabupaten', 'unit']);
     $unitId = (int)($_GET['unit_id'] ?? 0);
     $search = trim($_GET['search'] ?? '');
     $roleFilter = trim($_GET['role'] ?? '');
@@ -165,8 +165,8 @@ if ($method === 'GET' && $action === 'participants') {
     $whereSql = "WHERE p.status = 'verified_kabupaten'";
     $params = [];
 
-    // If logged in as unit admin, restrict to own unit
-    if ($user && $user['role'] === 'unit') {
+    // If logged in as unit admin, strictly restrict to own unit
+    if ($user['role'] === 'unit') {
         $whereSql .= " AND p.unit_id = ?";
         $params[] = $user['unit_id'];
     } else if ($unitId > 0) {

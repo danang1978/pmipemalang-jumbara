@@ -2049,7 +2049,7 @@ const App = {
                       <button class="btn btn-warning btn-sm" style="font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
                       <button class="btn btn-primary btn-sm" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit & Verifikasi</button>
                       <button class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(14)} ID Card</button>
-                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, '${Utils.escapeHtml(p.full_name)}')" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
                     </div>
                   </td>
                 </tr>
@@ -2087,7 +2087,7 @@ const App = {
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
-                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, '${Utils.escapeHtml(p.full_name)}')"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
                 </div>
               </div>
             `;
@@ -2718,7 +2718,7 @@ const App = {
                       <button class="btn btn-warning btn-sm" style="font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
                       <button class="btn btn-primary btn-sm" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit & Verifikasi</button>
                       <button class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(14)} ID Card</button>
-                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, '${Utils.escapeHtml(p.full_name)}')" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
                     </div>
                   </td>
                 </tr>
@@ -2755,7 +2755,7 @@ const App = {
                   <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
-                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, '${Utils.escapeHtml(p.full_name)}')"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
                 </div>
               </div>
@@ -5994,14 +5994,14 @@ const App = {
                   <td>${Utils.formatDate(u.created_at)}</td>
                   <td>
                     <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-                      <button class="btn btn-warning btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.openResetPasswordModal(${u.id}, '${Utils.escapeHtml(u.username)}')">
+                      <button class="btn btn-warning btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.openResetPasswordModal(${u.id}, this.dataset.username)">
                         <i class="fa-solid fa-key"></i> Reset Password
                       </button>
                       <button class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.openEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})">
                         <i class="fa-solid fa-pen"></i> Edit
                       </button>
                       ${u.id !== this.currentUser?.id ? `
-                        <button class="btn btn-danger btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.handleDeleteUser(${u.id}, '${Utils.escapeHtml(u.username)}')">
+                        <button class="btn btn-danger btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.handleDeleteUser(${u.id}, this.dataset.username)">
                           <i class="fa-solid fa-trash"></i>
                         </button>
                       ` : ''}
@@ -7029,7 +7029,7 @@ const App = {
                 <button type="button" class="btn btn-outline btn-sm" onclick="App.openAdminEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
                   <i class="fa-solid fa-pen-to-square"></i> Edit Data Lengkap
                 </button>
-                <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-size: 0.8rem;" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, '${Utils.escapeHtml(p.full_name)}')">
+                <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-size: 0.8rem;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)">
                   <i class="fa-solid fa-trash-can"></i> Hapus Peserta
                 </button>
               </div>
