@@ -386,12 +386,12 @@ const App = {
     if (!main) return;
 
     const role = this.currentUser ? this.currentUser.role : null;
-    const isAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit'].includes(role);
+    const isDesktopAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit'].includes(role);
 
     if (!this.currentUser) {
       document.body.classList.remove('has-mobile-portal');
       await this.renderPublicLanding(main);
-    } else if (isAdmin) {
+    } else if (isDesktopAdmin) {
       // ADMIN (Kabupaten & Unit) -> TETAP TAMPILAN DESKTOP
       document.body.classList.remove('has-mobile-portal');
       if (['unit', 'admin_unit'].includes(role)) {
@@ -400,11 +400,15 @@ const App = {
         await this.renderAdminKabupatenPortal(main);
       }
     } else if (['penilai', 'juri'].includes(role)) {
-      // PENILAI / DEWAN JURI -> TAMPILAN MOBILE APP PORTAL
+      // PENILAI / DEWAN JURI -> TAMPILAN DASHBOARD MOBILE PENILAI HP
       document.body.classList.add('has-mobile-portal');
       await this.renderPenilaiPortal(main);
+    } else if (role === 'peninjau') {
+      // PENINJAU RESMI JUMBARA -> TAMPILAN DASHBOARD MOBILE PENINJAU
+      document.body.classList.add('has-mobile-portal');
+      await this.renderPeninjauPortal(main);
     } else {
-      // PESERTA, PENINJAU, TAMU, MEDIA, USER PUBLIK -> TAMPILAN MOBILE APP PORTAL
+      // PESERTA (Default User Login) -> TAMPILAN DASHBOARD MOBILE PESERTA MANDIRI
       document.body.classList.add('has-mobile-portal');
       await this.renderPesertaPortal(main);
     }
@@ -1544,14 +1548,18 @@ const App = {
     const secLomba = document.getElementById('pesertaTabLomba');
     const secAgenda = document.getElementById('pesertaTabAgenda');
     const secPresensi = document.getElementById('pesertaTabPresensi');
+    const secMedali = document.getElementById('pesertaTabMedali');
 
     if (secBio) secBio.style.display = (tabId === 'bio') ? 'block' : 'none';
     if (secLomba) secLomba.style.display = (tabId === 'lomba') ? 'block' : 'none';
     if (secAgenda) secAgenda.style.display = (tabId === 'agenda') ? 'block' : 'none';
     if (secPresensi) secPresensi.style.display = (tabId === 'presensi') ? 'block' : 'none';
+    if (secMedali) secMedali.style.display = (tabId === 'medali') ? 'block' : 'none';
 
     if (tabId === 'presensi') {
       this.loadPesertaMyAttendanceLog();
+    } else if (tabId === 'medali') {
+      this.loadPesertaStandingsMobile();
     }
   },
 
@@ -1606,9 +1614,14 @@ const App = {
                 </div>
               </div>
 
-              <button onclick="App.handleLogout()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" title="Keluar dari Portal">
-                <i class="fa-solid fa-right-from-bracket"></i> Keluar
-              </button>
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <button onclick="App.openChangePasswordModal()" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 0.35rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" title="Ganti Password Akun">
+                  <i class="fa-solid fa-key"></i> Pass
+                </button>
+                <button onclick="App.handleLogout()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" title="Keluar dari Portal">
+                  <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+              </div>
             </div>
 
             <!-- PROFILE INFO MAIN GRID -->
@@ -1718,6 +1731,18 @@ const App = {
                 <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Log Presensi</span>
                 <span style="font-size: 0.68rem; color: #64748b;">Riwayat Check-In</span>
               </div>
+
+              <div class="peserta-action-card" onclick="App.switchPesertaMobileTab('medali')">
+                <i class="fa-solid fa-trophy" style="color: #eab308;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Klasemen Medali</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Pantau Medali</span>
+              </div>
+
+              <div class="peserta-action-card" onclick="App.openChangePasswordModal()">
+                <i class="fa-solid fa-key" style="color: #6366f1;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Keamanan Akun</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Ganti Password</span>
+              </div>
             </div>
           </div>
 
@@ -1735,6 +1760,9 @@ const App = {
               </button>
               <button class="peserta-segmented-btn" data-tab="presensi" onclick="App.switchPesertaMobileTab('presensi')">
                 <i class="fa-solid fa-history"></i> Presensi
+              </button>
+              <button class="peserta-segmented-btn" data-tab="medali" onclick="App.switchPesertaMobileTab('medali')">
+                <i class="fa-solid fa-trophy"></i> Medali
               </button>
             </div>
           </div>
@@ -1935,6 +1963,24 @@ const App = {
               </div>
             </div>
 
+            <!-- TAB 5: KLASEMEN MEDALI & INFO -->
+            <div id="pesertaTabMedali" style="display: none;">
+              <div class="peserta-info-card">
+                <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Papan Klasemen & Perolehan Medali</span>
+                  <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile()" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                  </button>
+                </div>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
+                  Perolehan medali kontingen secara real-time dari hasil penjurian kegiatan Jumbara:
+                </p>
+                <div id="pesertaStandingsContainer">
+                  <!-- Dynamic standings loaded by loadPesertaStandingsMobile() -->
+                </div>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -1956,6 +2002,348 @@ const App = {
           </div>
         `;
       }
+    }
+  },
+
+  async loadPesertaStandingsMobile(containerId = 'pesertaStandingsContainer') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="text-align: center; padding: 1.5rem; color: #64748b;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: #eab308;"></i>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">Memuat papan perolehan medali...</p>
+      </div>
+    `;
+
+    try {
+      const standings = await API.getStandings();
+      if (!standings || !standings.length) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem;">
+            <i class="fa-solid fa-award" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem;"></i>
+            <p>Data rekapitulasi medali belum diterbitkan oleh Dewan Juri.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+          ${standings.slice(0, 15).map((s, idx) => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
+              <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                <span style="width: 24px; height: 24px; border-radius: 50%; background: ${idx === 0 ? '#fef08a' : (idx === 1 ? '#e2e8f0' : (idx === 2 ? '#ffedd5' : '#f1f5f9'))}; color: ${idx === 0 ? '#854d0e' : (idx === 1 ? '#475569' : (idx === 2 ? '#9a3412' : '#64748b'))}; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">
+                  ${idx + 1}
+                </span>
+                <div style="min-width: 0;">
+                  <strong style="color: #0f172a; font-size: 0.82rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${Utils.escapeHtml(s.unit_name || s.name || 'Kontingen')}
+                  </strong>
+                  <span style="font-size: 0.7rem; color: #64748b;">${Utils.escapeHtml(s.level_category || '')}</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0;">
+                <span title="Emas" style="background: #fef08a; color: #854d0e; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥇 ${s.gold || 0}</span>
+                <span title="Perak" style="background: #e2e8f0; color: #334155; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥈 ${s.silver || 0}</span>
+                <span title="Perunggu" style="background: #ffedd5; color: #9a3412; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥉 ${s.bronze || 0}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p style="color: #ef4444; font-size: 0.8rem; text-align: center;">Gagal memuat klasemen.</p>`;
+    }
+  },
+
+  // =========================================================================
+  // VIEW 2.2: PENINJAU PORTAL VIEW (MOBILE DASHBOARD KHUSUS PENINJAU RESMI)
+  // =========================================================================
+  switchPeninjauMobileTab(tabId) {
+    document.querySelectorAll('.peninjau-tab-btn, .peninjau-segmented-btn').forEach(btn => {
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', isActive);
+      btn.style.background = isActive ? '#059669' : 'transparent';
+      btn.style.color = isActive ? '#ffffff' : '#64748b';
+    });
+
+    const secInfo = document.getElementById('peninjauTabInfo');
+    const secAgenda = document.getElementById('peninjauTabAgenda');
+    const secMedali = document.getElementById('peninjauTabMedali');
+    const secLokasi = document.getElementById('peninjauTabLokasi');
+
+    if (secInfo) secInfo.style.display = (tabId === 'info') ? 'block' : 'none';
+    if (secAgenda) secAgenda.style.display = (tabId === 'agenda') ? 'block' : 'none';
+    if (secMedali) secMedali.style.display = (tabId === 'medali') ? 'block' : 'none';
+    if (secLokasi) secLokasi.style.display = (tabId === 'lokasi') ? 'block' : 'none';
+
+    if (tabId === 'medali') {
+      this.loadPesertaStandingsMobile('peninjauStandingsContainer');
+    }
+  },
+
+  async renderPeninjauPortal(container) {
+    if (!container) container = document.getElementById('mainContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="peserta-mobile-wrapper">
+        <div id="peninjauProfileContent">
+          <div style="background: #ffffff; border-radius: 20px; padding: 2rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: #059669; margin-bottom: 0.75rem;"></i>
+            <p style="color: var(--text-muted); font-weight: 600;">Memuat Portal Mobile Peninjau Jumbara...</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    try {
+      const profile = await API.getParticipantMe();
+      const events = await API.getEvents().catch(() => []);
+
+      const content = document.getElementById('peninjauProfileContent');
+      if (!content) return;
+
+      const userName = profile.full_name || (this.currentUser ? this.currentUser.username : 'Peninjau Jumbara');
+      const unitName = profile.unit_name || 'Peninjau Resmi PMI Kabupaten';
+      const pnjCode = profile.code || 'PNJ-2026';
+
+      content.innerHTML = `
+        <div class="peserta-mobile-card">
+          
+          <!-- HERO BANNER PENINJAU -->
+          <div class="peserta-hero-banner" style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 50%, #0284c7 100%);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <img src="${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Logo PMI" style="height: 28px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <div>
+                  <div style="font-size: 0.72rem; font-weight: 800; color: #6ee7b7; letter-spacing: 0.5px; text-transform: uppercase;">Portal Mobile Peninjau</div>
+                  <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 600;">JUMBARA PMR PMI KABUPATEN</div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <button onclick="App.openChangePasswordModal()" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 0.35rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" title="Ganti Password">
+                  <i class="fa-solid fa-key"></i> Pass
+                </button>
+                <button onclick="App.handleLogout()" style="background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" title="Keluar dari Portal">
+                  <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+              </div>
+            </div>
+
+            <!-- PROFILE INFO MAIN -->
+            <div style="display: flex; gap: 1.1rem; align-items: center;">
+              <div style="position: relative; flex-shrink: 0;">
+                <img src="${profile.photo_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'}" 
+                     alt="Foto Peninjau" class="peserta-avatar-img" style="border-color: #34d399;"
+                     onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'">
+                <span style="position: absolute; bottom: -4px; right: -4px; background: #10b981; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #090d16;" title="Peninjau Resmi"></span>
+              </div>
+
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 0.75rem; color: #a7f3d0; font-weight: 600; margin-bottom: 0.15rem;">Selamat Datang, Bapak/Ibu Peninjau 👋</div>
+                <h3 style="font-size: 1.2rem; font-weight: 800; color: #ffffff; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                  ${Utils.escapeHtml(userName)}
+                </h3>
+                
+                <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.45rem;">
+                  <span style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(52, 211, 153, 0.5); color: #6ee7b7; font-weight: 800; font-size: 0.78rem; padding: 0.15rem 0.65rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    <i class="fa-solid fa-id-badge"></i> ${pnjCode}
+                  </span>
+                  <span style="background: #065f46; color: #ecfdf5; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 12px;">
+                    <i class="fa-solid fa-eye"></i> Peninjau Resmi
+                  </span>
+                </div>
+
+                <div style="font-size: 0.8rem; color: #cbd5e1; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <i class="fa-solid fa-building-columns" style="color: #34d399;"></i> ${Utils.escapeHtml(unitName)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATUS PENINJAU NOTICE -->
+          <div style="background: #f0fdf4; padding: 0.9rem 1.25rem; border-bottom: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 0.45rem;">
+              <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> Status Akses: Peninjau Resmi Terdaftar
+            </div>
+            <button onclick="App.openIDCardModal(${profile.id})" class="btn btn-outline btn-xs" style="color: #047857; border-color: #059669; font-weight: 800; font-size: 0.72rem; border-radius: 8px;">
+              <i class="fa-solid fa-qrcode"></i> Kartu ID
+            </button>
+          </div>
+
+          <!-- QUICK ACTION 4-GRID MOBILE WIDGETS -->
+          <div style="padding: 1.1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
+              Layanan Peninjau Jumbara:
+            </div>
+            
+            <div class="peserta-action-grid">
+              <div class="peserta-action-card" onclick="App.openIDCardModal(${profile.id})">
+                <i class="fa-solid fa-id-card" style="color: #059669;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Kartu ID QR</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Akses Masuk</span>
+              </div>
+
+              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('agenda')">
+                <i class="fa-solid fa-calendar-days" style="color: #d97706;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Jadwal Acara</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Rundown Kegiatan</span>
+              </div>
+
+              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('medali')">
+                <i class="fa-solid fa-trophy" style="color: #eab308;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Klasemen</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Perolehan Medali</span>
+              </div>
+
+              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('lokasi')">
+                <i class="fa-solid fa-map-location-dot" style="color: #0284c7;"></i>
+                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Peta Buperta</span>
+                <span style="font-size: 0.68rem; color: #64748b;">Lokasi & Tenda</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEGMENTED TABS -->
+          <div style="padding: 1.1rem 1.25rem 0 1.25rem; background: #ffffff;">
+            <div class="peserta-segmented-bar">
+              <button class="peninjau-segmented-btn active" data-tab="info" onclick="App.switchPeninjauMobileTab('info')" style="background: #059669; color: #ffffff;">
+                <i class="fa-solid fa-user-tie"></i> Profil
+              </button>
+              <button class="peninjau-segmented-btn" data-tab="agenda" onclick="App.switchPeninjauMobileTab('agenda')">
+                <i class="fa-solid fa-calendar-check"></i> Agenda
+              </button>
+              <button class="peninjau-segmented-btn" data-tab="medali" onclick="App.switchPeninjauMobileTab('medali')">
+                <i class="fa-solid fa-trophy"></i> Medali
+              </button>
+              <button class="peninjau-segmented-btn" data-tab="lokasi" onclick="App.switchPeninjauMobileTab('lokasi')">
+                <i class="fa-solid fa-map-pin"></i> Denah
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT PANELS -->
+          <div style="padding: 1.25rem;">
+            <!-- TAB 1: PROFIL & INFO PENINJAU -->
+            <div id="peninjauTabInfo" style="display: block;">
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-id-badge" style="color: #059669;"></i> Identitas Resmi Peninjau
+                </div>
+                <div class="peserta-detail-row">
+                  <span class="peserta-detail-label">Kode Peninjau</span>
+                  <span class="peserta-detail-val" style="color: #059669; font-weight: 800;">${pnjCode}</span>
+                </div>
+                <div class="peserta-detail-row">
+                  <span class="peserta-detail-label">Nama Lengkap</span>
+                  <span class="peserta-detail-val" style="font-weight: 700;">${Utils.escapeHtml(userName)}</span>
+                </div>
+                <div class="peserta-detail-row">
+                  <span class="peserta-detail-label">Status Penugasan</span>
+                  <span class="peserta-detail-val"><span style="background: #ecfdf5; color: #047857; font-weight: 800; padding: 2px 8px; border-radius: 6px;">✓ Peninjau Terakreditasi</span></span>
+                </div>
+                <div class="peserta-detail-row">
+                  <span class="peserta-detail-label">Asal Kontingen / Instansi</span>
+                  <span class="peserta-detail-val">${Utils.escapeHtml(unitName)}</span>
+                </div>
+                <div class="peserta-detail-row">
+                  <span class="peserta-detail-label">Nomor WhatsApp</span>
+                  <span class="peserta-detail-val" style="color: #16a34a;">📱 ${Utils.escapeHtml(profile.phone || '-')}</span>
+                </div>
+              </div>
+
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Panduan Peninjau Lapangan Jumbara
+                </div>
+                <p style="font-size: 0.82rem; color: #475569; line-height: 1.5; margin: 0 0 0.5rem 0;">
+                  Bapak/Ibu Peninjau memiliki akses peninjauan ke seluruh area perkemahan, gelanggang Tri Bakti PMR, pameran inovasi kontingen, dan posko sekretariat Jumbara.
+                </p>
+                <div style="background: #f8fafc; border-left: 3px solid #059669; padding: 0.75rem; border-radius: 8px; font-size: 0.78rem; color: #475569;">
+                  Harap selalu mengenakan <strong>Kartu Tanda Pengenal / ID Card QR</strong> selama berada di arena Bumi Perkemahan.
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: AGENDA KEGIATAN -->
+            <div id="peninjauTabAgenda" style="display: none;">
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-calendar-days" style="color: #059669;"></i> Rundown Jadwal Kegiatan Jumbara
+                </div>
+                <div>
+                  ${events.length ? events.map(e => `
+                    <div style="padding: 0.85rem; border-left: 4px solid #059669; background: #f8fafc; border-radius: 12px; margin-bottom: 0.75rem; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.35rem;">
+                        <strong style="color: #0f172a; font-size: 0.9rem;">${Utils.escapeHtml(e.title)}</strong>
+                        <span style="background: #ecfdf5; color: #047857; font-weight: 800; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 10px; flex-shrink: 0;">
+                          ${Utils.escapeHtml(e.category || 'Umum')}
+                        </span>
+                      </div>
+                      <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem;">
+                        <i class="fa-solid fa-location-dot" style="color: #ef4444;"></i> ${Utils.escapeHtml(e.location)}
+                      </div>
+                      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+                        <span style="color: #059669; font-weight: 700;">
+                          <i class="fa-solid fa-clock"></i> ${e.start_time} - ${e.end_time} WIB
+                        </span>
+                        <span style="color: #64748b;">
+                          <i class="fa-solid fa-user-gear"></i> PIC: ${Utils.escapeHtml(e.pic_name || 'Panitia')}
+                        </span>
+                      </div>
+                    </div>
+                  `).join('') : '<p style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 1rem;">Belum ada agenda kegiatan terdaftar.</p>'}
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: KLASEMEN MEDALI -->
+            <div id="peninjauTabMedali" style="display: none;">
+              <div class="peserta-info-card">
+                <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Rekapitulasi Medali Jumbara</span>
+                  <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile('peninjauStandingsContainer')" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                  </button>
+                </div>
+                <div id="peninjauStandingsContainer">
+                  <!-- Dynamic standings loaded by loadPesertaStandingsMobile() -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: LOKASI & DENAH -->
+            <div id="peninjauTabLokasi" style="display: none;">
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-map-location-dot" style="color: #0284c7;"></i> Peta & Lokasi Bumi Perkemahan
+                </div>
+                <p style="font-size: 0.82rem; color: #475569; margin-bottom: 0.75rem;">
+                  Lokasi utama kegiatan Jumbara PMR PMI Kabupaten:
+                </p>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 0.85rem; text-align: center;">
+                  <i class="fa-solid fa-tents" style="font-size: 2.2rem; color: #059669; margin-bottom: 0.5rem;"></i>
+                  <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0;">
+                    ${Utils.escapeHtml(this.appSettings.event_location || 'Buperta Utama PMI Kabupaten')}
+                  </h4>
+                  <p style="font-size: 0.78rem; color: #64748b; margin: 0 0 0.75rem 0;">
+                    ${Utils.escapeHtml(this.appSettings.event_dates || '15 - 17 Oktober 2026')}
+                  </p>
+                  <a href="${this.appSettings.gmaps_url || 'https://maps.google.com'}" target="_blank" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 700; border-radius: 8px;">
+                    <i class="fa-solid fa-diamond-turn-right"></i> Buka Google Maps Navigasi
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error('Error rendering peninjau portal:', err);
     }
   },
 
@@ -9706,12 +10094,23 @@ const App = {
       this.switchPesertaMobileTab('agenda');
     } else if (key === 'peserta_presensi') {
       this.switchPesertaMobileTab('presensi');
+    } else if (key === 'peserta_medali') {
+      this.switchPesertaMobileTab('medali');
     } else if (key === 'penilai_presensi') {
       this.switchPenilaiSubTab('presensi');
     } else if (key === 'penilai_nilai') {
       this.openEventScoringModal();
     } else if (key === 'penilai_rekap') {
       this.switchPenilaiSubTab('input');
+    } else if (key === 'peninjau_profil') {
+      this.switchPeninjauMobileTab('info');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'peninjau_agenda') {
+      this.switchPeninjauMobileTab('agenda');
+    } else if (key === 'peninjau_medali') {
+      this.switchPeninjauMobileTab('medali');
+    } else if (key === 'peninjau_lokasi') {
+      this.switchPeninjauMobileTab('lokasi');
     } else if (key === 'admin_dashboard') {
       if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
         this.switchUnitTab('peserta');
@@ -9764,33 +10163,34 @@ const App = {
     }
 
     const role = this.currentUser.role;
-    const isAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit', 'panitia'].includes(role);
+    const isDesktopAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit', 'panitia'].includes(role);
 
     // ADMIN TETAP DESKTOP: Jangan pernah tampilkan bottom nav bar untuk Admin!
-    if (isAdmin) {
+    if (isDesktopAdmin) {
       nav.style.display = 'none';
       nav.innerHTML = '';
       return;
     }
 
-    if (['peserta', 'peninjau', 'tamu', 'media', 'user'].includes(role)) {
+    if (role === 'peninjau') {
+      // PENINJAU RESMI BOTTOM NAV
       nav.style.display = 'flex';
       nav.innerHTML = `
-        <button class="mobile-nav-btn active" id="mbNavBio" onclick="App.handleMobileNav('peserta_bio')">
-          <i class="fa-solid fa-id-badge"></i>
+        <button class="mobile-nav-btn active" id="mbNavPeninjauProfil" onclick="App.handleMobileNav('peninjau_profil')">
+          <i class="fa-solid fa-user-tie"></i>
           <span>Profil</span>
         </button>
-        <button class="mobile-nav-btn" id="mbNavLomba" onclick="App.handleMobileNav('peserta_lomba')">
-          <i class="fa-solid fa-award"></i>
-          <span>Cabang</span>
-        </button>
-        <button class="mobile-nav-btn" id="mbNavPesertaAgenda" onclick="App.handleMobileNav('peserta_agenda')">
+        <button class="mobile-nav-btn" id="mbNavPeninjauAgenda" onclick="App.handleMobileNav('peninjau_agenda')">
           <i class="fa-solid fa-calendar-days"></i>
           <span>Agenda</span>
         </button>
-        <button class="mobile-nav-btn" id="mbNavPresensi" onclick="App.handleMobileNav('peserta_presensi')">
-          <i class="fa-solid fa-clipboard-user"></i>
-          <span>Presensi</span>
+        <button class="mobile-nav-btn" id="mbNavPeninjauMedali" onclick="App.handleMobileNav('peninjau_medali')">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Medali</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPeninjauLokasi" onclick="App.handleMobileNav('peninjau_lokasi')">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Lokasi</span>
         </button>
         <button class="mobile-nav-btn" id="mbNavLogout" onclick="App.handleMobileNav('logout')" style="color: #ef4444;">
           <i class="fa-solid fa-right-from-bracket"></i>
@@ -9798,6 +10198,7 @@ const App = {
         </button>
       `;
     } else if (['penilai', 'juri'].includes(role)) {
+      // PENILAI / JURI BOTTOM NAV
       nav.style.display = 'flex';
       nav.innerHTML = `
         <button class="mobile-nav-btn active" id="mbNavPenilaiScan" onclick="App.handleMobileNav('penilai_presensi')">
@@ -9818,8 +10219,34 @@ const App = {
         </button>
       `;
     } else {
-      nav.style.display = 'none';
-      nav.innerHTML = '';
+      // PESERTA (Default User Mobile Portal)
+      nav.style.display = 'flex';
+      nav.innerHTML = `
+        <button class="mobile-nav-btn active" id="mbNavBio" onclick="App.handleMobileNav('peserta_bio')">
+          <i class="fa-solid fa-id-badge"></i>
+          <span>Profil</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavLomba" onclick="App.handleMobileNav('peserta_lomba')">
+          <i class="fa-solid fa-award"></i>
+          <span>Cabang</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPesertaAgenda" onclick="App.handleMobileNav('peserta_agenda')">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Agenda</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPresensi" onclick="App.handleMobileNav('peserta_presensi')">
+          <i class="fa-solid fa-clipboard-user"></i>
+          <span>Presensi</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPesertaMedali" onclick="App.handleMobileNav('peserta_medali')">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Medali</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavLogout" onclick="App.handleMobileNav('logout')" style="color: #ef4444;">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Keluar</span>
+        </button>
+      `;
     }
   },
 

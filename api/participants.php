@@ -22,15 +22,22 @@ if ($method === 'GET' && $action === 'me') {
     $stmt->execute([$user['id']]);
     $part = $stmt->fetch();
     if (!$part) {
+        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'panitia') ? 'PNT-2026-' : 'JMB-2026-');
+        $code = $prefix . str_pad($user['id'], 4, '0', STR_PAD_LEFT);
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($code);
         jsonResponse([
             'id' => 0,
+            'code' => $code,
             'user_id' => $user['id'],
             'full_name' => $user['full_name'] ?? $user['username'],
-            'registration_code' => '-',
-            'level' => 'Umum',
+            'registration_type' => ucfirst($user['role']),
+            'registration_code' => $code,
+            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : 'Umum'),
             'status' => 'verified_kabupaten',
             'sub_categories' => [],
-            'unit_name' => $user['unit_name'] ?? 'Panitia Pelaksana'
+            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : 'Kontingen PMI'),
+            'qr_code_base64' => $qrUrl,
+            'photo_url' => null
         ]);
     }
     if (isset($part['sub_categories']) && is_string($part['sub_categories'])) {
@@ -41,8 +48,24 @@ if ($method === 'GET' && $action === 'me') {
 
 // GET /api/participants.php?action=idcard&id=123 (Protected with Role & Ownership Authorization)
 if ($method === 'GET' && $action === 'idcard') {
-    $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri']);
-    if (!$id) jsonResponse(['error' => 'ID Peserta wajib.'], 400);
+    $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri', 'peninjau']);
+    if (!$id) {
+        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : 'JMB-2026-';
+        $code = $prefix . str_pad($user['id'], 4, '0', STR_PAD_LEFT);
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($code);
+        jsonResponse([
+            'id' => 0,
+            'code' => $code,
+            'user_id' => $user['id'],
+            'full_name' => $user['full_name'] ?? $user['username'],
+            'registration_type' => ucfirst($user['role']),
+            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : 'Umum'),
+            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : 'Kontingen PMI'),
+            'status' => 'verified_kabupaten',
+            'qr_code_base64' => $qrUrl,
+            'photo_url' => null
+        ]);
+    }
 
     $stmt = $pdo->prepare("
         SELECT p.*, un.name AS unit_name, un.level_category 
@@ -55,8 +78,8 @@ if ($method === 'GET' && $action === 'idcard') {
     if (!$part) jsonResponse(['error' => 'Data peserta tidak ditemukan.'], 404);
 
     // Multi-tenant & Role-based Authorization:
-    // Peserta can only view their own ID card
-    if ($user['role'] === 'peserta' && (int)($part['user_id'] ?? 0) !== (int)$user['id']) {
+    // Peserta & Peninjau can only view their own ID card
+    if (in_array($user['role'], ['peserta', 'peninjau']) && (int)($part['user_id'] ?? 0) !== (int)$user['id']) {
         jsonResponse(['error' => 'Akses ditolak. Anda hanya dapat melihat ID Card Anda sendiri.'], 403);
     }
     // Unit admin can only view ID cards of participants belonging to their unit
