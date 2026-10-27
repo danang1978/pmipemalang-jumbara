@@ -3313,7 +3313,7 @@ const App = {
                 <button type="button" class="btn btn-sm" onclick="App.switchPenilaiSubTab('presensi')" style="background: #4338ca; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.4rem; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
                   <i class="fa-solid fa-qrcode"></i> Scan Presensi Pos
                 </button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="App.openEventScoringModal()" style="font-weight: 700; border-radius: 10px; padding: 0.6rem 0.4rem; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: #dc2626; border-color: #dc2626;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="App.switchPenilaiSubTab('input')" style="font-weight: 700; border-radius: 10px; padding: 0.6rem 0.4rem; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: #dc2626; border-color: #dc2626;">
                   <i class="fa-solid fa-pen-to-square"></i> Input Nilai Lomba
                 </button>
               </div>
@@ -3493,23 +3493,7 @@ const App = {
                 <span>Kembali ke Beranda Penilai</span>
               </div>
 
-              <div class="peserta-info-card">
-                <div class="peserta-info-header">
-                  <i class="fa-solid fa-pen-to-square" style="color: #4338ca;"></i> Form Penilaian Kegiatan
-                </div>
-                
-                <p style="font-size: 0.82rem; color: #475569; margin-top: 0; margin-bottom: 1rem;">
-                  Gunakan tombol di bawah untuk membuka scanner QR HP atau cari nama/kode peserta untuk memulai penilaian per aspek.
-                </p>
-
-                <button class="btn btn-primary" style="width: 100%; font-weight: 800; padding: 0.85rem; font-size: 0.95rem; border-radius: 10px; margin-bottom: 0.75rem; background: #dc2626; border-color: #dc2626; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="App.openEventScoringModal()">
-                  <i class="fa-solid fa-qrcode"></i> Buka Scanner Kamera QR Penilaian
-                </button>
-
-                <button class="btn btn-outline" style="width: 100%; font-weight: 700; padding: 0.75rem; font-size: 0.88rem; border-radius: 10px; color: #4338ca; border-color: #4338ca; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onclick="App.openManageAspectsModal()">
-                  <i class="fa-solid fa-list-ol"></i> Atur Aspek & Bobot Penilaian
-                </button>
-              </div>
+              ${this.getEmbeddedScoringFormHtml({ roleTheme: 'indigo', backFn: "App.switchPenilaiSubTab('home')" })}
             </div>
 
             <!-- SUBTAB: RIWAYAT / DRAFT NILAI SAYA -->
@@ -3664,7 +3648,15 @@ const App = {
       if (el) el.style.display = (tabId === t) ? 'block' : 'none';
     });
 
-    if (tabId === 'presensi') {
+    if (tabId !== 'input') {
+      this.stopScoringCameraQR();
+    }
+
+    if (tabId === 'input') {
+      if (!this.editingScoreId) {
+        this.initEmbeddedScoringForm();
+      }
+    } else if (tabId === 'presensi') {
       const pContainer = document.getElementById('penilaiPresensiInner');
       if (pContainer && !pContainer.dataset.loaded) {
         this.renderTabPresensi(pContainer);
@@ -4052,17 +4044,7 @@ const App = {
                 <span>Kembali ke Beranda Panitia</span>
               </div>
 
-              <div class="peserta-info-card">
-                <div class="peserta-info-header">
-                  <i class="fa-solid fa-pen-to-square" style="color: #dc2626;"></i> Fasilitasi Input Nilai Lomba
-                </div>
-                <p style="font-size: 0.82rem; color: #475569; margin-bottom: 1rem;">
-                  Panitia dapat membantu dewan juri membuka scanner kamera QR untuk mencatat skor evaluasi pos.
-                </p>
-                <button class="btn btn-primary" style="width: 100%; font-weight: 800; padding: 0.85rem; font-size: 0.95rem; border-radius: 10px; margin-bottom: 0.75rem; background: #dc2626; border-color: #dc2626;" onclick="App.openEventScoringModal()">
-                  <i class="fa-solid fa-qrcode"></i> Buka Scanner Kamera QR Penilaian
-                </button>
-              </div>
+              ${this.getEmbeddedScoringFormHtml({ roleTheme: 'red', backFn: "App.switchPanitiaMobileTab('home')" })}
             </div>
 
             <!-- SUBTAB: RUNDOWN ACARA -->
@@ -4194,7 +4176,15 @@ const App = {
       if (el) el.style.display = (tabId === t) ? 'block' : 'none';
     });
 
-    if (tabId === 'presensi') {
+    if (tabId !== 'nilai') {
+      this.stopScoringCameraQR();
+    }
+
+    if (tabId === 'nilai') {
+      if (!this.editingScoreId) {
+        this.initEmbeddedScoringForm();
+      }
+    } else if (tabId === 'presensi') {
       const pContainer = document.getElementById('panitiaPresensiInner');
       if (pContainer && !pContainer.dataset.loaded) {
         this.renderTabPresensi(pContainer);
@@ -7082,7 +7072,7 @@ const App = {
             <button class="btn btn-outline btn-sm" style="font-weight: 700; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;" onclick="App.openManageAspectsModal()">
               <i class="fa-solid fa-sliders"></i> Pengaturan Aspek
             </button>
-            <button class="btn btn-primary btn-sm" style="background: #16a34a; border-color: #16a34a; font-weight: 700;" onclick="App.openEventScoringModal()">
+            <button class="btn btn-primary btn-sm" style="background: #16a34a; border-color: #16a34a; font-weight: 700;" onclick="App.switchPenilaianSubTab('entry')">
               <i class="fa-solid fa-clipboard-check"></i> Input Nilai Juri & Scan QR
             </button>
           </div>
@@ -7104,6 +7094,9 @@ const App = {
           </button>
           <button type="button" id="btnSubTabRiwayat" class="btn ${activeSubTab === 'riwayat' ? 'btn-primary' : 'btn-outline'} btn-sm" style="border-radius: 20px; font-weight: 700;" onclick="App.switchPenilaianSubTab('riwayat')">
             <i class="fa-solid fa-history"></i> Riwayat Entry Nilai Juri
+          </button>
+          <button type="button" id="btnSubTabEntry" class="btn ${activeSubTab === 'entry' ? 'btn-primary' : 'btn-outline'} btn-sm" style="border-radius: 20px; font-weight: 700;" onclick="App.switchPenilaianSubTab('entry')">
+            <i class="fa-solid fa-pen-to-square"></i> Form Input Nilai
           </button>
         </div>
 
@@ -7205,7 +7198,7 @@ const App = {
                 </h4>
                 <small style="color: #64748b;">Daftar penilaian yang telah dimasukkan oleh juri beserta rincian nilai per aspek</small>
               </div>
-              <button class="btn btn-primary btn-sm" style="background: #16a34a; border-color: #16a34a;" onclick="App.openEventScoringModal()">
+              <button class="btn btn-primary btn-sm" style="background: #16a34a; border-color: #16a34a;" onclick="App.switchPenilaianSubTab('entry')">
                 <i class="fa-solid fa-clipboard-check"></i> Input Nilai Baru
               </button>
             </div>
@@ -7213,6 +7206,11 @@ const App = {
               <p style="color: var(--text-muted);">Memuat data nilai...</p>
             </div>
           </div>
+        </div>
+
+        <!-- SUB-TAB 6: FORM INPUT NILAI JURI & SCAN QR -->
+        <div id="penilaianSubTabEntry" style="display: ${activeSubTab === 'entry' ? 'block' : 'none'};">
+          ${this.getEmbeddedScoringFormHtml({ roleTheme: 'green', backFn: "App.switchPenilaianSubTab('aspek')" })}
         </div>
       </div>
     `;
@@ -7228,24 +7226,34 @@ const App = {
     const tabRekapUnit = document.getElementById('penilaianSubTabRekapUnit');
     const tabKlasemen = document.getElementById('penilaianSubTabKlasemen');
     const tabRiwayat = document.getElementById('penilaianSubTabRiwayat');
+    const tabEntry = document.getElementById('penilaianSubTabEntry');
 
     const btnAspek = document.getElementById('btnSubTabAspek');
     const btnRekap = document.getElementById('btnSubTabRekap');
     const btnRekapUnit = document.getElementById('btnSubTabRekapUnit');
     const btnKlasemen = document.getElementById('btnSubTabKlasemen');
     const btnRiwayat = document.getElementById('btnSubTabRiwayat');
+    const btnEntry = document.getElementById('btnSubTabEntry');
 
     if (tabAspek) tabAspek.style.display = subTab === 'aspek' ? 'block' : 'none';
     if (tabRekap) tabRekap.style.display = subTab === 'rekap' ? 'block' : 'none';
     if (tabRekapUnit) tabRekapUnit.style.display = subTab === 'rekap_unit' ? 'block' : 'none';
     if (tabKlasemen) tabKlasemen.style.display = subTab === 'klasemen' ? 'block' : 'none';
     if (tabRiwayat) tabRiwayat.style.display = subTab === 'riwayat' ? 'block' : 'none';
+    if (tabEntry) tabEntry.style.display = subTab === 'entry' ? 'block' : 'none';
 
     if (btnAspek) btnAspek.className = `btn ${subTab === 'aspek' ? 'btn-primary' : 'btn-outline'} btn-sm`;
     if (btnRekap) btnRekap.className = `btn ${subTab === 'rekap' ? 'btn-primary' : 'btn-outline'} btn-sm`;
     if (btnRekapUnit) btnRekapUnit.className = `btn ${subTab === 'rekap_unit' ? 'btn-primary' : 'btn-outline'} btn-sm`;
     if (btnKlasemen) btnKlasemen.className = `btn ${subTab === 'klasemen' ? 'btn-primary' : 'btn-outline'} btn-sm`;
     if (btnRiwayat) btnRiwayat.className = `btn ${subTab === 'riwayat' ? 'btn-primary' : 'btn-outline'} btn-sm`;
+    if (btnEntry) btnEntry.className = `btn ${subTab === 'entry' ? 'btn-primary' : 'btn-outline'} btn-sm`;
+
+    if (subTab !== 'entry') {
+      this.stopScoringCameraQR();
+    } else if (!this.editingScoreId) {
+      this.initEmbeddedScoringForm();
+    }
   },
 
   async loadStandingsAndScores() {
@@ -11173,12 +11181,163 @@ const App = {
   },
 
   // ==========================================================================
-  // PEMBERIAN NILAI KEGIATAN & SCAN QR TARGET
+  // PEMBERIAN NILAI KEGIATAN & SCAN QR TARGET (EMBEDDED NATIVE, NON-MODAL)
   // ==========================================================================
 
-  async openEventScoringModal(eventId = null) {
+  getEmbeddedScoringFormHtml(options = {}) {
+    const roleTheme = options.roleTheme || 'indigo';
+    const backFn = options.backFn || "App.switchPenilaiSubTab('home')";
+    const themeColor = roleTheme === 'red' ? '#dc2626' : (roleTheme === 'green' ? '#16a34a' : '#4338ca');
+    const badgeBg = roleTheme === 'red' ? '#fee2e2' : (roleTheme === 'green' ? '#dcfce7' : '#e0e7ff');
+    const badgeColor = roleTheme === 'red' ? '#991b1b' : (roleTheme === 'green' ? '#166534' : '#3730a3');
+
+    return `
+      <div class="peserta-info-card" style="margin-bottom: 1.25rem;">
+        <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+          <span style="font-weight: 800; font-size: 1.02rem; color: #0f172a;">
+            <i class="fa-solid fa-clipboard-check" style="color: ${themeColor}; margin-right: 0.35rem;"></i> Form Input Penilaian Kegiatan
+          </span>
+          <span id="scoringFormStatusBadge" class="badge" style="background: ${badgeBg}; color: ${badgeColor}; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.7rem; border-radius: 8px;">
+            INPUT BARU
+          </span>
+        </div>
+
+        <form id="embeddedScoringForm" onsubmit="App.handleSaveAspectScoring(event)">
+          <!-- STEP 1: PILIH KEGIATAN -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 240px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 0.35rem;">
+                  <span style="background: ${themeColor}; color: #ffffff; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 0.35rem;">1</span>
+                  Pilih Kegiatan / Cabang Lomba *
+                </label>
+                <select id="scoringEventSelect" class="form-control" onchange="App.onScoringEventChanged(this.value)" required style="font-size: 0.88rem; font-weight: 600;">
+                  <option value="">-- Pilih Kegiatan --</option>
+                </select>
+              </div>
+              ${this.currentUser && ['kabupaten', 'admin'].includes(this.currentUser.role) ? `
+              <div style="margin-top: 1.2rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.openManageAspectsModal(document.getElementById('scoringEventSelect')?.value)" style="font-size: 0.78rem;">
+                  <i class="fa-solid fa-sliders"></i> Kelola Aspek
+                </button>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- STEP 2: SASARAN & SCAN QR -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <label class="form-label" style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 0.5rem;">
+              <span style="background: ${themeColor}; color: #ffffff; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 0.35rem;">2</span>
+              Sasaran Penilaian & Scan QR *
+            </label>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem; align-items: center; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.88rem; font-weight: 600; margin: 0;">
+                <input type="radio" name="scoringTargetType" value="peserta" checked onchange="App.onScoringTargetTypeChanged()">
+                <i class="fa-solid fa-user-graduate" style="color: #0284c7;"></i> Perorangan / Peserta
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.88rem; font-weight: 600; margin: 0;">
+                <input type="radio" name="scoringTargetType" value="kontingen" onchange="App.onScoringTargetTypeChanged()">
+                <i class="fa-solid fa-school-flag" style="color: #ea580c;"></i> Kontingen / Unit Sekolah
+              </label>
+            </div>
+
+            <!-- Area Scan QR / Search Input -->
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <input type="text" id="scoringTargetSearchInput" class="form-control" style="flex: 1; min-width: 200px; font-size: 0.85rem;" placeholder="Cari Kode ID / NIK / Nama Peserta atau Kontingen..." onkeyup="App.searchScoringTarget(event)">
+              <button type="button" class="btn btn-primary btn-sm" onclick="App.searchScoringTargetManual()" style="font-weight: 700;">
+                <i class="fa-solid fa-magnifying-glass"></i> Cari
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" style="border-color: #0284c7; color: #0284c7; font-weight: 700;" onclick="App.toggleScoringCameraQR()">
+                <i class="fa-solid fa-camera"></i> Scan Camera QR
+              </button>
+            </div>
+
+            <!-- Video QR Container -->
+            <div id="scoringCameraQRContainer" style="display: none; margin-top: 0.75rem; text-align: center;">
+              <div id="scoringQrVideoReader" style="width: 100%; max-width: 320px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid #0284c7;"></div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top: 0.4rem; color: #dc2626; font-size: 0.78rem;" onclick="App.stopScoringCameraQR()">
+                <i class="fa-solid fa-circle-xmark"></i> Tutup Kamera Scanner
+              </button>
+            </div>
+
+            <!-- Target Search Result Dropdown List -->
+            <div id="scoringTargetSearchResults" style="display: none; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);"></div>
+
+            <!-- Selected Target Profile Card -->
+            <div id="scoringSelectedTargetCard" style="display: none; margin-top: 0.75rem; padding: 0.85rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px;">
+              <!-- Target info injected by JS -->
+            </div>
+          </div>
+
+          <!-- STEP 3: ASPEK PENILAIAN DENGAN SLIDER & LIVE PREVIEW -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+              <label class="form-label" style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin: 0;">
+                <span style="background: ${themeColor}; color: #ffffff; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 0.35rem;">3</span>
+                Input Nilai Berdasarkan Aspek *
+              </label>
+              <span id="scoringAspectsLiveTotalBadge" class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.92rem; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 8px;">
+                Total: 0 Poin
+              </span>
+            </div>
+
+            <div id="scoringAspectsContainer">
+              <p style="color: #64748b; font-size: 0.85rem; margin: 0.5rem 0;">Pilih kegiatan terlebih dahulu untuk memuat aspek penilaian.</p>
+            </div>
+
+            <!-- Final Grade Preview Badge -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">Predikat / Medali Terkalkulasi:</span>
+              <span id="scoringGradeBadgePreview" class="badge" style="background: #e2e8f0; color: #334155; font-size: 0.9rem; font-weight: 800; padding: 0.4rem 0.85rem; border-radius: 8px;">
+                Peserta
+              </span>
+            </div>
+          </div>
+
+          <!-- STEP 4: NAMA JURI & CATATAN -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <label class="form-label" style="font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 0.75rem;">
+              <span style="background: ${themeColor}; color: #ffffff; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem; margin-right: 0.35rem;">4</span>
+              Evaluator & Catatan Penilaian
+            </label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem;">
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #475569;">Nama Juri / Evaluator *</label>
+                <input type="text" id="scoringJudgeNameInput" class="form-control" style="font-size: 0.85rem;" required>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: #475569;">Catatan / Masukan (Opsional)</label>
+                <input type="text" id="scoringNotesInput" class="form-control" style="font-size: 0.85rem;" placeholder="Kelebihan / Masukan perbaikan...">
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="${backFn}" style="border-radius: 10px; font-weight: 700; padding: 0.65rem 1.25rem;">
+              <i class="fa-solid fa-arrow-left"></i> Batal / Kembali
+            </button>
+            <button type="submit" class="btn btn-primary" style="background: #16a34a; border-color: #16a34a; border-radius: 10px; font-weight: 800; padding: 0.65rem 1.5rem; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);">
+              <i class="fa-solid fa-circle-check"></i> Simpan Penilaian Kegiatan
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  },
+
+  async initEmbeddedScoringForm(eventId = null) {
     try {
       this.editingScoreId = null;
+
+      const statusBadge = document.getElementById('scoringFormStatusBadge');
+      if (statusBadge) {
+        statusBadge.textContent = 'INPUT BARU';
+        statusBadge.style.background = '#e0e7ff';
+        statusBadge.style.color = '#3730a3';
+      }
 
       if (!this.cachedEvents || !this.cachedEvents.length) {
         const events = await API.getEvents();
@@ -11192,18 +11351,37 @@ const App = {
 
         if (eventId && eventId !== 'null' && eventId !== 'undefined') {
           select.value = eventId;
-          this.onScoringEventChanged(eventId);
+          await this.onScoringEventChanged(eventId);
         } else {
-          document.getElementById('scoringAspectsContainer').innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Pilih kegiatan terlebih dahulu untuk memuat aspek penilaian.</p>';
+          const container = document.getElementById('scoringAspectsContainer');
+          if (container) {
+            container.innerHTML = '<p style="color: #64748b; font-size: 0.85rem; margin: 0.5rem 0;">Pilih kegiatan terlebih dahulu untuk memuat aspek penilaian.</p>';
+          }
+          const liveBadge = document.getElementById('scoringAspectsLiveTotalBadge');
+          if (liveBadge) liveBadge.textContent = 'Total: 0 Poin';
+          const gradeBadge = document.getElementById('scoringGradeBadgePreview');
+          if (gradeBadge) {
+            gradeBadge.textContent = 'Peserta';
+            gradeBadge.style.background = '#e2e8f0';
+            gradeBadge.style.color = '#334155';
+          }
         }
       }
 
       // Reset target search & selection
       this.selectedScoringTarget = null;
-      document.getElementById('scoringTargetSearchInput').value = '';
-      document.getElementById('scoringTargetSearchResults').style.display = 'none';
-      document.getElementById('scoringSelectedTargetCard').style.display = 'none';
+      const targetSearchInput = document.getElementById('scoringTargetSearchInput');
+      if (targetSearchInput) targetSearchInput.value = '';
+      const targetSearchResults = document.getElementById('scoringTargetSearchResults');
+      if (targetSearchResults) targetSearchResults.style.display = 'none';
+      const selectedTargetCard = document.getElementById('scoringSelectedTargetCard');
+      if (selectedTargetCard) selectedTargetCard.style.display = 'none';
 
+      // Set default target radio
+      const radioPeserta = document.querySelector('input[name="scoringTargetType"][value="peserta"]');
+      if (radioPeserta) radioPeserta.checked = true;
+
+      // Judge name lock
       const judgeInput = document.getElementById('scoringJudgeNameInput');
       if (judgeInput) {
         judgeInput.value = this.currentUser?.full_name || this.currentUser?.username || 'Penilai PMI';
@@ -11221,12 +11399,30 @@ const App = {
           judgeInput.style.cursor = 'text';
         }
       }
-      document.getElementById('scoringNotesInput').value = '';
+
+      const notesInput = document.getElementById('scoringNotesInput');
+      if (notesInput) notesInput.value = '';
 
       this.stopScoringCameraQR();
-      this.openModal('eventScoringModal');
     } catch (err) {
-      Utils.showToast('Gagal memuat modal penilaian: ' + err.message, 'error');
+      console.error('initEmbeddedScoringForm error:', err);
+    }
+  },
+
+  async openEventScoringModal(eventId = null) {
+    try {
+      const role = this.currentUser?.role;
+      if (['penilai', 'juri'].includes(role)) {
+        this.switchPenilaiSubTab('input');
+      } else if (role === 'panitia') {
+        this.switchPanitiaMobileTab('nilai');
+      } else {
+        this.switchPenilaianSubTab('entry');
+      }
+      await this.initEmbeddedScoringForm(eventId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      Utils.showToast('Gagal memuat form penilaian: ' + err.message, 'error');
     }
   },
 
@@ -11244,7 +11440,23 @@ const App = {
         return;
       }
 
+      const role = this.currentUser?.role;
+      if (['penilai', 'juri'].includes(role)) {
+        this.switchPenilaiSubTab('input');
+      } else if (role === 'panitia') {
+        this.switchPanitiaMobileTab('nilai');
+      } else {
+        this.switchPenilaianSubTab('entry');
+      }
+
       this.editingScoreId = score.id;
+
+      const statusBadge = document.getElementById('scoringFormStatusBadge');
+      if (statusBadge) {
+        statusBadge.textContent = 'MODE EDIT / REVISI';
+        statusBadge.style.background = '#fef3c7';
+        statusBadge.style.color = '#92400e';
+      }
 
       if (!this.cachedEvents || !this.cachedEvents.length) {
         const events = await API.getEvents();
@@ -11332,10 +11544,11 @@ const App = {
           judgeInput.style.cursor = 'text';
         }
       }
-      document.getElementById('scoringNotesInput').value = score.notes || '';
+      const notesInput = document.getElementById('scoringNotesInput');
+      if (notesInput) notesInput.value = score.notes || '';
 
       this.stopScoringCameraQR();
-      this.openModal('eventScoringModal');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       Utils.showToast('Gagal memuat form edit penilaian: ' + err.message, 'error');
     }
@@ -11713,10 +11926,20 @@ const App = {
       this.editingScoreId = null;
 
       Utils.showToast(isEdit ? 'Revisi nilai draft berhasil disimpan!' : `Penilaian kegiatan berhasil disimpan! Skor: ${res.score_val} (${res.grade})`, 'success');
-      this.closeModal('eventScoringModal');
+      if (document.getElementById('eventScoringModal')) {
+        this.closeModal('eventScoringModal');
+      }
       this.loadStandingsAndScores();
       if (this.currentUser && (this.currentUser.role === 'penilai' || this.currentUser.role === 'juri')) {
-        this.renderPenilaiPortal();
+        this.switchPenilaiSubTab('riwayat');
+        this.loadPenilaiRiwayat();
+        this.initEmbeddedScoringForm();
+      } else if (this.currentUser && this.currentUser.role === 'panitia') {
+        this.switchPanitiaMobileTab('home');
+        this.initEmbeddedScoringForm();
+      } else {
+        this.switchPenilaianSubTab('riwayat');
+        this.initEmbeddedScoringForm();
       }
     } catch (err) {
       Utils.showToast('Gagal menyimpan penilaian: ' + err.message, 'error');
@@ -12197,7 +12420,7 @@ const App = {
           list.innerHTML = `
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('home')"><i class="fa-solid fa-house"></i> Beranda Penilai / Juri</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('presensi')"><i class="fa-solid fa-qrcode"></i> Scan Presensi Pos</a></li>
-            <li><a href="javascript:void(0)" onclick="App.openEventScoringModal()"><i class="fa-solid fa-pen-to-square"></i> Input Nilai Lomba</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('input')"><i class="fa-solid fa-pen-to-square"></i> Input Nilai Lomba</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('riwayat')"><i class="fa-solid fa-list-check"></i> Draft Nilai Saya</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('klasemen')"><i class="fa-solid fa-trophy"></i> Klasemen Medali</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('agenda')"><i class="fa-solid fa-calendar-days"></i> Rundown Lomba</a></li>
