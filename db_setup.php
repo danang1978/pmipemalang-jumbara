@@ -268,6 +268,14 @@ try {
         $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
     } catch (Exception $e) {}
 
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN full_name VARCHAR(150) NULL AFTER unit_id");
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN phone VARCHAR(50) NULL AFTER full_name");
+    } catch (Exception $e) {}
+
     // Indexes for high-performance scaled queries (handling millions of records with sub-millisecond execution)
     try { $pdo->exec("CREATE INDEX idx_unit_id ON participants (unit_id, id DESC)"); } catch (Exception $e) {}
     try { $pdo->exec("CREATE INDEX idx_unit_status_id ON participants (unit_id, status, id DESC)"); } catch (Exception $e) {}

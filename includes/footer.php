@@ -267,13 +267,18 @@ $settings = getAppSettings();
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
-              <label class="form-label">No. Telepon / WhatsApp *</label>
-              <input type="text" id="regPhone" placeholder="0812xxxxxxx" required>
+              <label class="form-label">Alamat Email Aktif * <small style="color: var(--primary); font-weight: normal;">(Kirim User & Password)</small></label>
+              <input type="email" id="regEmail" placeholder="contoh@email.com" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Kontak Darurat (Orangtua) *</label>
-              <input type="text" id="regEmergency" placeholder="Nama & No. HP Orangtua" required>
+              <label class="form-label">No. Telepon / WhatsApp * <small style="color: #059669; font-weight: normal;">(Notifikasi WA)</small></label>
+              <input type="text" id="regPhone" placeholder="0812xxxxxxx" required>
             </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Kontak Darurat (Nama & No. HP Orangtua/Wali) *</label>
+            <input type="text" id="regEmergency" placeholder="Nama & No. HP Orangtua/Wali" required>
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">

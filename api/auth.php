@@ -57,12 +57,19 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt = $pdo->prepare("
-        SELECT u.*, un.name AS unit_name 
+        SELECT u.*, un.name AS unit_name,
+               p.id AS participant_id, p.code AS participant_code, 
+               COALESCE(p.full_name, u.full_name) AS full_name,
+               p.level, p.status AS participant_status, p.photo_url
         FROM users u 
         LEFT JOIN units un ON u.unit_id = un.id 
-        WHERE u.username = ?
+        LEFT JOIN participants p ON p.user_id = u.id
+        WHERE u.username = ? 
+           OR (u.email IS NOT NULL AND u.email != '' AND u.email = ?) 
+           OR (p.code IS NOT NULL AND p.code != '' AND p.code = ?)
+        LIMIT 1
     ");
-    $stmt->execute([$username]);
+    $stmt->execute([$username, $username, $username]);
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password'])) {
@@ -125,9 +132,13 @@ if ($action === 'me') {
     $user = getCurrentUser();
     if ($user) {
         $stmt = $pdo->prepare("
-            SELECT u.*, un.name AS unit_name 
+            SELECT u.*, un.name AS unit_name,
+                   p.id AS participant_id, p.code AS participant_code,
+                   COALESCE(p.full_name, u.full_name) AS full_name,
+                   p.level, p.status AS participant_status, p.photo_url
             FROM users u 
             LEFT JOIN units un ON u.unit_id = un.id 
+            LEFT JOIN participants p ON p.user_id = u.id
             WHERE u.id = ?
         ");
         $stmt->execute([$user['id']]);
@@ -300,8 +311,8 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
-        $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId]);
+        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
         $userId = $pdo->lastInsertId();
 
         $codePrefixMap = [
@@ -340,30 +351,38 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $phone = $phoneDigits;
         if (strpos($phone, '0') === 0) {
             $phone = '62' . substr($phone, 1);
+        } elseif (strpos($phone, '8') === 0) {
+            $phone = '62' . $phone;
         }
 
-        // 1. Automated System WhatsApp Notification (Fonnte API)
-        $waMsg = "Halo *{$fullName}*,\n\nPendaftaran Anda sebagai *{$registrationType}* untuk kegiatan *JUMBARA PMR TINGKAT KABUPATEN 2026* telah *BERHASIL DITERIMA & DIKIRIM!*\n\n📌 Kode Registrasi: *{$participantCode}*\n📋 Kategori/Unsur: *{$level}*\n🏫 Kontingen/Instansi: *{$unitName}*\n\n🔑 *AKUN LOGIN PORTAL RESMI ANDA:*\n• Username: *{$username}*\n• Password: *{$password}*\n\nStatus: *Menunggu Verifikasi Admin/Pembina*. Silakan login portal untuk mengecek status dan mengunduh ID Card QR Code Anda.\n\nSekretariat Panitia Jumbara PMR PMI Kabupaten";
+        // Determine Portal Login URL
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8888';
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+        $baseDir = rtrim(str_replace(['/api', '\\api'], '', $scriptDir), '/');
+        $portalLoginUrl = $protocol . $host . $baseDir . '/#login';
+
+        // 1. Direct WhatsApp Click-to-Open URL & Automated Notification (Fonnte API)
+        $waUrl = buildWhatsAppRegistrationUrl($phone, $fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $portalLoginUrl);
+        $waMsg = buildWhatsAppRegistrationMessage($fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $portalLoginUrl);
         $fonnteResult = sendFonnteWhatsApp($phone, $waMsg);
 
-        // 2. Automated System Email Notification with Credentials
+        // 2. Automated System Email Notification (Formal HTML PMI)
         $emailSent = false;
         if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $emailSubject = "INFO AKUN & BUKTI PENDAFTARAN JUMBARA PMR 2026 - {$participantCode}";
-            $emailBody = "Halo {$fullName},\n\nTerima kasih telah melakukan pendaftaran di JUMBARA PMR TINGKAT KABUPATEN 2026.\n\nBerikut adalah ringkasan data registrasi Anda:\n• Kode Pendaftaran: {$participantCode}\n• Nama Lengkap: {$fullName}\n• Unsur / Tingkat: {$level}\n• Kategori Pendaftaran: {$registrationType}\n• Kontingen Unit: {$unitName}\n\n========================================\nAKUN LOGIN PORTAL RESMI:\nUsername: {$username}\nPassword: {$password}\n========================================\n\nStatus Pendaftaran: Menunggu Verifikasi Pembina Unit & PMI Kabupaten.\nAnda dapat mengunduh formulir registrasi PDF serta mengecek status verifikasi secara berkala dengan login ke portal menggunakan akun di atas.\n\nSalam Kemanusiaan,\nPanitia Pelaksana JUMBARA PMR TINGKAT KABUPATEN 2026\nPalang Merah Indonesia";
-            $headers = "From: no-reply@jumbara-pmi.or.id\r\nContent-Type: text/plain; charset=UTF-8\r\nX-Mailer: PHP/" . phpversion();
-            @mail($email, $emailSubject, $emailBody, $headers);
-            $emailSent = true;
+            $emailSent = sendRegistrationEmail($email, $fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $portalLoginUrl);
         }
 
         jsonResponse([
-            'message' => 'Pendaftaran berhasil dikirim! Kode pendaftaran Anda: ' . $participantCode . '.',
+            'message' => 'Pendaftaran berhasil dikirim! Akun login Anda telah aktif dengan Kode: ' . $participantCode . '.',
             'code' => $participantCode,
             'username' => $username,
             'password' => $password,
             'phone' => $phone,
             'email' => $email,
             'email_sent' => $emailSent,
+            'wa_url' => $waUrl,
+            'login_url' => $portalLoginUrl,
             'fonnte_status' => $fonnteResult,
             'participant_data' => [
                 'code' => $participantCode,
@@ -379,6 +398,7 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'blood_type' => $input['blood_type'] ?? 'O',
                 'phone' => $input['phone'] ?? '-',
                 'email' => $email ?: '-',
+                'wa_url' => $waUrl,
                 'birth_place' => $input['birth_place'] ?? '-',
                 'birth_date' => $input['birth_date'] ?? '-',
                 'photo_url' => $photoUrl,

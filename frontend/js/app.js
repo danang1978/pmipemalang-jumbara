@@ -9488,10 +9488,11 @@ const App = {
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Nama Pengguna / Peserta</th>
                 <th>Username</th>
                 <th>Peran / Role</th>
-                <th>Unit / Instansi</th>
-                <th>Email</th>
+                <th>Unit / Kontingen</th>
+                <th>Kontak (Email & WA)</th>
                 <th>Tgl Dibuat</th>
                 <th>Aksi Kelola & Reset Password</th>
               </tr>
@@ -9500,10 +9501,20 @@ const App = {
               ${users.map(u => `
                 <tr>
                   <td>#${u.id}</td>
-                  <td><strong>${Utils.escapeHtml(u.username)}</strong></td>
+                  <td>
+                    <strong>${Utils.escapeHtml(u.full_name || u.username)}</strong>
+                    ${u.participant_code ? `<br><span style="display:inline-block; font-size:0.75rem; background:#fee2e2; color:#991b1b; padding:1px 6px; border-radius:4px; font-weight:700; margin-top:2px;"><i class="fa-solid fa-id-badge"></i> ${Utils.escapeHtml(u.participant_code)}</span>` : ''}
+                  </td>
+                  <td><code style="font-size: 0.85rem; font-weight: 700; color: #1e40af;">${Utils.escapeHtml(u.username)}</code></td>
                   <td>${getRoleBadge(u.role)}</td>
                   <td>${u.unit_name ? Utils.escapeHtml(u.unit_name) : '<em style="color:#94a3b8;">- (Kabupaten/Umum)</em>'}</td>
-                  <td>${u.email ? Utils.escapeHtml(u.email) : '<em style="color:#94a3b8;">-</em>'}</td>
+                  <td>
+                    <div style="font-size: 0.82rem;">
+                      ${u.email ? `<div><i class="fa-solid fa-envelope" style="color: #0284c7; width: 14px;"></i> ${Utils.escapeHtml(u.email)}</div>` : ''}
+                      ${u.phone ? `<div><i class="fa-brands fa-whatsapp" style="color: #16a34a; width: 14px;"></i> ${Utils.escapeHtml(u.phone)}</div>` : ''}
+                      ${!u.email && !u.phone ? '<em style="color:#94a3b8;">-</em>' : ''}
+                    </div>
+                  </td>
                   <td>${Utils.formatDate(u.created_at)}</td>
                   <td>
                     <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
@@ -9615,6 +9626,10 @@ const App = {
           <div class="modal-body" style="padding: 1.25rem;">
             <form onsubmit="App.handleCreateUserSubmit(event)">
               <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Nama Lengkap Pengguna / PIC</label>
+                <input type="text" id="u_full_name" placeholder="Nama lengkap atau nama peserta" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 1rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Username <span style="color: red;">*</span></label>
                 <input type="text" id="u_username" required placeholder="Contoh: juri_pertolongan_pertama" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
               </div>
@@ -9642,9 +9657,15 @@ const App = {
                   ${unitsOptions}
                 </select>
               </div>
-              <div class="form-group" style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Email</label>
-                <input type="email" id="u_email" placeholder="email@domain.com" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                <div class="form-group">
+                  <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Email</label>
+                  <input type="email" id="u_email" placeholder="email@domain.com" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div class="form-group">
+                  <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">No. WA / Telepon</label>
+                  <input type="text" id="u_phone" placeholder="0812xxxxxxx" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
               </div>
               <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('userFormModal').remove()">Batal</button>
@@ -9663,6 +9684,8 @@ const App = {
   async handleCreateUserSubmit(e) {
     e.preventDefault();
     const payload = {
+      full_name: document.getElementById('u_full_name')?.value.trim() || '',
+      phone: document.getElementById('u_phone')?.value.trim() || '',
       username: document.getElementById('u_username')?.value.trim(),
       password: document.getElementById('u_password')?.value.trim(),
       role: document.getElementById('u_role')?.value,
@@ -9695,6 +9718,10 @@ const App = {
           <div class="modal-body" style="padding: 1.25rem;">
             <form onsubmit="App.handleUpdateUserSubmit(event, ${user.id})">
               <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Nama Lengkap Pengguna / Peserta</label>
+                <input type="text" id="ue_full_name" value="${Utils.escapeHtml(user.full_name || '')}" placeholder="Nama lengkap pengguna" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 1rem;">
                 <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Username</label>
                 <input type="text" value="${Utils.escapeHtml(user.username)}" disabled style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; background: #f1f5f9;">
               </div>
@@ -9718,9 +9745,15 @@ const App = {
                   ${unitsOptions}
                 </select>
               </div>
-              <div class="form-group" style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Email</label>
-                <input type="email" id="ue_email" value="${Utils.escapeHtml(user.email || '')}" placeholder="email@domain.com" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                <div class="form-group">
+                  <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">Email</label>
+                  <input type="email" id="ue_email" value="${Utils.escapeHtml(user.email || '')}" placeholder="email@domain.com" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
+                <div class="form-group">
+                  <label style="display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.88rem;">No. WA / Telepon</label>
+                  <input type="text" id="ue_phone" value="${Utils.escapeHtml(user.phone || '')}" placeholder="0812xxxxxxx" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                </div>
               </div>
               <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('userFormModal').remove()">Batal</button>
@@ -9740,6 +9773,8 @@ const App = {
     e.preventDefault();
     const payload = {
       user_id: userId,
+      full_name: document.getElementById('ue_full_name')?.value.trim() || '',
+      phone: document.getElementById('ue_phone')?.value.trim() || '',
       role: document.getElementById('ue_role')?.value,
       unit_id: document.getElementById('ue_unit_id')?.value || null,
       email: document.getElementById('ue_email')?.value.trim()
@@ -10376,13 +10411,24 @@ const App = {
   async handleRegister(e) {
     e.preventDefault();
 
+    const emailVal = document.getElementById('regEmail')?.value.trim() || '';
+    if (!emailVal) {
+      Utils.showToast('Alamat email aktif wajib diisi untuk penerimaan akun portal (Username & Password) dan bukti pendaftaran.', 'warning');
+      document.getElementById('regEmail')?.focus();
+      return;
+    }
+
     const selectedSubCats = Array.from(document.querySelectorAll('input[name="regCategory"]:checked')).map(cb => cb.value);
+
+    const unitSelect = document.getElementById('regUnitId');
+    const unitNameText = unitSelect && unitSelect.options[unitSelect.selectedIndex] ? unitSelect.options[unitSelect.selectedIndex].text : '-';
 
     const payload = {
       unit_id: parseInt(document.getElementById('regUnitId').value),
       level: document.getElementById('regLevel').value,
       full_name: document.getElementById('regFullName').value.trim(),
       nisn: document.getElementById('regNisn').value.trim(),
+      email: emailVal,
       religion: document.getElementById('regReligion')?.value || 'Islam',
       is_disabled: document.getElementById('regIsDisabled')?.value || 'Tidak',
       disability_type: document.getElementById('regDisabilityType')?.value || 'Tidak Ada',
@@ -10401,10 +10447,33 @@ const App = {
       const res = await API.registerPeserta(payload);
       Utils.showToast(res.message, 'success');
       this.closeModal('registerModal');
-      if (res.wa_url) {
-        window.open(res.wa_url, '_blank');
-      }
-      this.openLoginModal();
+
+      const pData = res.participant_data || {
+        code: res.code,
+        username: res.username,
+        password: res.password,
+        full_name: payload.full_name,
+        nisn: payload.nisn,
+        level: payload.level,
+        registration_type: 'Peserta',
+        unit_name: unitNameText,
+        religion: payload.religion,
+        gender: payload.gender,
+        blood_type: payload.blood_type,
+        is_disabled: payload.is_disabled,
+        disability_type: payload.disability_type,
+        birth_place: payload.birth_place,
+        birth_date: payload.birth_date,
+        address: payload.address,
+        phone: payload.phone,
+        email: payload.email,
+        emergency_contact: payload.emergency_contact,
+        photo_url: payload.photo_url,
+        wa_url: res.wa_url || '',
+        status: 'pending_unit'
+      };
+      pData.wa_url = res.wa_url || pData.wa_url;
+      this.renderRegistrationSuccessDetailView(pData);
     } catch (err) {
       Utils.showToast(err.message, 'error');
     }
@@ -13299,7 +13368,7 @@ const App = {
           <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
           <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.35rem; color: #ffffff;">PENDAFTARAN RESMI BERHASIL DITERIMA!</h2>
           <p style="font-size: 0.95rem; opacity: 0.95; max-width: 600px; margin: 0 auto 0.85rem auto;">
-            Terima kasih, data pendaftaran Anda telah tercatat di sistem JUMBARA PMR 2026.
+            Terima kasih, data pendaftaran Anda telah tercatat sebagai Peserta dan Akun Pengguna Resmi di sistem JUMBARA PMR 2026.
           </p>
           <div style="display: inline-block; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 0.4rem 1.25rem; border-radius: 20px; font-weight: 800; font-size: 1.05rem;">
             KODE REGISTRASI: <span style="color: #fef08a;">${participantData.code || '-'}</span>
@@ -13307,32 +13376,56 @@ const App = {
         </div>
 
         <!-- NOTIFIKASI OTOMATIS TERKIRIM ALERT -->
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-          <i class="fa-solid fa-paper-plane" style="color: #15803d; font-size: 1.3rem; margin-top: 0.15rem; flex-shrink: 0;"></i>
-          <div>
-            <strong style="font-size: 0.95rem; color: #14532d;">Notifikasi Otomatis Sistem Dikirim:</strong><br>
-            Rincian pendaftaran serta informasi login akun telah dikirimkan secara otomatis oleh sistem ke <strong>WhatsApp (${Utils.escapeHtml(participantData.phone || '-')})</strong> dan <strong>Email (${Utils.escapeHtml(participantData.email || '-')})</strong>.
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.92rem; display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <i class="fa-solid fa-paper-plane" style="color: #15803d; font-size: 1.35rem; margin-top: 0.15rem; flex-shrink: 0;"></i>
+            <div>
+              <strong style="font-size: 0.98rem; color: #14532d;">Notifikasi Otomatis Telah Diproses:</strong><br>
+              Bukti pendaftaran dan akun login Anda telah dikirimkan ke <strong>WhatsApp (${Utils.escapeHtml(participantData.phone || '-')})</strong> dan <strong>Email (${Utils.escapeHtml(participantData.email || '-')})</strong>.
+            </div>
           </div>
+          ${participantData.wa_url ? `
+            <div style="margin-left: 2.1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding-top: 0.35rem; border-top: 1px dashed #bbf7d0;">
+              <a href="${participantData.wa_url}" target="_blank" class="btn btn-success" style="background: #25D366; border-color: #25D366; color: white; padding: 0.65rem 1.25rem; font-size: 0.92rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(37,211,102,0.35);">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.35rem;"></i> 💬 Buka Bukti Pendaftaran di WhatsApp
+              </a>
+              <span style="font-size: 0.8rem; color: #166534;">* Klik untuk membuka template pesan konfirmasi pendaftaran di WhatsApp</span>
+            </div>
+          ` : ''}
         </div>
 
         <!-- KREDENSIAL AKUN LOGIN PORTAL -->
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
-          <h4 style="color: #1d4ed8; margin-bottom: 0.6rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem;">
-            <i class="fa-solid fa-key"></i> Akun Login Portal Resmi Peserta
-          </h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px dashed #93c5fd; margin-bottom: 0.5rem;">
-            <div>
-              <span style="font-size: 0.8rem; color: #64748b; display: block;">Username / ID Login:</span>
-              <strong style="font-size: 1.1rem; color: #1e3a8a; letter-spacing: 0.5px;">${participantData.username || '-'}</strong>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.35rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 4px 14px rgba(30,58,138,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <h4 style="color: #1d4ed8; margin: 0; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">
+              <i class="fa-solid fa-key"></i> Akun Login Portal Resmi Peserta
+            </h4>
+            <span style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 12px;">Akun User Aktif</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #ffffff; padding: 1.1rem; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 0.8rem; color: #64748b; display: block;">Username / ID Login:</span>
+                <strong style="font-size: 1.15rem; color: #1e3a8a; letter-spacing: 0.5px; font-family: monospace;">${participantData.username || '-'}</strong>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.copyToClipboard('${Utils.escapeHtml(participantData.username || '')}', 'Username')">
+                <i class="fa-solid fa-copy"></i> Salin
+              </button>
             </div>
-            <div>
-              <span style="font-size: 0.8rem; color: #64748b; display: block;">Password Login:</span>
-              <strong style="font-size: 1.1rem; color: #1e3a8a; letter-spacing: 0.5px;">${participantData.password || '-'}</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 0.8rem; color: #64748b; display: block;">Password Login:</span>
+                <strong style="font-size: 1.15rem; color: #1e3a8a; letter-spacing: 0.5px; font-family: monospace;">${participantData.password || '-'}</strong>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.copyToClipboard('${Utils.escapeHtml(participantData.password || '')}', 'Password')">
+                <i class="fa-solid fa-copy"></i> Salin
+              </button>
             </div>
           </div>
-          <small style="color: #475569; font-size: 0.8rem;">
-            * Simpan username dan password di atas untuk masuk ke Portal Peserta JUMBARA, mengecek status verifikasi, presensi QR code, dan mengunduh Kartu Peserta (ID Card).
-          </small>
+          <p style="color: #475569; font-size: 0.82rem; margin: 0; line-height: 1.45;">
+            💡 <strong>Info Fleksibilitas Login:</strong> Anda dapat login menggunakan <strong>Username</strong>, <strong>Alamat Email (${Utils.escapeHtml(participantData.email || '-')})</strong>, atau <strong>Kode Registrasi (${participantData.code || '-'})</strong> dengan password di atas.
+          </p>
         </div>
 
         <!-- DETAIL DATA PENDAFTARAN (PANEL TABEL) -->
@@ -13423,10 +13516,10 @@ const App = {
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-            <button type="button" class="btn btn-primary" onclick="App.openLoginModalWithCredentials('${Utils.escapeHtml(participantData.username || '')}', '${Utils.escapeHtml(participantData.password || '')}')" style="justify-content: center; font-weight: 800; background: #059669; border-color: #059669; color: white;">
-              <i class="fa-solid fa-right-to-bracket"></i> 🔑 Login ke Portal Peserta Sekarang
+            <button type="button" class="btn btn-primary" onclick="App.directLoginWithCredentials('${Utils.escapeHtml(participantData.username || '')}', '${Utils.escapeHtml(participantData.password || '')}')" style="justify-content: center; font-weight: 800; background: #059669; border-color: #059669; color: white; padding: 0.85rem 1rem; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(5,150,105,0.3);">
+              <i class="fa-solid fa-right-to-bracket"></i> 🚀 Langsung Masuk ke Portal Peserta
             </button>
-            <button type="button" class="btn btn-secondary" onclick="App.renderView()" style="justify-content: center; font-weight: 700;">
+            <button type="button" class="btn btn-secondary" onclick="App.renderView()" style="justify-content: center; font-weight: 700; padding: 0.85rem 1rem;">
               <i class="fa-solid fa-house"></i> Kembali ke Beranda Utama
             </button>
           </div>
@@ -13436,6 +13529,55 @@ const App = {
     `;
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  copyToClipboard(text, label = 'Teks') {
+    if (!text) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        Utils.showToast(`${label} berhasil disalin!`, 'success');
+      }).catch(() => {
+        this.fallbackCopyText(text, label);
+      });
+    } else {
+      this.fallbackCopyText(text, label);
+    }
+  },
+
+  fallbackCopyText(text, label) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      Utils.showToast(`${label} berhasil disalin!`, 'success');
+    } catch (err) {
+      Utils.showToast(`Gagal menyalin ${label}`, 'error');
+    }
+    document.body.removeChild(textArea);
+  },
+
+  async directLoginWithCredentials(username, password) {
+    if (!username || !password) {
+      this.openLoginModalWithCredentials(username, password);
+      return;
+    }
+    Utils.showToast('Memproses login otomatis ke Portal Peserta...', 'info');
+    try {
+      const res = await API.login(username, password);
+      this.currentUser = res.user;
+      Utils.showToast(`Selamat datang, ${res.user.full_name || res.user.username}!`, 'success');
+      this.renderNav();
+      await this.renderView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      this.openLoginModalWithCredentials(username, password);
+    }
   },
 
   openLoginModalWithCredentials(username = '', password = '') {

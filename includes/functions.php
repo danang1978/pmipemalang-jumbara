@@ -320,3 +320,214 @@ if (!function_exists('sendFonnteWhatsApp')) {
         ];
     }
 }
+
+if (!function_exists('buildWhatsAppRegistrationMessage')) {
+    function buildWhatsAppRegistrationMessage($fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $loginUrl = '') {
+        $settings = getAppSettings();
+        $appName = $settings['app_name'] ?? 'JUMBARA PMR TINGKAT KABUPATEN 2026';
+        $orgName = $settings['organizer_name'] ?? 'PMI Kabupaten Pemalang';
+
+        if (!$loginUrl) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8888';
+            $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+            $baseDir = rtrim(str_replace(['/api', '\\api'], '', $scriptDir), '/');
+            $loginUrl = $protocol . $host . $baseDir . '/#login';
+        }
+
+        return "Halo *{$fullName}*,\n\n"
+            . "Pendaftaran Anda untuk kegiatan *{$appName}* ({$orgName}) telah *BERHASIL DITERIMA & DIDAFTARKAN!*\n\n"
+            . "📋 *RINCIAN PENDAFTARAN RESMI:*\n"
+            . "• Kode Registrasi: *{$participantCode}*\n"
+            . "• Nama Lengkap: *{$fullName}*\n"
+            . "• Kategori / Unsur: *{$registrationType}* ({$level})\n"
+            . "• Kontingen Unit: *{$unitName}*\n\n"
+            . "================================\n"
+            . "🔑 *AKUN LOGIN PORTAL RESMI ANDA:*\n"
+            . "• Username: *{$username}*\n"
+            . "• Password: *{$password}*\n"
+            . "• Link Login: {$loginUrl}\n"
+            . "================================\n\n"
+            . "📌 *Panduan Login & Akses:*\n"
+            . "1. Gunakan Username dan Password di atas untuk login ke portal resmi.\n"
+            . "2. Anda juga dapat login menggunakan Username, Alamat Email, atau Kode Registrasi ({$participantCode}).\n"
+            . "3. Melalui portal, Anda dapat memantau status verifikasi berkas, presensi QR code, jadwal kegiatan, dan mencetak ID Card resmi.\n\n"
+            . "Salam Kemanusiaan,\n"
+            . "*Panitia Pelaksana Jumbara PMR*\n"
+            . "*{$orgName}*";
+    }
+}
+
+if (!function_exists('buildWhatsAppRegistrationUrl')) {
+    function buildWhatsAppRegistrationUrl($targetPhone, $fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $loginUrl = '') {
+        $message = buildWhatsAppRegistrationMessage($fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $loginUrl);
+        $phone = preg_replace('/[^0-9]/', '', $targetPhone);
+        if (strpos($phone, '0') === 0) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (strpos($phone, '8') === 0) {
+            $phone = '62' . $phone;
+        }
+        return 'https://api.whatsapp.com/send?phone=' . $phone . '&text=' . rawurlencode($message);
+    }
+}
+
+if (!function_exists('sendRegistrationEmail')) {
+    function sendRegistrationEmail($toEmail, $fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $loginUrl = '') {
+        if (empty($toEmail) || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $settings = getAppSettings();
+        $appName = $settings['app_name'] ?? 'JUMBARA PMR TINGKAT KABUPATEN 2026';
+        $orgName = $settings['organizer_name'] ?? 'Palang Merah Indonesia Kabupaten Pemalang';
+        $contactEmail = $settings['contact_email'] ?? 'sekretariat@jumbara-pmi.or.id';
+        $contactPhone = $settings['contact_phone'] ?? '(0284) 321-PMI';
+        $contactAddress = $settings['contact_address'] ?? 'Markas PMI Kabupaten Pemalang';
+
+        if (!$loginUrl) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8888';
+            $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+            $baseDir = rtrim(str_replace(['/api', '\\api'], '', $scriptDir), '/');
+            $loginUrl = $protocol . $host . $baseDir . '/#login';
+        }
+
+        $subject = "Bukti Pendaftaran & Akun Login {$appName} - [{$participantCode}]";
+
+        $html = '<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . htmlspecialchars($subject) . '</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f1f5f9; padding: 20px 10px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 620px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+                    
+                    <!-- HEADER KOP RESMI -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); padding: 26px 24px; text-align: center; color: #ffffff;">
+                            <div style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #fecaca; margin-bottom: 4px;">
+                                ' . htmlspecialchars($orgName) . '
+                            </div>
+                            <h1 style="margin: 0; font-size: 20px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">
+                                ' . htmlspecialchars($appName) . '
+                            </h1>
+                            <div style="font-size: 12px; margin-top: 6px; color: #fee2e2;">
+                                Surat Konfirmasi Pendaftaran & Akun Portal Resmi
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- CONTENT BODY -->
+                    <tr>
+                        <td style="padding: 28px 24px;">
+                            <p style="margin-top: 0; font-size: 15px; color: #334155;">
+                                Halo <strong>' . htmlspecialchars($fullName) . '</strong>,
+                            </p>
+                            <p style="font-size: 14px; color: #475569; margin-bottom: 20px;">
+                                Selamat! Pendaftaran Anda sebagai <strong>' . htmlspecialchars($registrationType) . '</strong> pada kegiatan <strong>' . htmlspecialchars($appName) . '</strong> telah <strong>BERHASIL DITERIMA</strong> di sistem pusat.
+                            </p>
+
+                            <!-- KODE PENDAFTARAN BADGE -->
+                            <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 22px;">
+                                <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px;">
+                                    Kode Registrasi Resmi Peserta
+                                </div>
+                                <div style="font-size: 22px; font-weight: 800; color: #b91c1c; letter-spacing: 1.5px; margin-top: 4px;">
+                                    ' . htmlspecialchars($participantCode) . '
+                                </div>
+                            </div>
+
+                            <!-- TABEL RINCIAN -->
+                            <table width="100%" cellspacing="0" cellpadding="8" border="0" style="font-size: 13px; border-collapse: collapse; margin-bottom: 22px; background-color: #ffffff; border: 1px solid #f1f5f9; border-radius: 6px;">
+                                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                    <td style="width: 38%; color: #64748b; font-weight: 600;">Nama Lengkap</td>
+                                    <td style="color: #0f172a; font-weight: 700;">' . htmlspecialchars($fullName) . '</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #e2e8f0;">
+                                    <td style="color: #64748b; font-weight: 600;">Kategori / Unsur</td>
+                                    <td style="color: #0f172a;">' . htmlspecialchars($registrationType) . ' (' . htmlspecialchars($level) . ')</td>
+                                </tr>
+                                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                    <td style="color: #64748b; font-weight: 600;">Kontingen / Unit</td>
+                                    <td style="color: #0f172a;">' . htmlspecialchars($unitName) . '</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #64748b; font-weight: 600;">Status Saat Ini</td>
+                                    <td><span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 12px;">Menunggu Verifikasi Unit & PMI</span></td>
+                                </tr>
+                            </table>
+
+                            <!-- BOX AKUN LOGIN PORTAL -->
+                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-size: 16px; font-weight: 800; color: #1e40af;">
+                                        🔑 AKUN LOGIN PORTAL RESMI ANDA
+                                    </span>
+                                </div>
+                                <table width="100%" cellspacing="0" cellpadding="6" border="0" style="font-size: 14px; background: #ffffff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 12px;">
+                                    <tr>
+                                        <td style="width: 35%; color: #475569; font-weight: 600; padding-left: 12px;">Username:</td>
+                                        <td style="color: #1e3a8a; font-weight: 800; font-family: monospace; font-size: 15px;">' . htmlspecialchars($username) . '</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #475569; font-weight: 600; padding-left: 12px;">Password:</td>
+                                        <td style="color: #1e3a8a; font-weight: 800; font-family: monospace; font-size: 15px;">' . htmlspecialchars($password) . '</td>
+                                    </tr>
+                                </table>
+                                <p style="margin: 0; font-size: 12px; color: #3b82f6; line-height: 1.4;">
+                                    💡 <em>Anda juga dapat login ke portal menggunakan Username, Alamat Email ini, atau Kode Registrasi (' . htmlspecialchars($participantCode) . ') dengan password di atas.</em>
+                                </p>
+                            </div>
+
+                            <!-- TOMBOL LOGIN PORTAL -->
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <a href="' . htmlspecialchars($loginUrl) . '" target="_blank" style="display: inline-block; background-color: #dc2626; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 10px rgba(220,38,38,0.25);">
+                                    🚀 Masuk / Login ke Portal Peserta
+                                </a>
+                            </div>
+
+                            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 0;">
+                                Harap simpan email ini sebagai bukti pendaftaran resmi. Untuk keamanan akun Anda, jangan berikan kredensial password di atas kepada pihak lain.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER RESMI -->
+                    <tr>
+                        <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+                            <div style="font-weight: 700; color: #64748b; margin-bottom: 4px;">
+                                Panitia Pelaksana ' . htmlspecialchars($appName) . '
+                            </div>
+                            <div>
+                                ' . htmlspecialchars($orgName) . ' | Telp: ' . htmlspecialchars($contactPhone) . ' | Email: ' . htmlspecialchars($contactEmail) . '
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px;">
+                                ' . htmlspecialchars($contactAddress) . '
+                            </div>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>';
+
+        $headers = [];
+        $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'Content-type: text/html; charset=UTF-8';
+        $headers[] = 'From: PMI Kabupaten Pemalang <no-reply@jumbara-pmi.or.id>';
+        $headers[] = 'Reply-To: ' . $contactEmail;
+        $headers[] = 'X-Mailer: PHP/' . phpversion();
+
+        $sent = @mail($toEmail, $subject, $html, implode("\r\n", $headers));
+        return $sent;
+    }
+}
+

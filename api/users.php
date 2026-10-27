@@ -25,8 +25,12 @@ if ($method === 'GET') {
     $params = [];
 
     if ($search !== '') {
-        $where[] = "(u.username LIKE ? OR u.email LIKE ? OR un.name LIKE ?)";
+        $where[] = "(u.username LIKE ? OR u.email LIKE ? OR un.name LIKE ? OR u.full_name LIKE ? OR p.full_name LIKE ? OR p.code LIKE ? OR p.phone LIKE ?)";
         $term = "%{$search}%";
+        $params[] = $term;
+        $params[] = $term;
+        $params[] = $term;
+        $params[] = $term;
         $params[] = $term;
         $params[] = $term;
         $params[] = $term;
@@ -39,14 +43,25 @@ if ($method === 'GET') {
 
     $whereClause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
-    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM users u LEFT JOIN units un ON u.unit_id = un.id {$whereClause}");
+    $countStmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT u.id) 
+        FROM users u 
+        LEFT JOIN units un ON u.unit_id = un.id 
+        LEFT JOIN participants p ON p.user_id = u.id
+        {$whereClause}
+    ");
     $countStmt->execute($params);
     $total = (int)$countStmt->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT u.id, u.username, u.email, u.role, u.unit_id, u.created_at, un.name AS unit_name
+        SELECT u.id, u.username, u.email, u.role, u.unit_id, u.created_at,
+               COALESCE(u.full_name, p.full_name) AS full_name,
+               COALESCE(u.phone, p.phone) AS phone,
+               p.id AS participant_id, p.code AS participant_code, p.level, p.status AS participant_status,
+               un.name AS unit_name
         FROM users u
         LEFT JOIN units un ON u.unit_id = un.id
+        LEFT JOIN participants p ON p.user_id = u.id
         {$whereClause}
         ORDER BY u.id DESC
         LIMIT {$limit} OFFSET {$offset}
@@ -99,6 +114,8 @@ if ($method === 'POST') {
         $password = trim($input['password'] ?? '');
         $email = trim($input['email'] ?? '');
         $role = trim($input['role'] ?? 'peserta');
+        $fullName = trim($input['full_name'] ?? '');
+        $phone = trim($input['phone'] ?? '');
         $unitId = !empty($input['unit_id']) ? (int)$input['unit_id'] : null;
 
         if (!$username || !$password) {
@@ -115,8 +132,8 @@ if ($method === 'POST') {
         }
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
-        $stmtIns->execute([$username, $hash, $email, $role, $unitId]);
+        $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null]);
 
         jsonResponse([
             'message' => "User baru '{$username}' dengan peran '{$role}' berhasil dibuat!",
@@ -128,16 +145,22 @@ if ($method === 'POST') {
         $userId = (int)($input['user_id'] ?? 0);
         $email = trim($input['email'] ?? '');
         $role = trim($input['role'] ?? '');
+        $fullName = trim($input['full_name'] ?? '');
+        $phone = trim($input['phone'] ?? '');
         $unitId = !empty($input['unit_id']) ? (int)$input['unit_id'] : null;
 
         if (!$userId || !$role) {
             jsonResponse(['error' => 'ID User dan Peran/Role wajib diisi.'], 400);
         }
 
-        $stmtUpd = $pdo->prepare("UPDATE users SET email = ?, role = ?, unit_id = ? WHERE id = ?");
-        $stmtUpd->execute([$email, $role, $unitId, $userId]);
+        $stmtUpd = $pdo->prepare("UPDATE users SET email = ?, role = ?, unit_id = ?, full_name = ?, phone = ? WHERE id = ?");
+        $stmtUpd->execute([$email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null, $userId]);
 
-        jsonResponse(['message' => 'Data user berhasil diperbarui!']);
+        // If user is a participant, also update participant's full_name and phone
+        $stmtPartUpd = $pdo->prepare("UPDATE participants SET full_name = ?, phone = ?, email = ? WHERE user_id = ?");
+        $stmtPartUpd->execute([$fullName ?: null, $phone ?: null, $email ?: null, $userId]);
+
+        jsonResponse(['message' => 'Data user dan peserta berhasil diperbarui!']);
     }
 }
 
