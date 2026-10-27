@@ -3036,6 +3036,13 @@ body.user-logged-in .nav-actions {
   padding-top: 0 !important;
 }
 
+/* Sembunyikan menu navigasi header di sebelah logo saat user sudah login karena menu sudah ada di portal dashboard bawah */
+body.user-logged-in .site-header .nav-menu,
+body.user-logged-in #publicNavMenu,
+body.user-logged-in #navToggleBtn {
+  display: none !important;
+}
+
 @keyframes mobileMenuSlideDown {
   from {
     opacity: 0;

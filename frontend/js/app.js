@@ -285,35 +285,15 @@ const App = {
       document.body.classList.add('user-logged-in');
       const role = this.currentUser.role;
 
+      // Menu navigasi di atas sebelah logo dihilangkan saat user login karena menu navigasi lengkap sudah tersedia di dashboard portal bawah
       if (publicNavMenu) {
-        publicNavMenu.classList.remove('hidden');
-        if (['kabupaten', 'admin_kabupaten', 'super_admin', 'panitia'].includes(role)) {
-          publicNavMenu.innerHTML = `
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('peserta'); App.closeMobileMenu();"><i class="fa-solid fa-users"></i> Peserta & Card</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('agenda'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-check"></i> Agenda & Presensi</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('penilaian'); App.closeMobileMenu();"><i class="fa-solid fa-award"></i> Penilaian & Laporan</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('pengaturan'); App.closeMobileMenu();"><i class="fa-solid fa-gears"></i> Pengaturan & Akun</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.openChangePasswordModal(); App.closeMobileMenu();"><i class="fa-solid fa-key"></i> Ganti Password Akun</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.handleLogout(); App.closeMobileMenu();" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
-          `;
-          publicNavMenu.style.display = '';
-        } else if (role === 'unit' || role === 'admin_unit') {
-          publicNavMenu.innerHTML = `
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('peserta'); App.closeMobileMenu();"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('jadwal'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('nilai'); App.closeMobileMenu();"><i class="fa-solid fa-award"></i> Rekap Nilai & Medali</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('piagam'); App.closeMobileMenu();"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.openChangePasswordModal(); App.closeMobileMenu();"><i class="fa-solid fa-key"></i> Ganti Password Akun</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.handleLogout(); App.closeMobileMenu();" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
-          `;
-          publicNavMenu.style.display = '';
-        } else {
-          publicNavMenu.style.display = 'none';
-        }
+        publicNavMenu.innerHTML = '';
+        publicNavMenu.style.display = 'none';
+        publicNavMenu.classList.add('hidden');
       }
       if (navToggleBtn) {
-        navToggleBtn.classList.remove('hidden');
-        navToggleBtn.style.display = (['kabupaten', 'admin_kabupaten', 'super_admin', 'panitia', 'unit', 'admin_unit'].includes(role)) ? '' : 'none';
+        navToggleBtn.style.display = 'none';
+        navToggleBtn.classList.add('hidden');
       }
 
       if (container) {
