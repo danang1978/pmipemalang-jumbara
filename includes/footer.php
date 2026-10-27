@@ -466,6 +466,55 @@ $settings = getAppSettings();
     </div>
   </div>
 
+  <!-- Modal 4.6: Menu Lainnya Bottom Sheet (Style Mobile JKN) -->
+  <div class="modal" id="menuLainnyaModal">
+    <div class="modal-dialog" style="max-width: 440px; margin: 1.5rem auto;">
+      <div class="modal-content" style="border-radius: 24px; overflow: hidden; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #e11d48 100%); color: #ffffff; padding: 1rem 1.25rem; border: none;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-table-cells-large" style="color: #ffffff; font-size: 1.15rem;"></i>
+            <div>
+              <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">Menu & Layanan Lainnya</h3>
+              <p style="margin: 0; font-size: 0.68rem; color: #e2e8f0; margin-top: 2px;">PORTAL PESERTA JUMBARA PMR</p>
+            </div>
+          </div>
+          <button class="modal-close" onclick="App.closeModal('menuLainnyaModal')" style="color: #ffffff; opacity: 0.85;">&times;</button>
+        </div>
+        <div class="modal-body" style="background: #ffffff; padding: 1.25rem;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem 0.5rem; text-align: center;">
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.downloadRegistrationFormPDF();">
+              <div class="jkn-icon-circle jkn-circle-sky"><i class="fa-solid fa-file-pdf"></i></div>
+              <span class="jkn-menu-label">Unduh PDF</span>
+            </div>
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.switchPesertaMobileTab('lomba');">
+              <div class="jkn-icon-circle jkn-circle-emerald"><i class="fa-solid fa-award"></i></div>
+              <span class="jkn-menu-label">Cabang Lomba</span>
+            </div>
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.switchPesertaMobileTab('medali');">
+              <div class="jkn-icon-circle jkn-circle-gold"><i class="fa-solid fa-trophy"></i></div>
+              <span class="jkn-menu-label">Klasemen</span>
+            </div>
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.openChangePasswordModal();">
+              <div class="jkn-icon-circle jkn-circle-violet"><i class="fa-solid fa-key"></i></div>
+              <span class="jkn-menu-label">Ganti Password</span>
+            </div>
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.openSaranModal();">
+              <div class="jkn-icon-circle jkn-circle-teal"><i class="fa-solid fa-comments"></i></div>
+              <span class="jkn-menu-label">Kotak Saran</span>
+            </div>
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.handleLogout();">
+              <div class="jkn-icon-circle jkn-circle-rose"><i class="fa-solid fa-right-from-bracket"></i></div>
+              <span class="jkn-menu-label">Keluar Akun</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.75rem 1.25rem; text-align: center;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('menuLainnyaModal')" style="width: 100%; border-radius: 12px; font-weight: 700;">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal 5: Input Penilaian Lomba -->
   <div class="modal" id="scoreModal">
     <div class="modal-dialog">

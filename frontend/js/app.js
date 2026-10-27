@@ -1532,24 +1532,28 @@ const App = {
   // VIEW 2: PESERTA PORTAL VIEW
   // =========================================================================
   switchPesertaMobileTab(tabId) {
-    document.querySelectorAll('.peserta-tab-btn, .peserta-segmented-btn').forEach(btn => {
-      const isActive = btn.dataset.tab === tabId;
-      btn.classList.toggle('active', isActive);
-      if (btn.classList.contains('peserta-segmented-btn')) {
-        btn.style.background = isActive ? '#0284c7' : 'transparent';
-        btn.style.color = isActive ? '#ffffff' : '#64748b';
-      } else {
-        btn.style.background = isActive ? '#0284c7' : '#f1f5f9';
-        btn.style.color = isActive ? '#ffffff' : '#475569';
-      }
-    });
+    // Update bottom nav buttons
+    const navBtnMap = {
+      'home': 'mbNavPesertaHome',
+      'presensi': 'mbNavPesertaPresensi',
+      'agenda': 'mbNavPesertaAgenda',
+      'medali': 'mbNavPesertaMedali',
+      'bio': 'mbNavPesertaBio'
+    };
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    if (navBtnMap[tabId] && document.getElementById(navBtnMap[tabId])) {
+      document.getElementById(navBtnMap[tabId]).classList.add('active');
+    }
 
+    // Toggle Tab Sections
+    const secHome = document.getElementById('pesertaTabHome');
     const secBio = document.getElementById('pesertaTabBio');
     const secLomba = document.getElementById('pesertaTabLomba');
     const secAgenda = document.getElementById('pesertaTabAgenda');
     const secPresensi = document.getElementById('pesertaTabPresensi');
     const secMedali = document.getElementById('pesertaTabMedali');
 
+    if (secHome) secHome.style.display = (tabId === 'home') ? 'block' : 'none';
     if (secBio) secBio.style.display = (tabId === 'bio') ? 'block' : 'none';
     if (secLomba) secLomba.style.display = (tabId === 'lomba') ? 'block' : 'none';
     if (secAgenda) secAgenda.style.display = (tabId === 'agenda') ? 'block' : 'none';
@@ -1561,6 +1565,28 @@ const App = {
     } else if (tabId === 'medali') {
       this.loadPesertaStandingsMobile();
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  openMenuLainnyaBottomSheet() {
+    this.openModal('menuLainnyaModal');
+  },
+
+  openSaranModal() {
+    this.openFeedbackModal();
+  },
+
+  filterJknNews(category, btn) {
+    document.querySelectorAll('.jkn-filter-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const cards = document.querySelectorAll('.jkn-article-card');
+    cards.forEach(card => {
+      if (category === 'semua' || card.dataset.category === category) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
   },
 
   // =========================================================================
@@ -1601,199 +1627,328 @@ const App = {
       const isKabDone = profile.status === 'verified_kabupaten';
 
       content.innerHTML = `
-        <div class="peserta-mobile-card">
+        <div class="peserta-mobile-card jkn-theme">
           
-          <!-- NATIVE MOBILE HERO BANNER -->
-          <div class="peserta-hero-banner">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <img src="${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Logo PMI" style="height: 28px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                <div>
-                  <div style="font-size: 0.72rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; text-transform: uppercase;">Portal Mobile Peserta</div>
-                  <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 600;">JUMBARA PMR PMI KABUPATEN</div>
+          <!-- TOP WAVE HEADER (Mobile JKN Style Gradient with Status Mockup) -->
+          <div class="jkn-wave-header">
+            <!-- Mockup Status Bar -->
+            <div class="jkn-status-bar">
+              <span class="jkn-status-time">09:05</span>
+              <div class="jkn-status-icons">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full"></i>
+              </div>
+            </div>
+
+            <!-- Top Brand Bar -->
+            <div class="jkn-top-bar">
+              <div class="jkn-brand">
+                <div class="jkn-logo-emblem">
+                  <i class="fa-solid fa-square-plus"></i>
+                </div>
+                <div class="jkn-brand-info">
+                  <span class="jkn-brand-title">JUMBARA <span class="jkn-brand-badge">PMR</span></span>
+                  <span class="jkn-brand-sub">PMI KABUPATEN PEMALANG</span>
                 </div>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <button onclick="App.openChangePasswordModal()" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 0.35rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;" title="Ganti Password Akun">
-                  <i class="fa-solid fa-key"></i> Pass
+              <div class="jkn-header-actions">
+                <button type="button" class="jkn-icon-action" onclick="App.scrollToSection('pengumuman')" title="Notifikasi Pengumuman">
+                  <i class="fa-solid fa-bell"></i>
+                  <span class="jkn-notif-badge">1</span>
                 </button>
-                <button onclick="App.handleLogout()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" title="Keluar dari Portal">
-                  <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                <button type="button" class="jkn-icon-action" onclick="App.handleLogout()" title="Keluar">
+                  <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
               </div>
             </div>
 
-            <!-- PROFILE INFO MAIN GRID -->
-            <div style="display: flex; gap: 1.1rem; align-items: center;">
-              <div style="position: relative; flex-shrink: 0;">
-                <img src="${profile.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" 
-                     alt="Foto" class="peserta-avatar-img"
-                     onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'">
-                <span style="position: absolute; bottom: -4px; right: -4px; background: ${isKabDone ? '#22c55e' : (isUnitDone ? '#3b82f6' : '#f59e0b')}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #090d16; box-shadow: 0 2px 6px rgba(0,0,0,0.4);" title="Status Verifikasi"></span>
-              </div>
-
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.15rem;">Selamat Datang 👋</div>
-                <h3 style="font-size: 1.2rem; font-weight: 800; color: #ffffff; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                  ${Utils.escapeHtml(profile.full_name || 'Peserta PMR')}
-                </h3>
-                
-                <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.45rem;">
-                  <span style="background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #7dd3fc; font-weight: 800; font-size: 0.78rem; padding: 0.15rem 0.65rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.3rem;">
-                    <i class="fa-solid fa-qrcode"></i> ${profile.code || '-'}
-                  </span>
-                  ${Utils.getLevelBadgeHtml(profile.level || 'Peserta')}
-                </div>
-
-                <div style="font-size: 0.8rem; color: #cbd5e1; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  <i class="fa-solid fa-school" style="color: #38bdf8;"></i> ${Utils.escapeHtml(profile.unit_name || 'Kontingen Unit Sekolah')}
-                </div>
-              </div>
+            <!-- Wave Transition Curve -->
+            <div class="jkn-wave-divider">
+              <svg viewBox="0 0 500 45" preserveAspectRatio="none">
+                <path d="M0,0 C150,45 350,5 500,35 L500,45 L0,45 Z" fill="#ffffff"></path>
+              </svg>
             </div>
           </div>
 
-          <!-- VERIFICATION STATUS STEPPER TIMELINE -->
-          <div style="background: #f8fafc; padding: 1.1rem 1.25rem; border-bottom: 1px solid #e2e8f0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span style="font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-clipboard-check" style="color: #0284c7;"></i> Status Verifikasi Pendaftaran
-              </span>
-              ${Utils.getStatusBadgeHtml(profile.status || 'pending_unit')}
-            </div>
-
-            <!-- Stepper Grid Bar -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
-              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.6rem 0.3rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(16,185,129,0.05);">
-                <div style="font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase;">1. Registrasi</div>
-                <div style="font-size: 0.78rem; color: #047857; font-weight: 800; margin-top: 0.15rem;">✓ Mandiri</div>
-              </div>
-
-              <div style="background: ${isUnitDone ? '#eff6ff' : '#fffbeb'}; border: 1px solid ${isUnitDone ? '#bfdbfe' : '#fef08a'}; padding: 0.6rem 0.3rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
-                <div style="font-size: 0.7rem; font-weight: 800; color: ${isUnitDone ? '#1d4ed8' : '#b45309'}; text-transform: uppercase;">2. Validasi Unit</div>
-                <div style="font-size: 0.78rem; color: ${isUnitDone ? '#1e40af' : '#d97706'}; font-weight: 800; margin-top: 0.15rem;">${isUnitDone ? '✓ Disetujui' : '⏳ Menunggu'}</div>
-              </div>
-
-              <div style="background: ${isKabDone ? '#ecfdf5' : '#f8fafc'}; border: 1px solid ${isKabDone ? '#a7f3d0' : '#cbd5e1'}; padding: 0.6rem 0.3rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <div style="font-size: 0.7rem; font-weight: 800; color: ${isKabDone ? '#059669' : '#64748b'}; text-transform: uppercase;">3. PMI Kab.</div>
-                <div style="font-size: 0.78rem; color: ${isKabDone ? '#047857' : '#94a3b8'}; font-weight: 800; margin-top: 0.15rem;">${isKabDone ? '🟢 Verified' : '⚙️ Proses'}</div>
-              </div>
-            </div>
-
-            ${profile.status === 'revision' ? `
-              <div style="background: #fffbebf5; border: 1px solid #fde68a; color: #92400e; padding: 0.85rem; border-radius: 14px; margin-top: 0.85rem; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12);">
-                <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 800; color: #b45309; margin-bottom: 0.3rem;">
-                  <i class="fa-solid fa-triangle-exclamation" style="color: #d97706; font-size: 1rem;"></i> PERBAIKAN DATA / REVISI BERKAS DIBUTUHKAN:
-                </div>
-                <p style="margin: 0.2rem 0 0.6rem 0; color: #78350f; font-size: 0.82rem; line-height: 1.4;">
-                  Catatan Verifikator: <em>"${Utils.escapeHtml(profile.reject_reason || 'Harap unggah ulang dokumen pas foto atau surat tugas Anda.')}"</em>
-                </p>
-                <button class="btn btn-warning btn-sm" onclick="App.openEditProfileModal()" style="background: #d97706; border-color: #d97706; color: white; width: 100%; justify-content: center; font-weight: 800; border-radius: 10px; padding: 0.5rem;">
-                  <i class="fa-solid fa-pen-to-square"></i> Perbaiki Data & Unggah Ulang Berkas
-                </button>
-              </div>
-            ` : ''}
-
-            ${profile.status === 'rejected' ? `
-              <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.85rem; border-radius: 14px; margin-top: 0.85rem; font-size: 0.85rem;">
-                <strong><i class="fa-solid fa-circle-xmark"></i> Pendaftaran Ditolak:</strong> ${Utils.escapeHtml(profile.reject_reason || 'Mohon hubungi Pembina Unit Sekolah Anda.')}
-              </div>
-            ` : ''}
-          </div>
-
-          <!-- MODERN APP LAUNCHER GRID (3x2 KEKINIAN) -->
-          <div style="padding: 1.15rem 1rem; background: #ffffff; border-bottom: 1px solid #f1f5f9;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding: 0 0.25rem;">
-              <span style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-shapes" style="color: #0284c7;"></i> Fitur & Layanan Utama
-              </span>
-              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; background: #f8fafc; padding: 2px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">6 Menu Cepat</span>
-            </div>
+          <!-- ================================================================= -->
+          <!-- TAB 0: HOME / BERANDA UTAMA (MOBILE JKN HOMEPAGE INTERFACE) -->
+          <!-- ================================================================= -->
+          <div id="pesertaTabHome" style="display: block;">
             
-            <div class="peserta-action-grid">
-              <!-- 1. QR CODE PRESENSI CEPAT (FOKUS SCANNER BESAR) -->
-              <div class="peserta-action-item" onclick="App.openLargeQRCodeModal()">
-                <div class="action-squircle squircle-rose">
-                  <i class="fa-solid fa-qrcode"></i>
+            <!-- GREETING & PARTICIPANT INFO SECTION -->
+            <div class="jkn-greeting-card">
+              <div class="jkn-greeting-row">
+                <div class="jkn-greeting-text">
+                  <div class="jkn-greeting-salute">Hi,</div>
+                  <h2 class="jkn-participant-name">${Utils.escapeHtml(profile.full_name || 'Peserta PMR')}</h2>
+                  
+                  <div class="jkn-meta-badges">
+                    <span class="jkn-code-pill">
+                      <i class="fa-solid fa-barcode"></i> ${profile.code || '-'}
+                    </span>
+                    ${Utils.getLevelBadgeHtml(profile.level || 'Madya')}
+                  </div>
+
+                  <div class="jkn-school-name">
+                    <i class="fa-solid fa-school"></i> ${Utils.escapeHtml(profile.unit_name || 'Kontingen Unit Sekolah')}
+                  </div>
                 </div>
-                <span class="action-title">QR Presensi</span>
-                <span class="action-sub">E-Pass Scanner</span>
+
+                <div class="jkn-avatar-wrap">
+                  <img src="${profile.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" 
+                       alt="Foto" class="jkn-avatar-img"
+                       onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'">
+                  <span class="jkn-status-dot ${isKabDone ? 'status-green' : (isUnitDone ? 'status-blue' : 'status-amber')}" title="Status Verifikasi"></span>
+                </div>
               </div>
 
-              <!-- 2. CETAK ID CARD FISIK -->
-              <div class="peserta-action-item" onclick="App.openIDCardModal(${profile.id})">
-                <div class="action-squircle squircle-blue">
-                  <i class="fa-solid fa-id-card"></i>
+              <!-- VERIFICATION STEPPER TIMELINE -->
+              <div class="jkn-stepper-box">
+                <div class="jkn-stepper-head">
+                  <span class="jkn-stepper-label"><i class="fa-solid fa-clipboard-check"></i> Status Verifikasi Pendaftaran</span>
+                  ${Utils.getStatusBadgeHtml(profile.status || 'pending_unit')}
                 </div>
-                <span class="action-title">ID Card</span>
-                <span class="action-sub">Cetak Fisik</span>
+                <div class="jkn-step-steps">
+                  <div class="jkn-step-item done">
+                    <span class="step-num">1</span>
+                    <span class="step-txt">Mandiri</span>
+                  </div>
+                  <div class="jkn-step-arrow"><i class="fa-solid fa-angle-right"></i></div>
+                  <div class="jkn-step-item ${isUnitDone ? 'done' : 'pending'}">
+                    <span class="step-num">2</span>
+                    <span class="step-txt">${isUnitDone ? 'Unit ✓' : 'Unit...'}</span>
+                  </div>
+                  <div class="jkn-step-arrow"><i class="fa-solid fa-angle-right"></i></div>
+                  <div class="jkn-step-item ${isKabDone ? 'done' : 'pending'}">
+                    <span class="step-num">3</span>
+                    <span class="step-txt">${isKabDone ? 'Kab. ✓' : 'Kab...'}</span>
+                  </div>
+                </div>
               </div>
 
-              <!-- 3. UNDUH FORM BUKTI REGISTRASI PDF -->
-              <div class="peserta-action-item" onclick="App.downloadRegistrationFormPDF()">
-                <div class="action-squircle squircle-sky">
-                  <i class="fa-solid fa-file-pdf"></i>
+              ${profile.status === 'revision' ? `
+                <div class="jkn-alert-revision">
+                  <strong><i class="fa-solid fa-triangle-exclamation"></i> Perbaikan Berkas Diperlukan:</strong>
+                  <p>${Utils.escapeHtml(profile.reject_reason || 'Mohon periksa dan unggah kembali berkas pas foto / surat tugas Anda.')}</p>
+                  <button type="button" class="btn btn-warning btn-xs" onclick="App.openEditProfileModal()">Perbaiki Data</button>
                 </div>
-                <span class="action-title">Bukti PDF</span>
-                <span class="action-sub">Formulir PMR</span>
-              </div>
+              ` : ''}
 
-              <!-- 4. RUNDOWN & JADWAL ACARA -->
-              <div class="peserta-action-item" onclick="App.switchPesertaMobileTab('agenda')">
-                <div class="action-squircle squircle-amber">
-                  <i class="fa-solid fa-calendar-days"></i>
+              ${profile.status === 'rejected' ? `
+                <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.85rem; border-radius: 14px; margin-top: 0.85rem; font-size: 0.85rem;">
+                  <strong><i class="fa-solid fa-circle-xmark"></i> Pendaftaran Ditolak:</strong> ${Utils.escapeHtml(profile.reject_reason || 'Mohon hubungi Pembina Unit Sekolah Anda.')}
                 </div>
-                <span class="action-title">Rundown</span>
-                <span class="action-sub">Jadwal Acara</span>
-              </div>
+              ` : ''}
+            </div>
 
-              <!-- 5. KLASEMEN & MEDALI KONTINGEN -->
-              <div class="peserta-action-item" onclick="App.switchPesertaMobileTab('medali')">
-                <div class="action-squircle squircle-gold">
-                  <i class="fa-solid fa-trophy"></i>
+            <!-- 8-GRID MENU LAUNCHER (4 Columns x 2 Rows - Exact Mobile JKN Look) -->
+            <div class="jkn-menu-section">
+              <div class="jkn-grid-container">
+                <!-- ROW 1 -->
+                <!-- 1. Info Jumbara -->
+                <div class="jkn-grid-item" onclick="App.scrollToSection('materi')">
+                  <div class="jkn-icon-circle jkn-circle-teal">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                  </div>
+                  <span class="jkn-grid-label">Info Jumbara</span>
                 </div>
-                <span class="action-title">Medali</span>
-                <span class="action-sub">Klasemen Unit</span>
-              </div>
 
-              <!-- 6. KEAMANAN & GANTI PASSWORD -->
-              <div class="peserta-action-item" onclick="App.openChangePasswordModal()">
-                <div class="action-squircle squircle-purple">
-                  <i class="fa-solid fa-key"></i>
+                <!-- 2. Lokasi Buperta -->
+                <div class="jkn-grid-item" onclick="App.scrollToSection('lokasi')">
+                  <div class="jkn-icon-circle jkn-circle-green">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                  </div>
+                  <span class="jkn-grid-label">Lokasi Buperta</span>
                 </div>
-                <span class="action-title">Keamanan</span>
-                <span class="action-sub">Ganti Password</span>
+
+                <!-- 3. Presensi QR (Fokus Scan Besar) -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('presensi')">
+                  <div class="jkn-icon-circle jkn-circle-cyan">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </div>
+                  <span class="jkn-grid-label">Presensi QR</span>
+                </div>
+
+                <!-- 4. Status Berkas -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('bio')">
+                  <div class="jkn-icon-circle jkn-circle-blue">
+                    <i class="fa-solid fa-file-circle-check"></i>
+                  </div>
+                  <span class="jkn-grid-label">Status Berkas</span>
+                </div>
+
+                <!-- ROW 2 -->
+                <!-- 5. Kartu Peserta -->
+                <div class="jkn-grid-item" onclick="App.openIDCardModal(${profile.id})">
+                  <div class="jkn-icon-circle jkn-circle-indigo">
+                    <i class="fa-solid fa-id-card"></i>
+                  </div>
+                  <span class="jkn-grid-label">Kartu Peserta</span>
+                </div>
+
+                <!-- 6. Rundown Acara -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('agenda')">
+                  <div class="jkn-icon-circle jkn-circle-emerald">
+                    <i class="fa-solid fa-calendar-check"></i>
+                  </div>
+                  <span class="jkn-grid-label">Rundown Acara</span>
+                </div>
+
+                <!-- 7. Perolehan Medali -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('medali')">
+                  <div class="jkn-icon-circle jkn-circle-amber">
+                    <i class="fa-solid fa-trophy"></i>
+                  </div>
+                  <span class="jkn-grid-label">Perolehan Medali</span>
+                </div>
+
+                <!-- 8. Menu Lainnya -->
+                <div class="jkn-grid-item" onclick="App.openMenuLainnyaBottomSheet()">
+                  <div class="jkn-icon-circle jkn-circle-sky">
+                    <i class="fa-solid fa-grip"></i>
+                  </div>
+                  <span class="jkn-grid-label">Menu Lainnya</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- MOBILE SEGMENTED PILL TAB SWITCHER -->
-          <div style="padding: 1.1rem 1.25rem 0 1.25rem; background: #ffffff;">
-            <div class="peserta-segmented-bar">
-              <button class="peserta-segmented-btn active" data-tab="bio" onclick="App.switchPesertaMobileTab('bio')">
-                <i class="fa-solid fa-address-card"></i> Biodata
-              </button>
-              <button class="peserta-segmented-btn" data-tab="lomba" onclick="App.switchPesertaMobileTab('lomba')">
-                <i class="fa-solid fa-award"></i> Cabang
-              </button>
-              <button class="peserta-segmented-btn" data-tab="agenda" onclick="App.switchPesertaMobileTab('agenda')">
-                <i class="fa-solid fa-calendar-check"></i> Agenda
-              </button>
-              <button class="peserta-segmented-btn" data-tab="presensi" onclick="App.switchPesertaMobileTab('presensi')">
-                <i class="fa-solid fa-history"></i> Presensi
-              </button>
-              <button class="peserta-segmented-btn" data-tab="medali" onclick="App.switchPesertaMobileTab('medali')">
-                <i class="fa-solid fa-trophy"></i> Medali
-              </button>
+            <!-- PROMOTIONAL EVENT CAROUSEL BANNER (Card Banner with 5 Dots) -->
+            <div class="jkn-banner-section">
+              <div class="jkn-promo-card">
+                <div class="jkn-promo-decor-curve"></div>
+                <div class="jkn-promo-content">
+                  <div class="jkn-promo-badge">
+                    <i class="fa-solid fa-bullhorn"></i> INFO JUMBARA IX
+                  </div>
+                  <h3 class="jkn-promo-title">Aman, Ceria & Berprestasi Bersama PMI</h3>
+                  <p class="jkn-promo-desc">Jumbara Palang Merah Remaja ke-IX Kabupaten Pemalang 2026 di Bumi Perkemahan.</p>
+                  <div class="jkn-promo-tags">
+                    <span><i class="fa-solid fa-hand-holding-heart"></i> Jumpa</span>
+                    <span><i class="fa-solid fa-seedling"></i> Bakti</span>
+                    <span><i class="fa-solid fa-face-smile"></i> Gembira</span>
+                  </div>
+                </div>
+                <div class="jkn-promo-ill">
+                  <i class="fa-solid fa-campground"></i>
+                </div>
+              </div>
+
+              <!-- 5-Dot Pagination Indicator -->
+              <div class="jkn-carousel-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
             </div>
+
+            <!-- ARTIKEL & INFORMASI FEED SECTION -->
+            <div class="jkn-articles-section">
+              <div class="jkn-articles-header">
+                <h3 class="jkn-articles-title">Artikel</h3>
+                <a href="javascript:void(0)" onclick="App.scrollToSection('pengumuman')" class="jkn-see-all-link">Lihat Semua</a>
+              </div>
+
+              <!-- Horizontal Filter Pills -->
+              <div class="jkn-pills-bar">
+                <button type="button" class="jkn-filter-pill active" onclick="App.filterJknNews('semua', this)">Semua</button>
+                <button type="button" class="jkn-filter-pill" onclick="App.filterJknNews('tips', this)">Tips Sehat</button>
+                <button type="button" class="jkn-filter-pill" onclick="App.filterJknNews('lomba', this)">Gaya Hidup</button>
+                <button type="button" class="jkn-filter-pill" onclick="App.filterJknNews('berita', this)">Berita</button>
+                <button type="button" class="jkn-filter-pill" onclick="App.filterJknNews('pmi', this)">Info PMI</button>
+              </div>
+
+              <!-- Horizontal Scrolling Article Cards -->
+              <div class="jkn-articles-scroll">
+                <div class="jkn-article-card" data-category="tips" onclick="App.scrollToSection('pengumuman')">
+                  <div class="jkn-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400" alt="Tips">
+                    <span class="thumb-tag tag-tips">Tips Sehat</span>
+                  </div>
+                  <div class="jkn-card-body">
+                    <h4 class="card-headline">Panduan Pertolongan Pertama (PP) di Bumi Perkemahan</h4>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> 27 Okt 2026 • 3 mnt</div>
+                  </div>
+                </div>
+
+                <div class="jkn-article-card" data-category="tips" onclick="App.scrollToSection('pengumuman')">
+                  <div class="jkn-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400" alt="Hidrasi">
+                    <span class="thumb-tag tag-tips">Tips Hidrasi</span>
+                  </div>
+                  <div class="jkn-card-body">
+                    <h4 class="card-headline">Menjaga Kebugaran & Asupan Air Selama Simulasi Lapangan</h4>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> 26 Okt 2026 • 2 mnt</div>
+                  </div>
+                </div>
+
+                <div class="jkn-article-card" data-category="lomba" onclick="App.scrollToSection('kegiatan')">
+                  <div class="jkn-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=400" alt="Lomba">
+                    <span class="thumb-tag tag-lomba">Gaya Hidup</span>
+                  </div>
+                  <div class="jkn-card-body">
+                    <h4 class="card-headline">Jadwal Kirab Budaya, Pentas Seni & Api Unggun Jumbara</h4>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> 25 Okt 2026 • 4 mnt</div>
+                  </div>
+                </div>
+
+                <div class="jkn-article-card" data-category="berita" onclick="App.scrollToSection('pengumuman')">
+                  <div class="jkn-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400" alt="Berita">
+                    <span class="thumb-tag tag-berita">Berita</span>
+                  </div>
+                  <div class="jkn-card-body">
+                    <h4 class="card-headline">Kesiapan Posko Medis dan Sanitasi Lingkungan Buperta</h4>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> 24 Okt 2026 • 3 mnt</div>
+                  </div>
+                </div>
+
+                <div class="jkn-article-card" data-category="pmi" onclick="App.scrollToSection('materi')">
+                  <div class="jkn-card-thumb">
+                    <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400" alt="Info PMI">
+                    <span class="thumb-tag tag-pmi">Info PMI</span>
+                  </div>
+                  <div class="jkn-card-body">
+                    <h4 class="card-headline">Mengenal 7 Prinsip Dasar Kepalangmerahan Internasional</h4>
+                    <div class="card-meta"><i class="fa-regular fa-clock"></i> 23 Okt 2026 • 5 mnt</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- GOLD SEAL ACCREDITATION BADGE FOOTER (Matches screenshot bottom seal) -->
+            <div class="jkn-seal-section">
+              <div class="jkn-seal-badge">
+                <div class="jkn-seal-medallion">
+                  <i class="fa-solid fa-award"></i>
+                </div>
+                <div class="jkn-seal-details">
+                  <div class="jkn-seal-stars">★★★★★</div>
+                  <div class="jkn-seal-heading">PARIPURNA</div>
+                  <div class="jkn-seal-desc">LEMBAGA AKREDITASI PMR PMI JAWA TENGAH</div>
+                  <div class="jkn-seal-sub">SISTEM MANAJEMEN EVENT RESMI JUMBARA KABUPATEN</div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- MOBILE TAB CONTENT PANELS -->
-          <div style="padding: 1.25rem;">
+          <!-- ================================================================= -->
+          <!-- SUBTABS WITH TOP BACK-TO-HOME BAR -->
+          <!-- ================================================================= -->
+          <div class="jkn-subtabs-wrapper">
             
             <!-- TAB 1: BIODATA LENGKAP -->
-            <div id="pesertaTabBio" style="display: block;">
-              
+            <div id="pesertaTabBio" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
               <!-- CARD 1: INFORMASI IDENTITAS -->
               <div class="peserta-info-card">
                 <div class="peserta-info-header">
@@ -1900,6 +2055,11 @@ const App = {
 
             <!-- TAB 2: CABANG LOMBA / SUB KATEGORI -->
             <div id="pesertaTabLomba" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
               <div class="peserta-info-card">
                 <div class="peserta-info-header">
                   <i class="fa-solid fa-award" style="color: #d97706;"></i> Minat Sub-Kategori Tri Bakti PMR
@@ -1927,6 +2087,11 @@ const App = {
 
             <!-- TAB 3: AGENDA & RUNDOWN KEGIATAN -->
             <div id="pesertaTabAgenda" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
               <div class="peserta-info-card">
                 <div class="peserta-info-header">
                   <i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Rundown Jadwal Kegiatan Jumbara
@@ -1960,6 +2125,11 @@ const App = {
 
             <!-- TAB 4: RIWAYAT & KARTU PRESENSI SCAN -->
             <div id="pesertaTabPresensi" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
               <!-- MODERN DIGITAL PASS E-TIKET PRESENSI CARD -->
               <div class="peserta-ticket-card">
                 <!-- Ticket Header -->
@@ -1996,7 +2166,7 @@ const App = {
                     ${Utils.escapeHtml(profile.full_name || 'Peserta PMR')}
                   </h3>
                   <div style="font-size: 0.8rem; color: #475569; font-weight: 600; margin-bottom: 0.5rem;">
-                    <i class="fa-solid fa-school" style="color: #0284c7;"></i> ${Utils.escapeHtml(profile.unit_name || 'Kontingen Sekolah')}
+                    <i class="fa-solid fa-school" style="color: #0284c7;"></i> ${Utils.escapeHtml(profile.unit_name || 'Kontingen Unit Sekolah')}
                   </div>
 
                   <!-- TICKET PERFORATED CUTOUT DIVIDER -->
@@ -2029,6 +2199,11 @@ const App = {
 
             <!-- TAB 5: KLASEMEN MEDALI & INFO -->
             <div id="pesertaTabMedali" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
                   <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Papan Klasemen & Perolehan Medali</span>
@@ -2049,6 +2224,9 @@ const App = {
 
         </div>
       `;
+
+      // Set default view to home
+      this.switchPesertaMobileTab('home');
     } catch (err) {
       console.error('Error rendering peserta portal:', err);
       const content = document.getElementById('pesertaProfileContent');
@@ -10310,10 +10488,12 @@ const App = {
       'pengumuman': 'mbNavAnnounce',
       'klasemen': 'mbNavStandings',
       'portal': 'mbNavPortal',
-      'peserta_bio': 'mbNavBio',
-      'peserta_lomba': 'mbNavLomba',
+      'peserta_home': 'mbNavPesertaHome',
+      'peserta_presensi': 'mbNavPesertaPresensi',
       'peserta_agenda': 'mbNavPesertaAgenda',
-      'peserta_presensi': 'mbNavPresensi',
+      'peserta_medali': 'mbNavPesertaMedali',
+      'peserta_bio': 'mbNavPesertaBio',
+      'peserta_lomba': 'mbNavLomba',
       'penilai_presensi': 'mbNavPenilaiScan',
       'penilai_nilai': 'mbNavPenilaiNilai',
       'penilai_rekap': 'mbNavPenilaiRekap',
@@ -10334,9 +10514,10 @@ const App = {
       return;
     }
 
-    if (key === 'peserta_bio') {
+    if (key === 'peserta_home') {
+      this.switchPesertaMobileTab('home');
+    } else if (key === 'peserta_bio') {
       this.switchPesertaMobileTab('bio');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (key === 'peserta_lomba') {
       this.switchPesertaMobileTab('lomba');
     } else if (key === 'peserta_agenda') {
@@ -10468,32 +10649,28 @@ const App = {
         </button>
       `;
     } else {
-      // PESERTA (Default User Mobile Portal)
+      // PESERTA (Mobile JKN Style Bottom Dock)
       nav.style.display = 'flex';
       nav.innerHTML = `
-        <button class="mobile-nav-btn active" id="mbNavBio" onclick="App.handleMobileNav('peserta_bio')">
-          <i class="fa-solid fa-id-badge"></i>
-          <span>Profil</span>
+        <button class="mobile-nav-btn active" id="mbNavPesertaHome" onclick="App.handleMobileNav('peserta_home')">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
         </button>
-        <button class="mobile-nav-btn" id="mbNavLomba" onclick="App.handleMobileNav('peserta_lomba')">
-          <i class="fa-solid fa-award"></i>
-          <span>Cabang</span>
+        <button class="mobile-nav-btn" id="mbNavPesertaPresensi" onclick="App.handleMobileNav('peserta_presensi')">
+          <i class="fa-solid fa-id-card"></i>
+          <span>Kartu Peserta</span>
         </button>
         <button class="mobile-nav-btn" id="mbNavPesertaAgenda" onclick="App.handleMobileNav('peserta_agenda')">
           <i class="fa-solid fa-calendar-days"></i>
           <span>Agenda</span>
         </button>
-        <button class="mobile-nav-btn" id="mbNavPresensi" onclick="App.handleMobileNav('peserta_presensi')">
-          <i class="fa-solid fa-clipboard-user"></i>
-          <span>Presensi</span>
-        </button>
         <button class="mobile-nav-btn" id="mbNavPesertaMedali" onclick="App.handleMobileNav('peserta_medali')">
           <i class="fa-solid fa-trophy"></i>
           <span>Medali</span>
         </button>
-        <button class="mobile-nav-btn" id="mbNavLogout" onclick="App.handleMobileNav('logout')" style="color: #ef4444;">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Keluar</span>
+        <button class="mobile-nav-btn" id="mbNavPesertaBio" onclick="App.handleMobileNav('peserta_bio')">
+          <i class="fa-solid fa-user"></i>
+          <span>Profil</span>
         </button>
       `;
     }

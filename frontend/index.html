@@ -370,6 +370,49 @@
     </div>
   </div>
 
+  <!-- MODAL: MENU LAINNYA BOTTOM SHEET (STYLE MOBILE JKN) -->
+  <div class="modal-overlay" id="menuLainnyaModal">
+    <div class="modal-container" style="max-width: 440px; border-radius: 24px; overflow: hidden; padding: 0;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #e11d48 100%); color: #ffffff; padding: 1rem 1.25rem;">
+        <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">
+          <i class="fa-solid fa-table-cells-large" style="margin-right: 0.4rem;"></i> Menu & Layanan Lainnya
+        </h3>
+        <button class="modal-close" onclick="App.closeModal('menuLainnyaModal')" style="color: #ffffff;">&times;</button>
+      </div>
+      <div class="modal-body" style="background: #ffffff; padding: 1.25rem;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem 0.5rem; text-align: center;">
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.downloadRegistrationFormPDF();">
+            <div class="jkn-icon-circle jkn-circle-sky"><i class="fa-solid fa-file-pdf"></i></div>
+            <span class="jkn-menu-label">Unduh PDF</span>
+          </div>
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.switchPesertaMobileTab('lomba');">
+            <div class="jkn-icon-circle jkn-circle-emerald"><i class="fa-solid fa-award"></i></div>
+            <span class="jkn-menu-label">Cabang Lomba</span>
+          </div>
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.switchPesertaMobileTab('medali');">
+            <div class="jkn-icon-circle jkn-circle-gold"><i class="fa-solid fa-trophy"></i></div>
+            <span class="jkn-menu-label">Klasemen</span>
+          </div>
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.openChangePasswordModal();">
+            <div class="jkn-icon-circle jkn-circle-violet"><i class="fa-solid fa-key"></i></div>
+            <span class="jkn-menu-label">Ganti Password</span>
+          </div>
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.openSaranModal();">
+            <div class="jkn-icon-circle jkn-circle-teal"><i class="fa-solid fa-comments"></i></div>
+            <span class="jkn-menu-label">Kotak Saran</span>
+          </div>
+          <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.handleLogout();">
+            <div class="jkn-icon-circle jkn-circle-rose"><i class="fa-solid fa-right-from-bracket"></i></div>
+            <span class="jkn-menu-label">Keluar Akun</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.75rem 1.25rem; text-align: center;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="App.closeModal('menuLainnyaModal')" style="width: 100%; border-radius: 12px; font-weight: 700;">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 4. MODAL REJECT REASON -->
   <div class="modal-overlay" id="rejectModal">
     <div class="modal-container" style="max-width: 450px;">
