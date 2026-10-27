@@ -5226,6 +5226,18 @@ body:not(.user-logged-in) .jumbotron-hero {
   overflow: hidden;
 }
 
+.jkn-wave-header.jkn-header-panitia {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 40%, #e11d48 80%, #be123c 100%);
+}
+
+.jkn-wave-header.jkn-header-penilai {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 85%, #6366f1 100%);
+}
+
+.jkn-wave-header.jkn-header-peninjau {
+  background: linear-gradient(135deg, #064e3b 0%, #047857 40%, #059669 85%, #10b981 100%);
+}
+
 .jkn-wave-header::before {
   content: '';
   position: absolute;
