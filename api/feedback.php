@@ -27,9 +27,9 @@ try {
             ip_address VARCHAR(45) DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             KEY idx_fb_status (status),
-            KEY idx_fb_created (created_at DESC),
+            KEY idx_fb_created (created_at),
             KEY idx_fb_cat (category)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
     // Auto-seed sample feedback if empty for preview
@@ -44,12 +44,32 @@ try {
             ['Anonim', 1, 'SMPN 2 Kota Bakti', 'Pembina Unit', 'Fasilitas & Sarpras', 4, 'Mohon agar titik air bersih di area tenda blok timur ditambah krannya, mengingat kontingen kami cukup banyak saat waktu sholat.', 'followup', 'Koordinasikan dengan Sie Sarpras untuk penambahan kran.', 5],
             ['Budi Santoso', 0, 'Umum', 'Orang Tua / Publik', 'Pelayanan & Konsumsi', 5, 'Terima kasih atas pelayanan panitia PMI yang sangat sigap dan ramah saat mengantar kontingen. Sukses selalu untuk Jumbara 2026!', 'unread', null, 8]
         ];
+
         foreach ($samples as $s) {
             $stmtSeed->execute($s);
         }
     }
-} catch (Exception $e) {
-    error_log('[FEEDBACK AUTO-MIGRATE ERROR] ' . $e->getMessage());
+} catch (\Throwable $e) {
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_name VARCHAR(150) DEFAULT 'Anonim',
+                is_anonymous TINYINT(1) NOT NULL DEFAULT 0,
+                unit_name VARCHAR(150) DEFAULT NULL,
+                sender_role VARCHAR(100) DEFAULT 'Peserta PMR',
+                category VARCHAR(100) NOT NULL DEFAULT 'Saran Umum',
+                rating INT NOT NULL DEFAULT 5,
+                message TEXT NOT NULL,
+                status ENUM('unread', 'read', 'followup') NOT NULL DEFAULT 'unread',
+                admin_notes TEXT DEFAULT NULL,
+                ip_address VARCHAR(45) DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+    } catch (\Throwable $e2) {
+        error_log('[FEEDBACK AUTO-MIGRATE ERROR] ' . $e2->getMessage());
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -147,25 +167,42 @@ if ($method === 'GET') {
 
     $whereSql = !empty($whereClauses) ? ('WHERE ' . implode(' AND ', $whereClauses)) : '';
 
-    // Total Count
-    $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM feedback $whereSql");
-    $stmtCount->execute($params);
-    $totalRecords = (int)$stmtCount->fetchColumn();
+    // Data & Stats with safe fallback
+    $totalRecords = 0;
+    $feedbacks = [];
+    $totalAll = 0;
+    $unreadCount = 0;
+    $followupCount = 0;
+    $avgRating = 5.0;
+    $catCounts = [];
 
-    // Data List
-    $sql = "SELECT * FROM feedback $whereSql ORDER BY id DESC LIMIT $limit OFFSET $offset";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $feedbacks = $stmt->fetchAll();
+    try {
+        // Total Count
+        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM feedback $whereSql");
+        $stmtCount->execute($params);
+        $totalRecords = (int)$stmtCount->fetchColumn();
 
-    // Overall Stats
-    $totalAll = (int)$pdo->query("SELECT COUNT(*) FROM feedback")->fetchColumn();
-    $unreadCount = (int)$pdo->query("SELECT COUNT(*) FROM feedback WHERE status = 'unread'")->fetchColumn();
-    $followupCount = (int)$pdo->query("SELECT COUNT(*) FROM feedback WHERE status = 'followup'")->fetchColumn();
-    $avgRating = (float)$pdo->query("SELECT COALESCE(ROUND(AVG(rating), 1), 5.0) FROM feedback")->fetchColumn();
+        // Data List
+        $sql = "SELECT * FROM feedback $whereSql ORDER BY id DESC LIMIT $limit OFFSET $offset";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $feedbacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $catCountsStmt = $pdo->query("SELECT category, COUNT(*) as count FROM feedback GROUP BY category ORDER BY count DESC");
-    $catCounts = $catCountsStmt->fetchAll();
+        // Overall Stats
+        $totalAll = (int)$pdo->query("SELECT COUNT(*) FROM feedback")->fetchColumn();
+        $unreadCount = (int)$pdo->query("SELECT COUNT(*) FROM feedback WHERE status = 'unread'")->fetchColumn();
+        $followupCount = (int)$pdo->query("SELECT COUNT(*) FROM feedback WHERE status = 'followup'")->fetchColumn();
+        $avgRating = (float)$pdo->query("SELECT COALESCE(ROUND(AVG(rating), 1), 5.0) FROM feedback")->fetchColumn();
+
+        $catCountsStmt = $pdo->query("SELECT category, COUNT(*) as count FROM feedback GROUP BY category ORDER BY count DESC");
+        $catCounts = $catCountsStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        if ($e->getCode() === '42S02' || strpos($e->getMessage(), "doesn't exist") !== false) {
+            // Table doesn't exist yet, return empty data
+        } else {
+            throw $e;
+        }
+    }
 
     jsonResponse([
         'data' => $feedbacks,

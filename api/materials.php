@@ -10,7 +10,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
 
-// Auto-migration: Ensure table materials exists
+// Auto-migration: Ensure table materials exists (cross-compatible with all MySQL and MariaDB versions)
 try {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS materials (
@@ -26,8 +26,8 @@ try {
             uploaded_by VARCHAR(100) DEFAULT 'Panitia Jumbara PMI',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             KEY idx_mat_cat (category),
-            KEY idx_mat_created (created_at DESC)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+            KEY idx_mat_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
     // Auto-seed initial materials if table is empty
@@ -110,8 +110,27 @@ try {
             $stmtSeed->execute($m);
         }
     }
-} catch (Exception $e) {
-    error_log('[MATERIALS AUTO-MIGRATE ERROR] ' . $e->getMessage());
+} catch (\Throwable $e) {
+    // Fallback minimal table without secondary indexes in case of restricted MySQL syntax
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS materials (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                category VARCHAR(100) NOT NULL DEFAULT 'Buku Panduan',
+                description TEXT,
+                file_url VARCHAR(255) NOT NULL,
+                file_name VARCHAR(255) DEFAULT NULL,
+                file_size VARCHAR(50) DEFAULT '1.5 MB',
+                file_type VARCHAR(50) DEFAULT 'pdf',
+                download_count INT NOT NULL DEFAULT 0,
+                uploaded_by VARCHAR(100) DEFAULT 'Panitia Jumbara PMI',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ");
+    } catch (\Throwable $e2) {
+        error_log('[MATERIALS AUTO-MIGRATE ERROR] ' . $e2->getMessage());
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -159,13 +178,47 @@ if ($method === 'GET') {
 
     $whereSql = !empty($whereClauses) ? ('WHERE ' . implode(' AND ', $whereClauses)) : '';
 
-    $stmt = $pdo->prepare("SELECT * FROM materials $whereSql ORDER BY id ASC");
-    $stmt->execute($params);
-    $materials = $stmt->fetchAll();
+    $materials = [];
+    $categories = [];
 
-    // Fetch unique categories list for filter tabs
-    $categoriesStmt = $pdo->query("SELECT DISTINCT category FROM materials ORDER BY category ASC");
-    $categories = $categoriesStmt->fetchAll(PDO::FETCH_COLUMN);
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM materials $whereSql ORDER BY id ASC");
+        $stmt->execute($params);
+        $materials = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch unique categories list for filter tabs
+        $categoriesStmt = $pdo->query("SELECT DISTINCT category FROM materials ORDER BY category ASC");
+        $categories = $categoriesStmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (\PDOException $e) {
+        if ($e->getCode() === '42S02' || strpos($e->getMessage(), "doesn't exist") !== false) {
+            // Attempt emergency table creation and retry once
+            try {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS materials (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        category VARCHAR(100) NOT NULL DEFAULT 'Buku Panduan',
+                        description TEXT,
+                        file_url VARCHAR(255) NOT NULL,
+                        file_name VARCHAR(255) DEFAULT NULL,
+                        file_size VARCHAR(50) DEFAULT '1.5 MB',
+                        file_type VARCHAR(50) DEFAULT 'pdf',
+                        download_count INT NOT NULL DEFAULT 0,
+                        uploaded_by VARCHAR(100) DEFAULT 'Panitia Jumbara PMI',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+                ");
+                $stmt = $pdo->prepare("SELECT * FROM materials $whereSql ORDER BY id ASC");
+                $stmt->execute($params);
+                $materials = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Throwable $e2) {
+                $materials = [];
+                $categories = [];
+            }
+        } else {
+            throw $e;
+        }
+    }
 
     jsonResponse([
         'data' => $materials,

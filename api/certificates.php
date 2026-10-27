@@ -9,7 +9,13 @@ $pdo = getPDOConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
-// Note: Schema updates are managed via database migrations, not runtime requests.
+// Auto-ensure certificate_number column exists in participants table
+try {
+    $colCheck = $pdo->query("SHOW COLUMNS FROM participants LIKE 'certificate_number'");
+    if (!$colCheck || !$colCheck->fetch()) {
+        $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
+    }
+} catch (\Throwable $e) {}
 
 // --------------------------------------------------------------------------
 // 1. GET /api/certificates.php?action=config
@@ -19,15 +25,11 @@ if ($method === 'GET' && $action === 'config') {
 
     // Count stats (with self-healing if certificate_number is missing in legacy databases)
     $totalVerified = (int)$pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten'")->fetchColumn();
+    $totalGenerated = 0;
     try {
         $totalGenerated = (int)$pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten' AND certificate_number IS NOT NULL AND certificate_number != ''")->fetchColumn();
-    } catch (Exception $e) {
-        try {
-            $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
-            $totalGenerated = 0;
-        } catch (Exception $e2) {
-            $totalGenerated = 0;
-        }
+    } catch (\Throwable $e) {
+        $totalGenerated = 0;
     }
 
     jsonResponse([
@@ -130,36 +132,43 @@ if ($method === 'POST' && $action === 'generate_numbers') {
         $params[] = $unitId;
     }
 
-    $stmtP = $pdo->prepare("
-        SELECT p.id, p.full_name, p.certificate_number, un.name AS unit_name 
-        FROM participants p 
-        LEFT JOIN units un ON p.unit_id = un.id 
-        $whereSql 
-        ORDER BY p.unit_id ASC, p.full_name ASC
-    ");
-    $stmtP->execute($params);
-    $participants = $stmtP->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $stmtP = $pdo->prepare("
+            SELECT p.id, p.full_name, p.certificate_number, un.name AS unit_name 
+            FROM participants p 
+            LEFT JOIN units un ON p.unit_id = un.id 
+            $whereSql 
+            ORDER BY p.unit_id ASC, p.full_name ASC
+        ");
+        $stmtP->execute($params);
+        $participants = $stmtP->fetchAll(PDO::FETCH_ASSOC);
 
-    $counter = $startNo;
-    $updatedCount = 0;
+        $counter = $startNo;
+        $updatedCount = 0;
 
-    $stmtUp = $pdo->prepare("UPDATE participants SET certificate_number = ? WHERE id = ?");
+        $stmtUp = $pdo->prepare("UPDATE participants SET certificate_number = ? WHERE id = ?");
 
-    foreach ($participants as $p) {
-        if ($force || empty($p['certificate_number'])) {
-            $formattedNo = sprintf('%04d', $counter);
-            $certNum = str_replace('{NO}', $formattedNo, $pattern);
-            $stmtUp->execute([$certNum, $p['id']]);
-            $updatedCount++;
-            $counter++;
+        foreach ($participants as $p) {
+            if ($force || empty($p['certificate_number'])) {
+                $formattedNo = sprintf('%04d', $counter);
+                $certNum = str_replace('{NO}', $formattedNo, $pattern);
+                $stmtUp->execute([$certNum, $p['id']]);
+                $updatedCount++;
+                $counter++;
+            }
         }
-    }
 
-    jsonResponse([
-        'message' => "Berhasil memicu pembuatan nomor piagam secara masal!",
-        'total_processed' => count($participants),
-        'total_updated' => $updatedCount
-    ]);
+        jsonResponse([
+            'message' => "Berhasil memicu pembuatan nomor piagam secara masal!",
+            'total_processed' => count($participants),
+            'total_updated' => $updatedCount
+        ]);
+    } catch (\PDOException $e) {
+        jsonResponse([
+            'error' => 'Gagal memproses nomor piagam: ' . $e->getMessage(),
+            'hint' => 'Pastikan kolom certificate_number sudah ada pada tabel participants di database.'
+        ], 500);
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -183,12 +192,33 @@ if ($method === 'GET' && $action === 'participants') {
         $params[] = $unitId;
     }
 
+    // Check if certificate_number exists
+    $hasCertCol = false;
+    try {
+        $checkCol = $pdo->query("SHOW COLUMNS FROM participants LIKE 'certificate_number'");
+        if ($checkCol && $checkCol->fetch()) {
+            $hasCertCol = true;
+        } else {
+            $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
+            $hasCertCol = true;
+        }
+    } catch (\Throwable $e) {
+        $hasCertCol = false;
+    }
+
     if ($search) {
-        $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ? OR p.certificate_number LIKE ?)";
-        $s = "%$search%";
-        $params[] = $s;
-        $params[] = $s;
-        $params[] = $s;
+        if ($hasCertCol) {
+            $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ? OR p.certificate_number LIKE ?)";
+            $s = "%$search%";
+            $params[] = $s;
+            $params[] = $s;
+            $params[] = $s;
+        } else {
+            $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ?)";
+            $s = "%$search%";
+            $params[] = $s;
+            $params[] = $s;
+        }
     }
 
     if ($roleFilter) {
@@ -197,15 +227,35 @@ if ($method === 'GET' && $action === 'participants') {
         $params[] = "%$roleFilter%";
     }
 
-    $stmt = $pdo->prepare("
-        SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, p.certificate_number, p.photo_url, un.name AS unit_name 
-        FROM participants p 
-        LEFT JOIN units un ON p.unit_id = un.id 
-        $whereSql 
-        ORDER BY un.name ASC, p.full_name ASC
-    ");
-    $stmt->execute($params);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $certColSql = $hasCertCol ? "p.certificate_number" : "NULL AS certificate_number";
+    $rows = [];
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, $certColSql, p.photo_url, un.name AS unit_name 
+            FROM participants p 
+            LEFT JOIN units un ON p.unit_id = un.id 
+            $whereSql 
+            ORDER BY un.name ASC, p.full_name ASC
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (\PDOException $e) {
+        if ($e->getCode() === '42S22' || strpos($e->getMessage(), 'certificate_number') !== false) {
+            $fallbackWhereSql = str_replace("OR p.certificate_number LIKE ?", "OR 1=0", $whereSql);
+            $stmt = $pdo->prepare("
+                SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, NULL AS certificate_number, p.photo_url, un.name AS unit_name 
+                FROM participants p 
+                LEFT JOIN units un ON p.unit_id = un.id 
+                $fallbackWhereSql 
+                ORDER BY un.name ASC, p.full_name ASC
+            ");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            throw $e;
+        }
+    }
 
     jsonResponse([
         'total' => count($rows),

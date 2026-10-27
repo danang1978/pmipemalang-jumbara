@@ -291,8 +291,8 @@ try {
                 uploaded_by VARCHAR(100) DEFAULT 'Panitia Jumbara PMI',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 KEY idx_mat_cat (category),
-                KEY idx_mat_created (created_at DESC)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+                KEY idx_mat_created (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
     } catch (Exception $e) {}
 
@@ -313,9 +313,9 @@ try {
                 ip_address VARCHAR(45) DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 KEY idx_fb_status (status),
-                KEY idx_fb_created (created_at DESC),
+                KEY idx_fb_created (created_at),
                 KEY idx_fb_cat (category)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
     } catch (Exception $e) {}
 

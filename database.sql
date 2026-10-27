@@ -31,7 +31,7 @@ CREATE TABLE `announcements` (
   `author_name` varchar(150) DEFAULT 'Panitia Kabupaten PMI',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -66,7 +66,7 @@ CREATE TABLE `attendance` (
   KEY `idx_event_status` (`event_id`,`status`),
   CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
   CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`participant_id`) REFERENCES `participants` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,7 +95,7 @@ CREATE TABLE `event_aspects` (
   PRIMARY KEY (`id`),
   KEY `event_id` (`event_id`),
   CONSTRAINT `event_aspects_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -125,7 +125,7 @@ CREATE TABLE `event_registrations` (
   KEY `participant_id` (`participant_id`),
   CONSTRAINT `event_registrations_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
   CONSTRAINT `event_registrations_ibfk_2` FOREIGN KEY (`participant_id`) REFERENCES `participants` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -159,7 +159,7 @@ CREATE TABLE `events` (
   `max_participants_per_unit` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_date_time` (`event_date`,`start_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -211,14 +211,14 @@ CREATE TABLE `participants` (
   UNIQUE KEY `user_id` (`user_id`),
   KEY `idx_unit_status` (`unit_id`,`status`),
   KEY `idx_status_level` (`status`,`level`),
-  KEY `idx_status_id` (`status`,`id` DESC),
+  KEY `idx_status_id` (`status`,`id`),
   KEY `idx_full_name` (`full_name`),
   KEY `idx_reg_type` (`registration_type`),
   KEY `idx_nisn` (`nisn`),
   KEY `idx_cert_num` (`certificate_number`),
   CONSTRAINT `participants_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `participants_ibfk_2` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -248,7 +248,7 @@ CREATE TABLE `score_aspect_details` (
   KEY `aspect_id` (`aspect_id`),
   CONSTRAINT `score_aspect_details_ibfk_1` FOREIGN KEY (`score_id`) REFERENCES `scores` (`id`) ON DELETE CASCADE,
   CONSTRAINT `score_aspect_details_ibfk_2` FOREIGN KEY (`aspect_id`) REFERENCES `event_aspects` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -294,7 +294,7 @@ CREATE TABLE `scores` (
   KEY `idx_unit_cat` (`unit_id`,`category_type`),
   CONSTRAINT `scores_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON DELETE CASCADE,
   CONSTRAINT `scores_ibfk_2` FOREIGN KEY (`participant_id`) REFERENCES `participants` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -318,7 +318,7 @@ CREATE TABLE `settings` (
   `key` varchar(100) NOT NULL,
   `value` text,
   PRIMARY KEY (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -349,7 +349,7 @@ CREATE TABLE `units` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -377,7 +377,7 @@ CREATE TABLE `unsur_categories` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -411,7 +411,7 @@ CREATE TABLE `users` (
   KEY `unit_id` (`unit_id`),
   KEY `idx_role` (`role`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -423,6 +423,59 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (1,'admin_kab','$2y$10$A.KLtfC.jaVmyEsRTK7UcO6ArEFq2fWi1ZVqmH6jUmHdksuZm3yuu','admin@pmikab.or.id','kabupaten',NULL,'2026-09-29 19:43:52'),(2,'admin_sman1','$2b$10$1BMbZDPsBFwhjZ28Uf6dUu.W/OP/PRD6a3oA4YlGfxXH0hW1r9KC.','unit.sman1@jumbara.id','unit',1,'2026-09-29 19:43:52'),(3,'admin_smpn2','$2b$10$1BMbZDPsBFwhjZ28Uf6dUu.W/OP/PRD6a3oA4YlGfxXH0hW1r9KC.','unit.smpn2@jumbara.id','unit',2,'2026-09-29 19:43:52'),(4,'admin_sdn01','$2b$10$1BMbZDPsBFwhjZ28Uf6dUu.W/OP/PRD6a3oA4YlGfxXH0hW1r9KC.','unit.sdn01@jumbara.id','unit',3,'2026-09-29 19:43:52'),(21,'penilai_01','$2y$10$uf6b4cfndCcD1qKFo2VwnuArpabhoyYDRsrES95kiXmKapuVx6hbC','penilai@gmail.com','penilai',NULL,'2026-10-03 19:18:14'),(22,'panitia_01','$2y$12$cmDZRNjYKK01qn/F1Wte6eTPtu8PYzbbxmdjQ8iACcnhFQmE4Xv5S','panitia@gmail.com','panitia',NULL,'2026-10-03 20:49:54');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `materials`
+--
+
+DROP TABLE IF EXISTS `materials`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `materials` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `category` varchar(100) NOT NULL DEFAULT 'Buku Panduan',
+  `description` text,
+  `file_url` varchar(255) NOT NULL,
+  `file_name` varchar(255) DEFAULT NULL,
+  `file_size` varchar(50) DEFAULT '1.5 MB',
+  `file_type` varchar(50) DEFAULT 'pdf',
+  `download_count` int NOT NULL DEFAULT '0',
+  `uploaded_by` varchar(100) DEFAULT 'Panitia Jumbara PMI',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_mat_cat` (`category`),
+  KEY `idx_mat_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `feedback`
+--
+
+DROP TABLE IF EXISTS `feedback`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `feedback` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sender_name` varchar(150) DEFAULT 'Anonim',
+  `is_anonymous` tinyint(1) NOT NULL DEFAULT '0',
+  `unit_name` varchar(150) DEFAULT NULL,
+  `sender_role` varchar(100) DEFAULT 'Peserta PMR',
+  `category` varchar(100) NOT NULL DEFAULT 'Saran Umum',
+  `rating` int NOT NULL DEFAULT '5',
+  `message` text NOT NULL,
+  `status` enum('unread','read','followup') NOT NULL DEFAULT 'unread',
+  `admin_notes` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_fb_status` (`status`),
+  KEY `idx_fb_created` (`created_at`),
+  KEY `idx_fb_cat` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
