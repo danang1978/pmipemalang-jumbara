@@ -17,9 +17,18 @@ $action = $_GET['action'] ?? '';
 if ($method === 'GET' && $action === 'config') {
     $settings = getAppSettings();
 
-    // Count stats
+    // Count stats (with self-healing if certificate_number is missing in legacy databases)
     $totalVerified = (int)$pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten'")->fetchColumn();
-    $totalGenerated = (int)$pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten' AND certificate_number IS NOT NULL AND certificate_number != ''")->fetchColumn();
+    try {
+        $totalGenerated = (int)$pdo->query("SELECT COUNT(*) FROM participants WHERE status = 'verified_kabupaten' AND certificate_number IS NOT NULL AND certificate_number != ''")->fetchColumn();
+    } catch (Exception $e) {
+        try {
+            $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
+            $totalGenerated = 0;
+        } catch (Exception $e2) {
+            $totalGenerated = 0;
+        }
+    }
 
     jsonResponse([
         'settings' => $settings,

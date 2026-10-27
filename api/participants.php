@@ -145,7 +145,7 @@ if ($method === 'GET') {
     $columns = "
         p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, 
         p.gender, p.blood_type, p.phone, p.photo_url, p.status, p.created_at, 
-        p.assignment_letter_url, p.registration_type, p.certificate_number,
+        p.assignment_letter_url, p.registration_type,
         un.name AS unit_name, un.code AS unit_code
     ";
 
