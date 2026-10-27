@@ -36,6 +36,14 @@ const App = {
       'frontend/images/jumbotron-tema3-bersahabat.jpg'
     ]
   },
+  cachedMaterials: [],
+  selectedMaterialCategory: 'all',
+  currentFeedbackFilter: 'all',
+  currentFeedbackPage: 1,
+  feedbackRating: {
+    landing: 5,
+    modal: 5
+  },
   jumbotronSlideIndex: 0,
   jumbotronIntervalId: null,
   jumbotronProgressInterval: null,
@@ -350,10 +358,12 @@ const App = {
         publicNavMenu.innerHTML = `
           <a href="#beranda" class="nav-link active" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda</a>
           <a href="#kegiatan" class="nav-link" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Agenda</a>
+          <a href="#materi" class="nav-link" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Materi & Juknis</a>
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
           <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Rekap Medali</a>
           <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen Unit</a>
           <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
+          <a href="#kotak-saran" class="nav-link" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran</a>
         `;
         publicNavMenu.style.display = '';
       }
@@ -782,6 +792,191 @@ const App = {
           </div>
         </div>
       </section>
+
+      <!-- SECTION 7: UNDUH MATERI & JUKNIS -->
+      <section class="landing-section section-alt" id="materi">
+        <div class="landing-section-inner">
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-blue"><i class="fa-solid fa-file-arrow-down"></i> DOKUMEN & PANDUAN</span>
+              <h2 class="sec-title">Unduh Materi & Juknis Jumbara</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-cloud-arrow-down"></i> Akses Terbuka Kontingen</span>
+            </div>
+          </div>
+
+          <!-- Filter & Search Bar -->
+          <div class="materials-filter-bar">
+            <div class="materials-categories" id="materialsCategoryFilters">
+              <button type="button" class="materi-cat-pill active" data-cat="all" onclick="App.filterMaterialsByCategory('all')">
+                <i class="fa-solid fa-layer-group"></i> Semua Kategori
+              </button>
+              <button type="button" class="materi-cat-pill" data-cat="Buku Panduan & Juknis" onclick="App.filterMaterialsByCategory('Buku Panduan & Juknis')">
+                <i class="fa-solid fa-book-open"></i> Panduan & Juknis
+              </button>
+              <button type="button" class="materi-cat-pill" data-cat="Materi Pokok PMR" onclick="App.filterMaterialsByCategory('Materi Pokok PMR')">
+                <i class="fa-solid fa-kit-medical"></i> 7 Materi Pokok
+              </button>
+              <button type="button" class="materi-cat-pill" data-cat="Lomba & Penilaian" onclick="App.filterMaterialsByCategory('Lomba & Penilaian')">
+                <i class="fa-solid fa-trophy"></i> Lomba & Juklak
+              </button>
+              <button type="button" class="materi-cat-pill" data-cat="Formulir & Administrasi" onclick="App.filterMaterialsByCategory('Formulir & Administrasi')">
+                <i class="fa-solid fa-file-lines"></i> Formulir Kontingen
+              </button>
+            </div>
+            <div class="materials-search-wrap">
+              <input type="text" id="materialsSearchInput" class="materials-search-input" placeholder="Cari materi, juknis, kisi-kisi..." oninput="App.searchMaterials(this.value)">
+              <i class="fa-solid fa-magnifying-glass materials-search-icon"></i>
+            </div>
+          </div>
+
+          <!-- Materials Grid Container -->
+          <div id="publicMaterialsList">
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Memuat daftar materi...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 8: KOTAK SARAN & ASPIRASI -->
+      <section class="landing-section" id="kotak-saran">
+        <div class="landing-section-inner">
+          <div class="sec-header-modern">
+            <div class="sec-header-left">
+              <span class="sec-kicker sec-kicker-red"><i class="fa-solid fa-comment-dots"></i> ASPIRASI & EVALUASI</span>
+              <h2 class="sec-title">Kotak Saran & Masukan Kontingen</h2>
+            </div>
+            <div class="sec-header-right">
+              <span class="sec-meta-badge"><i class="fa-solid fa-heart-circle-check"></i> Menuju Jumbara Berkualitas</span>
+            </div>
+          </div>
+
+          <div class="feedback-section-wrap">
+            <!-- Left Info Card -->
+            <div class="feedback-info-card">
+              <div>
+                <span class="feedback-info-badge">
+                  <i class="fa-solid fa-bullhorn"></i> Suara Anda Berharga
+                </span>
+                <h3 class="feedback-info-title">Bantu Kami Tingkatkan Pelayanan Jumbara XII</h3>
+                <p class="feedback-info-desc">
+                  Setiap masukan, kritik membangun, evaluasi fasilitas Buperta, maupun apresiasi dari Pembina, Peserta, Juri, dan Masyarakat sangat berarti bagi kemajuan pembinaan PMR di Kabupaten Pemalang.
+                </p>
+
+                <div class="feedback-points-list">
+                  <div class="feedback-point-item">
+                    <div class="feedback-point-icon">
+                      <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="feedback-point-text">
+                      <h4>Opsi Privasi Anonim</h4>
+                      <p>Anda dapat memilih untuk menyampaikan saran secara anonim tanpa mencantumkan identitas.</p>
+                    </div>
+                  </div>
+
+                  <div class="feedback-point-item">
+                    <div class="feedback-point-icon">
+                      <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div class="feedback-point-text">
+                      <h4>Tindak Lanjut Cepat Panitia</h4>
+                      <p>Saran terkait fasilitas sarpras, kebersihan, dan kesehatan ditindaklanjuti secara berkala oleh Posko Utama.</p>
+                    </div>
+                  </div>
+
+                  <div class="feedback-point-item">
+                    <div class="feedback-point-icon">
+                      <i class="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                    <div class="feedback-point-text">
+                      <h4>Indeks Kepuasan Terbuka</h4>
+                      <p>Penilaian rating bintang membantu panitia mengukur standar kepuasan seluruh kontingen.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="font-size: 0.82rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <i class="fa-solid fa-headset" style="color: #ef4444; margin-right: 0.35rem;"></i> Posko Pengaduan: <strong>${Utils.escapeHtml(s.contact_phone || '(021) 555-PMR-2026')}</strong>
+              </div>
+            </div>
+
+            <!-- Right Interactive Form Card -->
+            <div class="feedback-form-card">
+              <h3 class="feedback-form-title">
+                <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Kirimkan Masukan & Evaluasi
+              </h3>
+              <p class="feedback-form-subtitle">Sampaikan pengalaman, saran sarpras, atau catatan lomba Anda.</p>
+
+              <div id="landingFeedbackAlert" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;"></div>
+
+              <form onsubmit="App.handleFeedbackSubmit(event, 'landing')">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Nama Pengirim</label>
+                  <input type="text" id="landingFeedbackSenderName" placeholder="Nama lengkap Anda..." class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                  <label class="anonymous-check-wrap" style="margin-top: 0.45rem;">
+                    <input type="checkbox" id="landingFeedbackIsAnon" onchange="App.toggleFeedbackAnon('landing')">
+                    <span>Kirim sebagai Anonim (Rahasiakan Nama Saya)</span>
+                  </label>
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Peran Anda *</label>
+                    <select id="landingFeedbackRole" class="form-control" required style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                      <option value="Peserta PMR">Peserta PMR</option>
+                      <option value="Pembina / Pendamping Unit">Pembina / Pendamping Unit</option>
+                      <option value="Dewan Juri / Penilai">Dewan Juri / Penilai</option>
+                      <option value="Panitia Pelaksana">Panitia Pelaksana</option>
+                      <option value="Orang Tua / Publik">Orang Tua / Masyarakat Umum</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Kategori Masukan *</label>
+                    <select id="landingFeedbackCategory" class="form-control" required style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                      <option value="Fasilitas & Sarpras Buperta">Fasilitas & Sarpras Buperta</option>
+                      <option value="Pelayanan & Konsumsi">Pelayanan & Konsumsi</option>
+                      <option value="Penyelenggaraan Lomba">Penyelenggaraan Lomba</option>
+                      <option value="Jadwal & Rundown Acara">Jadwal & Rundown Acara</option>
+                      <option value="Keamanan & Medis">Keamanan & Medis</option>
+                      <option value="Saran Umum & Inovasi">Saran Umum & Inovasi</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Asal Unit Sekolah / Kontingen (Opsional)</label>
+                  <input type="text" id="landingFeedbackUnitName" placeholder="Contoh: SMAN 1 Pemalang / SMPN 2..." class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                </div>
+
+                <div class="rating-select-group" style="margin-bottom: 1rem;">
+                  <div class="rating-select-label">
+                    <span>Rating Kepuasan / Kualitas Layanan:</span>
+                    <span class="star-rating-text" id="landingFeedbackRatingText">5 Bintang (Sangat Memuaskan)</span>
+                  </div>
+                  <div class="star-rating-picker" id="landingStarPicker">
+                    <button type="button" class="star-btn active" data-val="1" onclick="App.setFeedbackRating(1, 'landing')"><i class="fa-solid fa-star"></i></button>
+                    <button type="button" class="star-btn active" data-val="2" onclick="App.setFeedbackRating(2, 'landing')"><i class="fa-solid fa-star"></i></button>
+                    <button type="button" class="star-btn active" data-val="3" onclick="App.setFeedbackRating(3, 'landing')"><i class="fa-solid fa-star"></i></button>
+                    <button type="button" class="star-btn active" data-val="4" onclick="App.setFeedbackRating(4, 'landing')"><i class="fa-solid fa-star"></i></button>
+                    <button type="button" class="star-btn active" data-val="5" onclick="App.setFeedbackRating(5, 'landing')"><i class="fa-solid fa-star"></i></button>
+                  </div>
+                  <input type="hidden" id="landingFeedbackRatingVal" value="5">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Isi Saran, Kritik & Aspirasi Anda *</label>
+                  <textarea id="landingFeedbackMessage" rows="4" placeholder="Tuliskan saran perbaikan, keluhan fasilitas, kritik membangun, atau apresiasi Anda secara jelas..." required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.88rem; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" id="landingFeedbackSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 8px; font-size: 0.95rem;">
+                  <i class="fa-solid fa-paper-plane"></i> Kirimkan Saran & Masukan
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
     `;
 
     this.loadPublicData();
@@ -1159,8 +1354,314 @@ const App = {
         unContainer.innerHTML = unitsDesktopTable + unitsMobileCards;
       }
 
+      // Load Materials & Documents
+      await this.loadPublicMaterials();
+
     } catch (e) {
       console.error('Error loading public data:', e);
+    }
+  },
+
+  // =========================================================================
+  // HELPER METHODS: DOKUMEN & MATERI JUMBARA
+  // =========================================================================
+  async loadPublicMaterials() {
+    const container = document.getElementById('publicMaterialsList');
+    if (!container) return;
+    try {
+      const res = await API.getMaterials();
+      this.cachedMaterials = Array.isArray(res) ? res : (res.data || []);
+      this.renderFilteredMaterials();
+    } catch (e) {
+      console.error('Error loading materials:', e);
+      if (container) {
+        container.innerHTML = `<div style="background: #fff; border: 1px dashed #fca5a5; border-radius: 12px; padding: 2.5rem; text-align: center; color: #ef4444;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; margin-bottom: 0.75rem;"></i>
+          <h4 style="font-weight: 700; margin-bottom: 0.35rem;">Gagal Memuat Materi</h4>
+          <p style="color: #64748b; font-size: 0.88rem;">${Utils.escapeHtml(e.message || 'Terjadi kesalahan sistem.')}</p>
+        </div>`;
+      }
+    }
+  },
+
+  filterMaterialsByCategory(category) {
+    this.selectedMaterialCategory = category;
+    document.querySelectorAll('.materi-cat-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-cat') === category || (category === 'all' && btn.getAttribute('data-cat') === 'all'));
+    });
+    const searchVal = document.getElementById('materialsSearchInput') ? document.getElementById('materialsSearchInput').value : '';
+    this.renderFilteredMaterials(searchVal);
+  },
+
+  searchMaterials(keyword) {
+    this.renderFilteredMaterials(keyword);
+  },
+
+  renderFilteredMaterials(keyword = '') {
+    const container = document.getElementById('publicMaterialsList');
+    if (!container) return;
+
+    let list = this.cachedMaterials || [];
+    if (this.selectedMaterialCategory && this.selectedMaterialCategory !== 'all') {
+      list = list.filter(m => m.category === this.selectedMaterialCategory);
+    }
+
+    if (keyword && keyword.trim()) {
+      const q = keyword.trim().toLowerCase();
+      list = list.filter(m => 
+        (m.title && m.title.toLowerCase().includes(q)) ||
+        (m.description && m.description.toLowerCase().includes(q)) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.file_type && m.file_type.toLowerCase().includes(q))
+      );
+    }
+
+    if (!list.length) {
+      container.innerHTML = `
+        <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 3rem 1.5rem; text-align: center; grid-column: 1 / -1;">
+          <i class="fa-solid fa-folder-open" style="font-size: 2.75rem; color: #94a3b8; margin-bottom: 0.75rem; display: block;"></i>
+          <h4 style="font-size: 1.1rem; color: #334155; margin-bottom: 0.35rem; font-weight: 700;">Materi Tidak Ditemukan</h4>
+          <p style="color: #64748b; font-size: 0.88rem; max-width: 450px; margin: 0 auto;">
+            ${keyword ? `Tidak ada materi yang sesuai dengan pencarian "<strong>${Utils.escapeHtml(keyword)}</strong>".` : 'Belum ada dokumen materi untuk kategori ini.'}
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    const typeIcons = {
+      'pdf': 'fa-solid fa-file-pdf',
+      'doc': 'fa-solid fa-file-word',
+      'docx': 'fa-solid fa-file-word',
+      'ppt': 'fa-solid fa-file-powerpoint',
+      'pptx': 'fa-solid fa-file-powerpoint',
+      'xls': 'fa-solid fa-file-excel',
+      'xlsx': 'fa-solid fa-file-excel',
+      'zip': 'fa-solid fa-file-zipper',
+      'rar': 'fa-solid fa-file-zipper'
+    };
+
+    container.innerHTML = `
+      <div class="materials-grid">
+        ${list.map(m => {
+          const ext = (m.file_type || (m.file_url ? m.file_url.split('.').pop() : 'pdf')).toLowerCase();
+          const iconCls = typeIcons[ext] || 'fa-solid fa-file-lines';
+          const typeCls = `type-${ext}`;
+          const isFeatured = m.is_featured == 1;
+
+          return `
+            <div class="material-card" id="materialCard_${m.id}">
+              <div>
+                <div class="material-card-top">
+                  <div class="material-type-icon ${typeCls}">
+                    <i class="${iconCls}"></i>
+                  </div>
+                  <div class="material-header-info">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; margin-bottom: 0.35rem;">
+                      <span class="material-cat-badge">${Utils.escapeHtml(m.category || 'Panduan')}</span>
+                      ${isFeatured ? '<span class="status-badge badge-unit" style="font-size: 0.7rem; padding: 2px 7px;"><i class="fa-solid fa-star"></i> PENTING</span>' : ''}
+                    </div>
+                    <h3 class="material-title">${Utils.escapeHtml(m.title)}</h3>
+                  </div>
+                </div>
+
+                <p class="material-desc">${Utils.escapeHtml(m.description || 'Dokumen panduan resmi kegiatan JUMBARA PMI.')}</p>
+              </div>
+
+              <div class="material-card-bottom">
+                <div class="material-meta-items">
+                  <span class="material-meta-item" title="Ukuran File">
+                    <i class="fa-regular fa-hard-drive"></i> ${Utils.escapeHtml(m.file_size || 'Dokumen')}
+                  </span>
+                  <span class="material-meta-item" title="Jumlah Diunduh">
+                    <i class="fa-solid fa-download"></i> <span id="materiDlCount_${m.id}">${Number(m.download_count || 0).toLocaleString('id-ID')}</span>x
+                  </span>
+                </div>
+
+                <button type="button" class="btn-download-materi" onclick="App.handleMaterialDownload(${m.id}, '${m.file_url}', '${Utils.escapeHtml(m.title)}')">
+                  <i class="fa-solid fa-arrow-down-to-bracket"></i> Unduh
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  },
+
+  async handleMaterialDownload(id, fileUrl, title) {
+    try {
+      Utils.showToast(`Memulai unduhan: ${title}...`, 'info');
+      API.trackMaterialDownload(id).then(res => {
+        if (res && res.download_count !== undefined) {
+          const el = document.getElementById(`materiDlCount_${id}`);
+          if (el) el.textContent = Number(res.download_count).toLocaleString('id-ID');
+        }
+      }).catch(e => console.warn('Download tracking error:', e));
+
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.setAttribute('download', '');
+      link.setAttribute('target', '_blank');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Download error:', e);
+      window.open(fileUrl, '_blank');
+    }
+  },
+
+  // =========================================================================
+  // HELPER METHODS: KOTAK SARAN & ASPIRASI
+  // =========================================================================
+  setFeedbackRating(val, context = 'landing') {
+    val = parseInt(val, 10) || 5;
+    if (val < 1) val = 1;
+    if (val > 5) val = 5;
+
+    this.feedbackRating = this.feedbackRating || {};
+    this.feedbackRating[context] = val;
+
+    const ratingValInput = document.getElementById(`${context}FeedbackRatingVal`);
+    if (ratingValInput) ratingValInput.value = val;
+
+    const starPicker = document.getElementById(`${context}StarPicker`);
+    if (starPicker) {
+      const stars = starPicker.querySelectorAll('.star-btn');
+      stars.forEach((btn, idx) => {
+        btn.classList.toggle('active', idx < val);
+      });
+    }
+
+    const ratingLabels = {
+      1: '1 Bintang (Perlu Evaluasi Serius)',
+      2: '2 Bintang (Kurang Memuaskan)',
+      3: '3 Bintang (Cukup Baik)',
+      4: '4 Bintang (Memuaskan)',
+      5: '5 Bintang (Sangat Memuaskan)'
+    };
+
+    const textEl = document.getElementById(`${context}FeedbackRatingText`);
+    if (textEl) {
+      textEl.textContent = ratingLabels[val] || `${val} Bintang`;
+    }
+  },
+
+  toggleFeedbackAnon(context = 'landing') {
+    const isAnonCheckbox = document.getElementById(`${context}FeedbackIsAnon`);
+    const nameInput = document.getElementById(`${context}FeedbackSenderName`);
+    if (!isAnonCheckbox || !nameInput) return;
+
+    if (isAnonCheckbox.checked) {
+      nameInput.dataset.prevVal = nameInput.value;
+      nameInput.value = 'Anonim (Rahasia)';
+      nameInput.disabled = true;
+      nameInput.style.backgroundColor = '#f1f5f9';
+      nameInput.style.color = '#64748b';
+    } else {
+      nameInput.value = nameInput.dataset.prevVal || '';
+      nameInput.disabled = false;
+      nameInput.style.backgroundColor = '';
+      nameInput.style.color = '';
+    }
+  },
+
+  openFeedbackModal() {
+    this.openModal('feedbackModal');
+  },
+
+  async handleFeedbackSubmit(event, context = 'landing') {
+    if (event) event.preventDefault();
+
+    const isAnon = document.getElementById(`${context}FeedbackIsAnon`)?.checked ? 1 : 0;
+    const senderName = isAnon ? 'Anonim' : (document.getElementById(`${context}FeedbackSenderName`)?.value.trim() || 'Anonim');
+    const role = document.getElementById(`${context}FeedbackRole`)?.value || 'Peserta PMR';
+    const category = document.getElementById(`${context}FeedbackCategory`)?.value || 'Saran Umum & Inovasi';
+    const unitName = document.getElementById(`${context}FeedbackUnitName`)?.value.trim() || '';
+    const rating = parseInt(document.getElementById(`${context}FeedbackRatingVal`)?.value, 10) || 5;
+    const message = document.getElementById(`${context}FeedbackMessage`)?.value.trim();
+
+    const alertBox = document.getElementById(`${context}FeedbackAlert`);
+    const submitBtn = document.getElementById(`${context}FeedbackSubmitBtn`) || (event ? event.target.querySelector('button[type="submit"]') : null);
+
+    if (!message || message.length < 5) {
+      if (alertBox) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.style.border = '1px solid #fca5a5';
+        alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Mohon tuliskan pesan saran Anda minimal 5 karakter.';
+      }
+      return;
+    }
+
+    const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirimkan...';
+    }
+
+    try {
+      const res = await API.submitFeedback({
+        sender_name: senderName,
+        is_anonymous: isAnon,
+        sender_role: role,
+        unit_name: unitName,
+        category: category,
+        rating: rating,
+        message: message
+      });
+
+      if (alertBox) {
+        alertBox.className = 'alert alert-success';
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#ecfdf5';
+        alertBox.style.color = '#047857';
+        alertBox.style.border = '1px solid #a7f3d0';
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${Utils.escapeHtml(res.message || 'Terima kasih! Saran & aspirasi Anda berhasil dikirimkan ke Panitia Jumbara.')}`;
+      }
+
+      Utils.showToast('Saran & aspirasi Anda berhasil dikirimkan!', 'success');
+
+      // Reset form fields
+      const msgInput = document.getElementById(`${context}FeedbackMessage`);
+      if (msgInput) msgInput.value = '';
+      const unitInput = document.getElementById(`${context}FeedbackUnitName`);
+      if (unitInput) unitInput.value = '';
+      const anonCheck = document.getElementById(`${context}FeedbackIsAnon`);
+      if (anonCheck) {
+        anonCheck.checked = false;
+        this.toggleFeedbackAnon(context);
+      }
+      const nameInput = document.getElementById(`${context}FeedbackSenderName`);
+      if (nameInput) nameInput.value = '';
+
+      this.setFeedbackRating(5, context);
+
+      if (context === 'modal') {
+        setTimeout(() => {
+          this.closeModal('feedbackModal');
+          if (alertBox) alertBox.style.display = 'none';
+        }, 1800);
+      }
+    } catch (err) {
+      console.error('Feedback submit error:', err);
+      if (alertBox) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.style.border = '1px solid #fca5a5';
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${Utils.escapeHtml(err.message || 'Gagal mengirim saran. Silakan coba kembali.')}`;
+      }
+      Utils.showToast(err.message || 'Gagal mengirimkan saran', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
+      }
     }
   },
 
@@ -2435,6 +2936,8 @@ const App = {
         { id: 'piagam', label: 'Piagam Penghargaan', icon: 'fa-solid fa-scroll', category: 'peserta', enabled: true, isSystem: true },
         { id: 'jadwal', label: 'Kelola Jadwal', icon: 'fa-solid fa-calendar-days', category: 'agenda', enabled: true, isSystem: true },
         { id: 'presensi', label: 'Scan Presensi QR', icon: 'fa-solid fa-qrcode', category: 'agenda', enabled: true, isSystem: true },
+        { id: 'materi', label: 'Unduh & Kelola Materi', icon: 'fa-solid fa-book-bookmark', category: 'agenda', enabled: true, isSystem: true },
+        { id: 'feedback', label: 'Kotak Saran & Aspirasi', icon: 'fa-solid fa-comments', category: 'agenda', enabled: true, isSystem: true },
         { id: 'pengumuman', label: 'Pengumuman', icon: 'fa-solid fa-bullhorn', category: 'agenda', enabled: true, isSystem: true },
         { id: 'aspek', label: 'Aspek Penilaian Kegiatan', icon: 'fa-solid fa-list-check', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'rekap_nilai', label: 'Rekap Nilai per Kegiatan', icon: 'fa-solid fa-chart-simple', category: 'penilaian', enabled: true, isSystem: true },
@@ -2665,6 +3168,10 @@ const App = {
       this.renderTabPenilaian(content, 'klasemen');
     } else if (tabName === 'jadwal') {
       this.renderTabJadwal(content);
+    } else if (tabName === 'materi') {
+      this.renderTabMateri(content);
+    } else if (tabName === 'feedback') {
+      this.renderTabFeedback(content);
     } else if (tabName === 'pengumuman') {
       this.renderTabPengumuman(content);
     } else if (tabName === 'pengaturan') {
@@ -5545,6 +6052,480 @@ const App = {
       `).join('');
     } catch (err) {
       container.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+    }
+  },
+
+  // =========================================================================
+  // TAB: KELOLA & UNDUH MATERI JUMBARA (ADMIN KABUPATEN)
+  // =========================================================================
+  async renderTabMateri(container) {
+    container.innerHTML = `
+      <div class="panel-card">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h3 class="panel-title">
+              <i class="fa-solid fa-book-bookmark" style="color: var(--primary);"></i> Kelola Dokumen & Materi Jumbara
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+              Publikasikan modul materi PMR, juknis, kisi-kisi lomba, denah buperta, dan berkas administrasi untuk peserta & kontingen.
+            </p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="App.openAddMaterialModal()" style="font-weight: 700;">
+            <i class="fa-solid fa-file-arrow-up"></i> Upload Dokumen Baru
+          </button>
+        </div>
+
+        <div id="manageMaterialsContainer" style="margin-top: 1.25rem;">
+          <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat daftar materi...</p>
+        </div>
+      </div>
+    `;
+
+    this.loadManageMaterials();
+  },
+
+  async loadManageMaterials() {
+    const container = document.getElementById('manageMaterialsContainer');
+    if (!container) return;
+
+    try {
+      const res = await API.getMaterials();
+      const list = Array.isArray(res) ? res : (res.data || []);
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 2.5rem; text-align: center;">
+            <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem; display: block;"></i>
+            <h4 style="font-size: 1.05rem; color: #334155; margin-bottom: 0.35rem; font-weight: 700;">Belum Ada Dokumen Materi</h4>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1rem;">Mulai dengan mengunggah modul atau panduan kegiatan Jumbara.</p>
+            <button class="btn btn-primary btn-sm" onclick="App.openAddMaterialModal()"><i class="fa-solid fa-file-arrow-up"></i> Upload Dokumen Baru</button>
+          </div>
+        `;
+        return;
+      }
+
+      const tableRows = list.map((m, idx) => {
+        const ext = (m.file_type || 'pdf').toUpperCase();
+        return `
+          <tr>
+            <td style="font-weight: 700; width: 40px; text-align: center;">${idx + 1}</td>
+            <td>
+              <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 0.25rem;">
+                ${Utils.escapeHtml(m.title)}
+                ${m.is_featured == 1 ? '<span class="status-badge badge-unit" style="font-size: 0.68rem; margin-left: 0.35rem;"><i class="fa-solid fa-star"></i> PENTING</span>' : ''}
+              </div>
+              <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4;">${Utils.escapeHtml(m.description || '-')}</div>
+            </td>
+            <td>
+              <span class="badge badge-unit" style="font-size: 0.75rem;">${Utils.escapeHtml(m.category || 'Umum')}</span>
+            </td>
+            <td style="font-size: 0.82rem; white-space: nowrap;">
+              <span class="badge" style="background: #fee2e2; color: #dc2626; font-weight: 800;">${ext}</span>
+              <span style="color: #64748b; margin-left: 0.25rem;">${Utils.escapeHtml(m.file_size || '-')}</span>
+            </td>
+            <td style="text-align: center; font-weight: 700; color: #059669; font-size: 0.9rem;">
+              <i class="fa-solid fa-download" style="font-size: 0.8rem;"></i> ${Number(m.download_count || 0).toLocaleString('id-ID')}
+            </td>
+            <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
+              ${Utils.formatDate(m.created_at)}
+            </td>
+            <td style="text-align: center; white-space: nowrap;">
+              <a href="${m.file_url}" target="_blank" download class="btn btn-outline btn-xs" style="padding: 0.3rem 0.6rem; font-size: 0.78rem; text-decoration: none; margin-right: 0.3rem;" title="Download / Preview">
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              <button class="btn btn-danger btn-xs" style="padding: 0.3rem 0.6rem; font-size: 0.78rem;" onclick="App.deleteMaterial(${m.id})" title="Hapus Dokumen">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Judul & Deskripsi Dokumen</th>
+                <th>Kategori</th>
+                <th>Format & Ukuran</th>
+                <th style="text-align: center;">Diunduh</th>
+                <th>Tanggal Rilis</th>
+                <th style="text-align: center; width: 100px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p style="color: #ef4444;">Error memuat materi: ${Utils.escapeHtml(err.message)}</p>`;
+    }
+  },
+
+  openAddMaterialModal() {
+    let modal = document.getElementById('addMaterialModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.id = 'addMaterialModal';
+      modal.innerHTML = `
+        <div class="modal-dialog" style="max-width: 580px;">
+          <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-file-arrow-up" style="color: var(--primary);"></i> Upload Dokumen / Materi Baru</h3>
+            <button class="modal-close" onclick="App.closeModal('addMaterialModal')">&times;</button>
+          </div>
+          <form onsubmit="App.handleSaveMaterial(event)">
+            <div class="modal-body" style="padding: 1.5rem 1.75rem;">
+              <div id="addMaterialAlert" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;"></div>
+              
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Judul Dokumen / Materi *</label>
+                <input type="text" id="matTitle" placeholder="Contoh: Juklak & Juknis Jumbara XII 2026..." required class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+              </div>
+
+              <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Kategori Materi *</label>
+                  <select id="matCategory" required class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <option value="Buku Panduan & Juknis">Buku Panduan & Juknis</option>
+                    <option value="Materi Pokok PMR">Materi Pokok PMR</option>
+                    <option value="Lomba & Penilaian">Lomba & Penilaian</option>
+                    <option value="Formulir & Administrasi">Formulir & Administrasi</option>
+                    <option value="Denah & Sarpras Buperta">Denah & Sarpras Buperta</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Opsi Dokumen</label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem;">
+                    <input type="checkbox" id="matIsFeatured" value="1">
+                    <span>Tandai Dokumen Unggulan</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Pilih File Dokumen (PDF, DOCX, PPTX, XLSX, ZIP) *</label>
+                <input type="file" id="matFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip" required class="form-control" style="width: 100%; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.25rem;">Maksimal 25MB per berkas.</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Deskripsi / Keterangan Singkat</label>
+                <textarea id="matDescription" rows="3" placeholder="Ringkasan isi dokumen materi..." class="form-control" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('addMaterialModal')">Batal</button>
+              <button type="submit" id="matSubmitBtn" class="btn btn-primary btn-sm" style="font-weight: 700;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Terbitkan
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    this.openModal('addMaterialModal');
+  },
+
+  async handleSaveMaterial(event) {
+    if (event) event.preventDefault();
+
+    const title = document.getElementById('matTitle')?.value.trim();
+    const category = document.getElementById('matCategory')?.value;
+    const isFeatured = document.getElementById('matIsFeatured')?.checked ? 1 : 0;
+    const description = document.getElementById('matDescription')?.value.trim();
+    const fileInput = document.getElementById('matFileInput');
+    const alertBox = document.getElementById('addMaterialAlert');
+    const submitBtn = document.getElementById('matSubmitBtn');
+
+    if (!title) {
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.innerHTML = 'Judul dokumen wajib diisi.';
+      }
+      return;
+    }
+
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.innerHTML = 'Silakan pilih file dokumen untuk diupload.';
+      }
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const origBtnHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...';
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const base64Data = e.target.result;
+        const fileSizeStr = (file.size > 1024 * 1024) 
+          ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
+          : Math.round(file.size / 1024) + ' KB';
+
+        await API.saveMaterial({
+          title: title,
+          category: category,
+          is_featured: isFeatured,
+          description: description,
+          file_data: base64Data,
+          file_name: file.name,
+          file_size: fileSizeStr
+        });
+
+        Utils.showToast('Dokumen materi berhasil diupload dan dipublikasikan!', 'success');
+        this.closeModal('addMaterialModal');
+        this.loadManageMaterials();
+        this.loadPublicMaterials();
+      } catch (err) {
+        if (alertBox) {
+          alertBox.style.display = 'block';
+          alertBox.style.background = '#fee2e2';
+          alertBox.style.color = '#b91c1c';
+          alertBox.innerHTML = `Gagal upload: ${Utils.escapeHtml(err.message)}`;
+        }
+        Utils.showToast(err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
+      }
+    };
+    reader.onerror = () => {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origBtnHtml;
+      Utils.showToast('Gagal membaca file dari komputer Anda.', 'error');
+    };
+    reader.readAsDataURL(file);
+  },
+
+  async deleteMaterial(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus dokumen materi ini? Berkas tidak akan dapat diunduh lagi oleh peserta.')) return;
+    try {
+      await API.deleteMaterial(id);
+      Utils.showToast('Dokumen materi berhasil dihapus.', 'info');
+      this.loadManageMaterials();
+      this.loadPublicMaterials();
+    } catch (err) {
+      Utils.showToast(err.message, 'error');
+    }
+  },
+
+  // =========================================================================
+  // TAB: KOTAK SARAN & ASPIRASI (ADMIN KABUPATEN)
+  // =========================================================================
+  async renderTabFeedback(container) {
+    container.innerHTML = `
+      <div class="panel-card">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h3 class="panel-title">
+              <i class="fa-solid fa-comments" style="color: var(--primary);"></i> Kotak Saran, Aspirasi & Evaluasi Layanan
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+              Pantau masukan, keluhan fasilitas Buperta, kritik membangun, dan indeks kepuasan dari kontingen & masyarakat.
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <select id="adminFeedbackStatusFilter" onchange="App.filterFeedbackStatus(this.value)" style="padding: 0.4rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+              <option value="all">Semua Status</option>
+              <option value="unread">Belum Dibaca</option>
+              <option value="followup">Perlu Follow-up</option>
+              <option value="read">Selesai / Dibaca</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="App.loadManageFeedback(1)" title="Segarkan Data">
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <div id="feedbackStatsRow" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.25rem; margin-bottom: 1.5rem;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Masukan</div>
+            <div id="fbStatTotal" style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 0.25rem;">-</div>
+          </div>
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
+            <div style="font-size: 0.8rem; color: #dc2626; font-weight: 700; text-transform: uppercase;">Belum Dibaca</div>
+            <div id="fbStatUnread" style="font-size: 1.6rem; font-weight: 800; color: #dc2626; margin-top: 0.25rem;">-</div>
+          </div>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem;">
+            <div style="font-size: 0.8rem; color: #2563eb; font-weight: 700; text-transform: uppercase;">Perlu Follow-up</div>
+            <div id="fbStatFollowup" style="font-size: 1.6rem; font-weight: 800; color: #2563eb; margin-top: 0.25rem;">-</div>
+          </div>
+          <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1rem;">
+            <div style="font-size: 0.8rem; color: #d97706; font-weight: 700; text-transform: uppercase;">Rata-rata Rating</div>
+            <div id="fbStatRating" style="font-size: 1.6rem; font-weight: 800; color: #d97706; margin-top: 0.25rem;">
+              ⭐ - / 5.0
+            </div>
+          </div>
+        </div>
+
+        <div id="manageFeedbackContainer">
+          <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat masukan saran...</p>
+        </div>
+      </div>
+    `;
+
+    this.loadManageFeedback(1);
+  },
+
+  filterFeedbackStatus(status) {
+    this.currentFeedbackFilter = status;
+    this.loadManageFeedback(1);
+  },
+
+  async loadManageFeedback(page = 1) {
+    this.currentFeedbackPage = page;
+    const container = document.getElementById('manageFeedbackContainer');
+    if (!container) return;
+
+    const filterVal = document.getElementById('adminFeedbackStatusFilter')?.value || this.currentFeedbackFilter || 'all';
+
+    try {
+      const res = await API.getFeedbacks({ page: page, limit: 15, status: filterVal });
+      const stats = res.stats || {};
+      const list = res.data || [];
+
+      // Update metric cards
+      const tEl = document.getElementById('fbStatTotal');
+      const uEl = document.getElementById('fbStatUnread');
+      const fEl = document.getElementById('fbStatFollowup');
+      const rEl = document.getElementById('fbStatRating');
+
+      if (tEl) tEl.textContent = (stats.total || 0).toLocaleString('id-ID');
+      if (uEl) uEl.textContent = (stats.unread || 0).toLocaleString('id-ID');
+      if (fEl) fEl.textContent = (stats.followup || 0).toLocaleString('id-ID');
+      if (rEl) rEl.innerHTML = `⭐ ${stats.avg_rating || 5.0} <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">/ 5.0</span>`;
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 3rem 1.5rem; text-align: center;">
+            <i class="fa-solid fa-comment-dots" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem; display: block;"></i>
+            <h4 style="font-size: 1.05rem; color: #334155; margin-bottom: 0.35rem; font-weight: 700;">Belum Ada Saran Masuk</h4>
+            <p style="color: #64748b; font-size: 0.85rem; margin: 0;">Tidak ada pesan saran dengan status filter yang dipilih.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const statusBadges = {
+        'unread': '<span class="status-badge badge-rejected" style="font-size: 0.72rem;"><i class="fa-solid fa-envelope"></i> BELUM DIBACA</span>',
+        'followup': '<span class="status-badge badge-unit" style="font-size: 0.72rem; background: #e0f2fe; color: #0369a1;"><i class="fa-solid fa-arrows-spin"></i> PERLU FOLLOW-UP</span>',
+        'read': '<span class="status-badge badge-verified" style="font-size: 0.72rem;"><i class="fa-solid fa-check-double"></i> SELESAI / TERBACA</span>'
+      };
+
+      const tableRows = list.map((item, idx) => {
+        const starsHtml = '⭐'.repeat(item.rating || 5);
+        return `
+          <tr id="feedbackRow_${item.id}">
+            <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
+              ${Utils.formatDate(item.created_at)}
+            </td>
+            <td>
+              <div style="font-weight: 700; color: #0f172a; font-size: 0.92rem;">
+                ${item.is_anonymous == 1 ? '<span style="color: #64748b;"><i class="fa-solid fa-user-secret"></i> Anonim (Rahasia)</span>' : Utils.escapeHtml(item.sender_name)}
+              </div>
+              <div style="font-size: 0.78rem; color: #64748b;">
+                <i class="fa-solid fa-id-badge"></i> ${Utils.escapeHtml(item.sender_role || 'Peserta')}
+                ${item.unit_name ? ` • <strong>${Utils.escapeHtml(item.unit_name)}</strong>` : ''}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-unit" style="font-size: 0.72rem;">${Utils.escapeHtml(item.category)}</span>
+            </td>
+            <td style="white-space: nowrap; font-size: 0.85rem;">
+              ${starsHtml}
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: #334155; line-height: 1.45; max-width: 380px;">
+                ${Utils.escapeHtml(item.message)}
+              </div>
+              ${item.admin_notes ? `<div style="margin-top: 0.35rem; font-size: 0.76rem; background: #fef3c7; color: #92400e; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block;"><strong>Catatan Posko:</strong> ${Utils.escapeHtml(item.admin_notes)}</div>` : ''}
+            </td>
+            <td>
+              ${statusBadges[item.status] || item.status}
+            </td>
+            <td style="text-align: center; white-space: nowrap;">
+              <div style="display: flex; gap: 0.3rem; justify-content: center;">
+                ${item.status !== 'read' ? `
+                  <button class="btn btn-outline btn-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #059669; border-color: #a7f3d0;" onclick="App.updateFeedbackStatus(${item.id}, 'read')" title="Tandai Selesai / Dibaca">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                ` : ''}
+                ${item.status !== 'followup' ? `
+                  <button class="btn btn-outline btn-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #2563eb; border-color: #bfdbfe;" onclick="App.updateFeedbackStatus(${item.id}, 'followup')" title="Tandai Perlu Tindak Lanjut">
+                    <i class="fa-solid fa-arrows-spin"></i>
+                  </button>
+                ` : ''}
+                <button class="btn btn-danger btn-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="App.deleteFeedbackItem(${item.id})" title="Hapus Masukan">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Waktu</th>
+                <th>Pengirim & Unit</th>
+                <th>Kategori</th>
+                <th>Rating</th>
+                <th>Isi Masukan / Saran</th>
+                <th>Status</th>
+                <th style="text-align: center; width: 110px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      container.innerHTML = `<p style="color: #ef4444;">Error memuat feedback: ${Utils.escapeHtml(err.message)}</p>`;
+    }
+  },
+
+  async updateFeedbackStatus(id, newStatus) {
+    let notes = '';
+    if (newStatus === 'followup') {
+      notes = prompt('Catatan tindak lanjut panitia (opsional):') || '';
+    }
+    try {
+      await API.updateFeedbackStatus(id, newStatus, notes);
+      Utils.showToast(`Status masukan berhasil diperbarui (${newStatus}).`, 'success');
+      this.loadManageFeedback(this.currentFeedbackPage);
+    } catch (err) {
+      Utils.showToast(err.message, 'error');
+    }
+  },
+
+  async deleteFeedbackItem(id) {
+    if (!confirm('Hapus pesan saran ini?')) return;
+    try {
+      await API.deleteFeedback(id);
+      Utils.showToast('Pesan saran berhasil dihapus.', 'info');
+      this.loadManageFeedback(this.currentFeedbackPage);
+    } catch (err) {
+      Utils.showToast(err.message, 'error');
     }
   },
 
@@ -8992,9 +9973,11 @@ const App = {
         list.innerHTML = `
           <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda & Jumbotron</a></li>
           <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Jadwal & Rundown</a></li>
+          <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
           <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Papan Pengumuman</a></li>
           <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Perolehan Medali</a></li>
           <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Peta & Lokasi Buperta</a></li>
+          <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
           <li><a href="javascript:void(0)" onclick="App.openLoginModal()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-to-bracket"></i> Login Portal</a></li>
         `;
       }
@@ -9006,6 +9989,8 @@ const App = {
           list.innerHTML = `
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('peserta')"><i class="fa-solid fa-users"></i> Kelola & Verifikasi Peserta</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda')"><i class="fa-solid fa-calendar-days"></i> Agenda & Presensi Jumbara</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda', 'materi')"><i class="fa-solid fa-book-bookmark"></i> Kelola & Unduh Materi</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda', 'feedback')"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('penilaian')"><i class="fa-solid fa-trophy"></i> Penilaian & Rekap Medali</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('pengaturan')"><i class="fa-solid fa-gear"></i> Pengaturan Aplikasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
@@ -9014,6 +9999,8 @@ const App = {
           list.innerHTML = `
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('peserta')"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('jadwal')"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a></li>
+            <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
+            <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('piagam')"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
           `;
@@ -9022,6 +10009,8 @@ const App = {
             <li><a href="javascript:void(0)" onclick="App.renderView()"><i class="fa-solid fa-id-badge"></i> Portal Peserta</a></li>
             <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda Publik</a></li>
             <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Jadwal Kegiatan</a></li>
+            <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
+            <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a></li>
           `;
         }

@@ -18,8 +18,8 @@ RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .pyc 
 SetHandler default-handler
 Options -ExecCGI -Indexes
 
-# Whitelist allowed media extensions only
-<FilesMatch "\.(?i:jpe?g|png|gif|webp|svg|ico|pdf)$">
+# Whitelist allowed media and document extensions only
+<FilesMatch "\.(?i:jpe?g|png|gif|webp|svg|ico|pdf|docx?|pptx?|xlsx?|zip)$">
     <IfModule mod_authz_core.c>
         Require all granted
     </IfModule>

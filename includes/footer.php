@@ -17,9 +17,11 @@ $settings = getAppSettings();
         <ul id="footerQuickLinks">
           <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)">Beranda & Jumbotron</a></li>
           <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)">Jadwal & Rundown</a></li>
+          <li><a href="#materi" onclick="App.scrollToSection('materi', event)">Unduh Materi & Juklak</a></li>
           <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)">Papan Pengumuman</a></li>
           <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)">Perolehan Medali</a></li>
           <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)">Peta & Lokasi Buperta</a></li>
+          <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)">Kotak Saran & Aspirasi</a></li>
         </ul>
       </div>
 
@@ -982,6 +984,94 @@ $settings = getAppSettings();
           <p style="text-align: center; padding: 3rem; color: #94a3b8; font-size: 1rem;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Memuat data papan informasi unsur...</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Floating Quick Button: Kotak Saran -->
+  <button type="button" class="floating-feedback-btn" id="floatingFeedbackBtn" onclick="App.openFeedbackModal()" aria-label="Buka Kotak Saran Jumbara" title="Kirim Saran & Aspirasi untuk Jumbara PMI">
+    <span class="feedback-dot-pulse"></span>
+    <i class="fa-solid fa-comment-dots"></i>
+    <span>Kotak Saran</span>
+  </button>
+
+  <!-- Modal: Kotak Saran & Aspirasi -->
+  <div class="modal" id="feedbackModal">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-comment-dots" style="color: var(--primary);"></i> Form Kotak Saran & Aspirasi JUMBARA
+        </h3>
+        <button type="button" class="modal-close" onclick="App.closeModal('feedbackModal')" aria-label="Tutup Modal">&times;</button>
+      </div>
+      <form onsubmit="App.handleFeedbackSubmit(event, 'modal')">
+        <div class="modal-body" style="padding: 1.5rem 1.75rem;">
+          <div id="modalFeedbackAlert" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;"></div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Nama Pengirim</label>
+            <input type="text" id="modalFeedbackSenderName" placeholder="Nama lengkap Anda..." class="form-control" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <label class="anonymous-check-wrap" style="margin-top: 0.4rem;">
+              <input type="checkbox" id="modalFeedbackIsAnon" onchange="App.toggleFeedbackAnon('modal')">
+              <span>Kirim sebagai Anonim (Rahasiakan Nama Saya)</span>
+            </label>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Peran Anda *</label>
+              <select id="modalFeedbackRole" class="form-control" required style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <option value="Peserta PMR">Peserta PMR</option>
+                <option value="Pembina / Pendamping Unit">Pembina / Pendamping Unit</option>
+                <option value="Dewan Juri / Penilai">Dewan Juri / Penilai</option>
+                <option value="Panitia Pelaksana">Panitia Pelaksana</option>
+                <option value="Orang Tua / Publik">Orang Tua / Masyarakat Umum</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Kategori Masukan *</label>
+              <select id="modalFeedbackCategory" class="form-control" required style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <option value="Fasilitas & Sarpras Buperta">Fasilitas & Sarpras Buperta</option>
+                <option value="Pelayanan & Konsumsi">Pelayanan & Konsumsi</option>
+                <option value="Penyelenggaraan Lomba">Penyelenggaraan Lomba</option>
+                <option value="Jadwal & Rundown Acara">Jadwal & Rundown Acara</option>
+                <option value="Keamanan & Medis">Keamanan & Medis</option>
+                <option value="Saran Umum & Inovasi">Saran Umum & Inovasi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Asal Unit Sekolah / Kontingen (Opsional)</label>
+            <input type="text" id="modalFeedbackUnitName" placeholder="Contoh: SMAN 1 Pemalang / SMPN 2..." class="form-control" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+          </div>
+
+          <div class="rating-select-group">
+            <div class="rating-select-label">
+              <span>Rating Kepuasan / Kualitas Layanan:</span>
+              <span class="star-rating-text" id="modalFeedbackRatingText">5 Bintang (Sangat Memuaskan)</span>
+            </div>
+            <div class="star-rating-picker" id="modalStarPicker">
+              <button type="button" class="star-btn active" data-val="1" onclick="App.setFeedbackRating(1, 'modal')"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-btn active" data-val="2" onclick="App.setFeedbackRating(2, 'modal')"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-btn active" data-val="3" onclick="App.setFeedbackRating(3, 'modal')"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-btn active" data-val="4" onclick="App.setFeedbackRating(4, 'modal')"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-btn active" data-val="5" onclick="App.setFeedbackRating(5, 'modal')"><i class="fa-solid fa-star"></i></button>
+            </div>
+            <input type="hidden" id="modalFeedbackRatingVal" value="5">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Isi Saran, Kritik & Aspirasi Anda *</label>
+            <textarea id="modalFeedbackMessage" rows="4" placeholder="Tuliskan saran perbaikan, keluhan fasilitas, kritik membangun, atau apresiasi Anda secara jelas..." required style="width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('feedbackModal')">Batal</button>
+          <button type="submit" id="modalFeedbackSubmitBtn" class="btn btn-primary btn-sm" style="font-weight: 700;">
+            <i class="fa-solid fa-paper-plane"></i> Kirim Saran
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -275,7 +275,49 @@ try {
     try { $pdo->exec("CREATE INDEX idx_reg_id ON participants (registration_type, id DESC)"); } catch (Exception $e) {}
     try { $pdo->exec("CREATE INDEX idx_full_name ON participants (full_name)"); } catch (Exception $e) {}
     try { $pdo->exec("CREATE INDEX idx_nisn ON participants (nisn)"); } catch (Exception $e) {}
-    try { $pdo->exec("CREATE INDEX idx_cert_num ON participants (certificate_number)"); } catch (Exception $e) {}
+    // Materials / Unduh Materi Table
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS materials (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                category VARCHAR(100) NOT NULL DEFAULT 'Buku Panduan',
+                description TEXT,
+                file_url VARCHAR(255) NOT NULL,
+                file_name VARCHAR(255) DEFAULT NULL,
+                file_size VARCHAR(50) DEFAULT '1.5 MB',
+                file_type VARCHAR(50) DEFAULT 'pdf',
+                download_count INT NOT NULL DEFAULT 0,
+                uploaded_by VARCHAR(100) DEFAULT 'Panitia Jumbara PMI',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_mat_cat (category),
+                KEY idx_mat_created (created_at DESC)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+        ");
+    } catch (Exception $e) {}
+
+    // Kotak Saran & Aspirasi Table
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_name VARCHAR(150) DEFAULT 'Anonim',
+                is_anonymous TINYINT(1) NOT NULL DEFAULT 0,
+                unit_name VARCHAR(150) DEFAULT NULL,
+                sender_role VARCHAR(100) DEFAULT 'Peserta PMR',
+                category VARCHAR(100) NOT NULL DEFAULT 'Saran Umum',
+                rating INT NOT NULL DEFAULT 5,
+                message TEXT NOT NULL,
+                status ENUM('unread', 'read', 'followup') NOT NULL DEFAULT 'unread',
+                admin_notes TEXT DEFAULT NULL,
+                ip_address VARCHAR(45) DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_fb_status (status),
+                KEY idx_fb_created (created_at DESC),
+                KEY idx_fb_cat (category)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+        ");
+    } catch (Exception $e) {}
 
     // Always seed initial settings & master options (IGNORE if already exists to preserve custom logos/settings)
     $pdo->exec("

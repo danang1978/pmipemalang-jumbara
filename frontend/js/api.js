@@ -428,5 +428,54 @@ const API = {
   getCertificateParticipants(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/certificates.php?action=participants&${query}`);
+  },
+
+  // Materials / Unduh Materi Jumbara
+  getMaterials(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/materials.php?${query}`);
+  },
+
+  trackMaterialDownload(id) {
+    return this.request(`/materials.php?action=download&id=${id}`);
+  },
+
+  saveMaterial(payload) {
+    return this.request('/materials.php', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  deleteMaterial(id) {
+    return this.request(`/materials.php?id=${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Kotak Saran & Aspirasi
+  submitFeedback(payload) {
+    return this.request('/feedback.php', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getFeedbacks(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/feedback.php?${query}`);
+  },
+
+  updateFeedbackStatus(id, status, notes = '') {
+    return this.request(`/feedback.php?id=${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, admin_notes: notes })
+    });
+  },
+
+  deleteFeedback(id) {
+    return this.request(`/feedback.php?id=${id}`, {
+      method: 'DELETE'
+    });
   }
 };
