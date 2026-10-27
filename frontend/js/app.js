@@ -9195,6 +9195,72 @@ const App = {
               </div>
             </div>
 
+            <!-- Sub-group 5: Konfigurasi Email SMTP Gateway -->
+            <div style="margin-bottom: 1.75rem; border-top: 1px dashed #e2e8f0; padding-top: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; flex-wrap: wrap; gap: 0.5rem;">
+                <h5 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-envelope-circle-check" style="color: #0284c7;"></i> 5. Konfigurasi Gateway Email SMTP (Kirim Akun & Notifikasi)
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline" onclick="App.openTestSmtpModal()" style="font-size: 0.78rem; padding: 0.35rem 0.85rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem; color: #0284c7; border-color: #0284c7; background: #f0f9ff; font-weight: 600;">
+                  <i class="fa-solid fa-paper-plane"></i> Uji Coba Kirim Email SMTP
+                </button>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.83rem; color: #475569; line-height: 1.5;">
+                <span style="font-weight: 700; color: #0369a1;"><i class="fa-solid fa-circle-info"></i> Info Pengiriman Email:</span>
+                Jika status aktif, email konfirmasi registrasi, bukti pendaftaran resmi, serta <strong>Username & Password login portal</strong> akan dikirimkan otomatis ke alamat email peserta menggunakan protokol SMTP yang andal.
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem;">
+                <div class="form-group">
+                  <label class="form-label">Status Gateway SMTP *</label>
+                  <select id="setSmtpEnabled">
+                    <option value="1" ${(s.smtp_enabled === '1' || s.smtp_enabled === 1) ? 'selected' : ''}>🟢 Aktif (Kirim via SMTP)</option>
+                    <option value="0" ${(!s.smtp_enabled || s.smtp_enabled === '0' || s.smtp_enabled === 0) ? 'selected' : ''}>⚪ Non-Aktif (Fallback mail() PHP)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">SMTP Server Host *</label>
+                  <input type="text" id="setSmtpHost" value="${Utils.escapeHtml(s.smtp_host || '')}" placeholder="Contoh: smtp.gmail.com atau mail.domain.com" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Port SMTP *</label>
+                  <input type="number" id="setSmtpPort" value="${Utils.escapeHtml(s.smtp_port || '587')}" placeholder="587 / 465 / 25" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Tipe Enkripsi *</label>
+                  <select id="setSmtpSecure">
+                    <option value="tls" ${(s.smtp_secure || 'tls') === 'tls' ? 'selected' : ''}>STARTTLS / TLS (Direkomendasikan Port 587)</option>
+                    <option value="ssl" ${s.smtp_secure === 'ssl' ? 'selected' : ''}>SSL (Port 465)</option>
+                    <option value="none" ${s.smtp_secure === 'none' ? 'selected' : ''}>None (Port 25)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Username / Akun Email SMTP</label>
+                  <input type="text" id="setSmtpUser" value="${Utils.escapeHtml(s.smtp_user || '')}" placeholder="Contoh: email@gmail.com atau admin@domain.com" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Password SMTP / App Password</label>
+                  <input type="password" id="setSmtpPass" placeholder="Kosongkan jika tidak ingin mengubah password" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Nama Pengirim (From Name)</label>
+                  <input type="text" id="setSmtpFromName" value="${Utils.escapeHtml(s.smtp_from_name || 'PMI Kabupaten Pemalang')}" placeholder="PMI Kabupaten Pemalang" style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Alamat Email Pengirim (From Email)</label>
+                  <input type="email" id="setSmtpFromEmail" value="${Utils.escapeHtml(s.smtp_from_email || '')}" placeholder="sekretariat@jumbara-pmi.or.id" style="width: 100%;">
+                </div>
+              </div>
+            </div>
+
             <!-- Sub-group 4: Jalur File Aset (Advanced Path Links) -->
             <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem 1rem; margin-bottom: 1.5rem;">
               <summary style="font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; user-select: none;">
@@ -9405,8 +9471,20 @@ const App = {
       jumbotron_title: document.getElementById('setJumbotronTitle').value.trim(),
       jumbotron_subtitle: document.getElementById('setJumbotronSubtitle').value.trim(),
       reg_deadline: document.getElementById('setRegDeadline').value,
-      reg_active: document.getElementById('setRegActive').value
+      reg_active: document.getElementById('setRegActive').value,
+      smtp_enabled: document.getElementById('setSmtpEnabled')?.value || '0',
+      smtp_host: document.getElementById('setSmtpHost')?.value.trim() || '',
+      smtp_port: document.getElementById('setSmtpPort')?.value.trim() || '587',
+      smtp_secure: document.getElementById('setSmtpSecure')?.value || 'tls',
+      smtp_user: document.getElementById('setSmtpUser')?.value.trim() || '',
+      smtp_from_name: document.getElementById('setSmtpFromName')?.value.trim() || '',
+      smtp_from_email: document.getElementById('setSmtpFromEmail')?.value.trim() || ''
     };
+
+    const passVal = document.getElementById('setSmtpPass')?.value;
+    if (passVal) {
+      payload.smtp_pass = passVal;
+    }
 
     try {
       const res = await API.updateSettings(payload);
@@ -14098,6 +14176,13 @@ const App = {
 
       const fonnteToken = settings.fonnte_token || '';
       const fonnteEnabled = settings.fonnte_enabled === '1' || settings.fonnte_enabled === 1 || settings.fonnte_enabled === true;
+      const smtpEnabled = settings.smtp_enabled === '1' || settings.smtp_enabled === 1 || settings.smtp_enabled === true;
+      const smtpHost = settings.smtp_host || '';
+      const smtpPort = settings.smtp_port || '587';
+      const smtpSecure = settings.smtp_secure || 'tls';
+      const smtpUser = settings.smtp_user || '';
+      const smtpFromEmail = settings.smtp_from_email || '';
+      const smtpFromName = settings.smtp_from_name || 'PMI Kabupaten Pemalang';
 
       const isUnits = this.activeMasterSubTab === 'units';
       const isUnsur = this.activeMasterSubTab === 'unsur';
@@ -14124,7 +14209,7 @@ const App = {
 
           <button type="button" class="btn btn-sm master-sub-tab-btn ${isFonnte ? 'active' : ''}" data-tab="fonnte" onclick="App.switchMasterSubTab('fonnte')" 
             style="font-weight: 700; padding: 0.55rem 1.1rem; background: ${isFonnte ? 'var(--primary, #0284c7)' : '#ffffff'}; color: ${isFonnte ? '#ffffff' : '#334155'}; border: 1px solid ${isFonnte ? 'var(--primary, #0284c7)' : '#cbd5e1'};">
-            <i class="fa-brands fa-whatsapp" style="color: ${isFonnte ? '#ffffff' : '#25D366'};"></i> 4. Gateway WA (Fonnte API)
+            <i class="fa-solid fa-tower-broadcast" style="color: ${isFonnte ? '#ffffff' : '#0284c7'};"></i> 4. Gateway Notifikasi (WA & Email SMTP)
           </button>
         </div>
 
@@ -14365,6 +14450,92 @@ const App = {
                   </div>
                 </div>
                 <div id="fonnteTestResultContainer" style="margin-top: 0.75rem;"></div>
+              </div>
+            </div>
+
+            <!-- CARD 2: INTEGRATION SMTP EMAIL GATEWAY -->
+            <div class="panel-card" style="border-left: 5px solid #0284c7; margin-top: 1.5rem;">
+              <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <h3 class="panel-title" style="color: #0369a1; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-envelope" style="font-size: 1.4rem; color: #0284c7;"></i> Konfigurasi Email Gateway (SMTP Server)
+                </h3>
+                <span class="badge ${smtpEnabled ? 'badge-success' : 'badge-warning'}">
+                  ${smtpEnabled ? '🟢 Gateway Email SMTP Aktif' : '⚪ Gateway SMTP Non-Aktif (Default mail())'}
+                </span>
+              </div>
+
+              <div style="background: #f0f9ff; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #bae6fd; margin-bottom: 1.25rem;">
+                <p style="font-size: 0.88rem; color: #0369a1; margin: 0; line-height: 1.5;">
+                  <strong>Panduan Email SMTP:</strong> Aktifkan SMTP agar pengiriman email konfirmasi pendaftaran & akun login peserta terkirim stabil dan tidak masuk folder spam. Mendukung <strong>Gmail SMTP</strong> (Host: <code>smtp.gmail.com</code>, Port: <code>587</code>, Enkripsi: <code>TLS</code>, menggunakan <em>Google App Password 16 karakter</em>), Webmail cPanel, Mailgun, Brevo, dsb.
+                </p>
+              </div>
+
+              <form onsubmit="App.handleSaveSmtpSettings(event)">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+                  <div class="form-group">
+                    <label class="form-label">Status Gateway SMTP *</label>
+                    <select id="smtpEnabledInput">
+                      <option value="1" ${smtpEnabled ? 'selected' : ''}>🟢 Aktif (Kirim via SMTP Mail Server)</option>
+                      <option value="0" ${!smtpEnabled ? 'selected' : ''}>⚪ Non-Aktif (Gunakan Fallback mail() PHP)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">SMTP Host Server *</label>
+                    <input type="text" id="smtpHostInput" value="${Utils.escapeHtml(smtpHost)}" placeholder="Contoh: smtp.gmail.com atau mail.domain.com" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Port SMTP *</label>
+                    <input type="number" id="smtpPortInput" value="${Utils.escapeHtml(smtpPort)}" placeholder="587 / 465 / 25" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tipe Enkripsi *</label>
+                    <select id="smtpSecureInput">
+                      <option value="tls" ${smtpSecure === 'tls' ? 'selected' : ''}>STARTTLS / TLS (Direkomendasikan Port 587)</option>
+                      <option value="ssl" ${smtpSecure === 'ssl' ? 'selected' : ''}>SSL (Port 465)</option>
+                      <option value="none" ${smtpSecure === 'none' ? 'selected' : ''}>None / Plain (Port 25)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Alamat Email Pengirim (From Email)</label>
+                    <input type="email" id="smtpFromEmailInput" value="${Utils.escapeHtml(smtpFromEmail)}" placeholder="Contoh: sekretariat@pmi-pemalang.or.id">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Pengirim (From Name)</label>
+                    <input type="text" id="smtpFromNameInput" value="${Utils.escapeHtml(smtpFromName)}" placeholder="PMI Kabupaten Pemalang">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Username / Akun Email SMTP</label>
+                    <input type="text" id="smtpUserInput" value="${Utils.escapeHtml(smtpUser)}" placeholder="Contoh: namaemail@gmail.com">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Password SMTP / App Password</label>
+                    <input type="password" id="smtpPassInput" placeholder="Kosongkan jika tidak ingin mengubah password">
+                    <span class="form-help">Untuk Gmail, gunakan 16 digit App Password (bukan sandi login biasa).</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
+                  <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Simpan Konfigurasi SMTP</button>
+                </div>
+              </form>
+
+              <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0;">
+
+              <!-- Live Test Email SMTP -->
+              <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <h4 style="font-size: 1rem; font-weight: 800; color: var(--secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-paper-plane" style="color: #0284c7;"></i> Uji Coba Pengiriman Email SMTP Langsung
+                </h4>
+                <div style="display: grid; grid-template-columns: 2fr auto; gap: 0.75rem; align-items: end;">
+                  <div class="form-group">
+                    <label class="form-label">Alamat Email Penerima Tes *</label>
+                    <input type="email" id="smtpTestEmail" placeholder="Masukkan email pribadi/admin untuk menerima pesan tes">
+                  </div>
+                  <div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="App.handleTestSmtp()"><i class="fa-solid fa-paper-plane"></i> Kirim Tes Email</button>
+                  </div>
+                </div>
+                <div id="smtpTestResultContainer" style="margin-top: 0.75rem;"></div>
               </div>
             </div>
           </div>
@@ -14977,6 +15148,167 @@ const App = {
         `;
       }
       Utils.showToast(err.message || 'Gagal tes kirim WA via Fonnte.', 'error');
+    }
+  },
+
+  // --- SMTP EMAIL GATEWAY HANDLERS ---
+  async handleSaveSmtpSettings(e) {
+    if (e) e.preventDefault();
+    const payload = {
+      smtp_enabled: document.getElementById('smtpEnabledInput')?.value || '0',
+      smtp_host: document.getElementById('smtpHostInput')?.value.trim() || '',
+      smtp_port: document.getElementById('smtpPortInput')?.value.trim() || '587',
+      smtp_secure: document.getElementById('smtpSecureInput')?.value || 'tls',
+      smtp_user: document.getElementById('smtpUserInput')?.value.trim() || '',
+      smtp_from_email: document.getElementById('smtpFromEmailInput')?.value.trim() || '',
+      smtp_from_name: document.getElementById('smtpFromNameInput')?.value.trim() || ''
+    };
+
+    const passVal = document.getElementById('smtpPassInput')?.value;
+    if (passVal) {
+      payload.smtp_pass = passVal;
+    }
+
+    try {
+      const res = await API.updateSettings(payload);
+      Utils.showToast(res.message || 'Konfigurasi SMTP Email Gateway disimpan!', 'success');
+      await this.loadSettings();
+      const content = document.getElementById('adminTabContent');
+      if (content) this.renderTabMaster(content, 'fonnte');
+    } catch (err) {
+      Utils.showToast(err.message || 'Gagal menyimpan konfigurasi SMTP.', 'error');
+    }
+  },
+
+  async handleTestSmtp() {
+    const toEmail = document.getElementById('smtpTestEmail')?.value.trim();
+    const resultContainer = document.getElementById('smtpTestResultContainer');
+
+    if (!toEmail) {
+      Utils.showToast('Masukkan alamat email penerima untuk pengujian.', 'warning');
+      return;
+    }
+
+    const payload = {
+      to_email: toEmail,
+      smtp_host: document.getElementById('smtpHostInput')?.value.trim() || '',
+      smtp_port: document.getElementById('smtpPortInput')?.value.trim() || '587',
+      smtp_secure: document.getElementById('smtpSecureInput')?.value || 'tls',
+      smtp_user: document.getElementById('smtpUserInput')?.value.trim() || '',
+      smtp_from_email: document.getElementById('smtpFromEmailInput')?.value.trim() || '',
+      smtp_from_name: document.getElementById('smtpFromNameInput')?.value.trim() || ''
+    };
+
+    const passVal = document.getElementById('smtpPassInput')?.value;
+    if (passVal) {
+      payload.smtp_pass = passVal;
+    }
+
+    if (resultContainer) {
+      resultContainer.innerHTML = `<span style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungi server SMTP dan mengirim email pengujian ke ${Utils.escapeHtml(toEmail)}...</span>`;
+    }
+
+    try {
+      const res = await API.testSmtp(payload);
+      if (resultContainer) {
+        resultContainer.innerHTML = `
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.88rem;">
+            🟢 <strong>${Utils.escapeHtml(res.message)}</strong>
+          </div>
+        `;
+      }
+      Utils.showToast(res.message || 'Tes kirim email SMTP berhasil!', 'success');
+    } catch (err) {
+      if (resultContainer) {
+        resultContainer.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.88rem;">
+            🔴 <strong>Gagal Pengujian SMTP:</strong> ${Utils.escapeHtml(err.message || 'Terjadi kesalahan SMTP')}
+          </div>
+        `;
+      }
+      Utils.showToast(err.message || 'Gagal tes kirim email via SMTP.', 'error');
+    }
+  },
+
+  openTestSmtpModal() {
+    const defaultEmail = this.currentUser?.email || this.appSettings?.contact_email || '';
+    const modalHtml = `
+      <div class="modal active" id="testSmtpModal">
+        <div class="modal-dialog" style="max-width: 520px;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; color: #0369a1;">
+                <i class="fa-solid fa-paper-plane" style="color: #0284c7;"></i> Uji Coba Pengiriman Email SMTP
+              </h3>
+              <button class="modal-close" onclick="Utils.closeModal('testSmtpModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+              <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;">
+                Kirim email uji coba menggunakan parameter SMTP yang sedang terkonfigurasi. Pastikan pengaturan telah disimpan atau terisi dengan benar.
+              </p>
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Alamat Email Penerima Uji Coba *</label>
+                <input type="email" id="modalSmtpTargetEmail" value="${Utils.escapeHtml(defaultEmail)}" placeholder="email.anda@gmail.com" style="width: 100%;" required>
+              </div>
+              <div id="modalSmtpTestResult" style="margin-top: 0.5rem;"></div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button type="button" class="btn btn-outline" onclick="Utils.closeModal('testSmtpModal')">Batal</button>
+              <button type="button" class="btn btn-primary" onclick="App.handleSendModalTestSmtp()">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Email Uji Coba
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const old = document.getElementById('testSmtpModal');
+    if (old) old.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  },
+
+  async handleSendModalTestSmtp() {
+    const toEmail = document.getElementById('modalSmtpTargetEmail')?.value.trim();
+    const resultBox = document.getElementById('modalSmtpTestResult');
+    if (!toEmail) {
+      return Utils.showToast('Masukkan alamat email penerima uji coba.', 'warning');
+    }
+
+    const payload = {
+      to_email: toEmail,
+      smtp_host: document.getElementById('setSmtpHost')?.value.trim() || this.appSettings?.smtp_host || '',
+      smtp_port: document.getElementById('setSmtpPort')?.value.trim() || this.appSettings?.smtp_port || '587',
+      smtp_secure: document.getElementById('setSmtpSecure')?.value || this.appSettings?.smtp_secure || 'tls',
+      smtp_user: document.getElementById('setSmtpUser')?.value.trim() || this.appSettings?.smtp_user || '',
+      smtp_from_email: document.getElementById('setSmtpFromEmail')?.value.trim() || this.appSettings?.smtp_from_email || '',
+      smtp_from_name: document.getElementById('setSmtpFromName')?.value.trim() || this.appSettings?.smtp_from_name || ''
+    };
+    const pass = document.getElementById('setSmtpPass')?.value;
+    if (pass) payload.smtp_pass = pass;
+
+    if (resultBox) {
+      resultBox.innerHTML = `<span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungi server SMTP & mengirim pesan...</span>`;
+    }
+
+    try {
+      const res = await API.testSmtp(payload);
+      if (resultBox) {
+        resultBox.innerHTML = `
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.65rem 0.85rem; border-radius: 6px; font-size: 0.85rem;">
+            🟢 <strong>${Utils.escapeHtml(res.message)}</strong>
+          </div>
+        `;
+      }
+      Utils.showToast(res.message || 'Tes kirim email SMTP berhasil!', 'success');
+    } catch (err) {
+      if (resultBox) {
+        resultBox.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.65rem 0.85rem; border-radius: 6px; font-size: 0.85rem;">
+            🔴 <strong>Gagal:</strong> ${Utils.escapeHtml(err.message || 'Gagal koneksi SMTP')}
+          </div>
+        `;
+      }
+      Utils.showToast(err.message || 'Gagal tes kirim email via SMTP.', 'error');
     }
   },
 

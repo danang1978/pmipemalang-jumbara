@@ -350,6 +350,13 @@ const API = {
     });
   },
 
+  testSmtp(payload) {
+    return this.request('/settings.php?action=test-smtp', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
   uploadSettingFile(type, file_data) {
     return this.request('/settings.php?action=upload', {
       method: 'POST',

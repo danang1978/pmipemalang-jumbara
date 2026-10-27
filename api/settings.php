@@ -14,9 +14,10 @@ if ($method === 'GET') {
     $settings = getAppSettings();
     $user = getCurrentUser();
 
-    // Sensitive Data Protection: Never expose 3rd party API tokens to guests or non-super-admins
+    // Sensitive Data Protection: Never expose 3rd party API tokens or passwords to guests or non-super-admins
     if (!$user || !in_array($user['role'] ?? '', ['kabupaten'])) {
         unset($settings['fonnte_token']);
+        unset($settings['smtp_pass']);
     }
 
     jsonResponse($settings);
@@ -177,6 +178,105 @@ if ($method === 'POST' && $action === 'test-fonnte') {
     }
 }
 
+// POST Test SMTP Email Connection
+if ($method === 'POST' && $action === 'test-smtp') {
+    requireUser(['kabupaten']);
+    $input = getJsonInput();
+    $toEmail = trim($input['to_email'] ?? '');
+
+    if (!$toEmail || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+        jsonResponse(['error' => 'Alamat email tujuan pengujian wajib diisi dan harus berupa email valid.'], 400);
+    }
+
+    $settings = getAppSettings();
+
+    // Use parameters from test payload if provided, otherwise fallback to saved DB settings
+    $smtpConfig = [
+        'smtp_enabled' => '1',
+        'smtp_host' => !empty($input['smtp_host']) ? trim($input['smtp_host']) : ($settings['smtp_host'] ?? ''),
+        'smtp_port' => !empty($input['smtp_port']) ? intval($input['smtp_port']) : intval($settings['smtp_port'] ?? 587),
+        'smtp_secure' => !empty($input['smtp_secure']) ? trim($input['smtp_secure']) : ($settings['smtp_secure'] ?? 'tls'),
+        'smtp_user' => isset($input['smtp_user']) ? trim($input['smtp_user']) : ($settings['smtp_user'] ?? ''),
+        'smtp_pass' => (isset($input['smtp_pass']) && $input['smtp_pass'] !== '') ? $input['smtp_pass'] : ($settings['smtp_pass'] ?? ''),
+        'smtp_from_email' => !empty($input['smtp_from_email']) ? trim($input['smtp_from_email']) : ($settings['smtp_from_email'] ?? ''),
+        'smtp_from_name' => !empty($input['smtp_from_name']) ? trim($input['smtp_from_name']) : ($settings['smtp_from_name'] ?? 'PMI Kabupaten Pemalang'),
+        'organizer_name' => $settings['organizer_name'] ?? 'Palang Merah Indonesia',
+        'contact_email' => $settings['contact_email'] ?? 'sekretariat@jumbara-pmi.or.id'
+    ];
+
+    if (empty($smtpConfig['smtp_host'])) {
+        jsonResponse(['error' => 'Host SMTP server wajib diisi sebelum melakukan pengujian (Contoh: smtp.gmail.com).'], 400);
+    }
+
+    // Save temporary credentials into settings if provided
+    if (!empty($input['save_credentials'])) {
+        $stmtSave = $pdo->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
+        $stmtSave->execute(['smtp_enabled', '1']);
+        $stmtSave->execute(['smtp_host', $smtpConfig['smtp_host']]);
+        $stmtSave->execute(['smtp_port', (string)$smtpConfig['smtp_port']]);
+        $stmtSave->execute(['smtp_secure', $smtpConfig['smtp_secure']]);
+        $stmtSave->execute(['smtp_user', $smtpConfig['smtp_user']]);
+        if (!empty($smtpConfig['smtp_pass'])) {
+            $stmtSave->execute(['smtp_pass', $smtpConfig['smtp_pass']]);
+        }
+        if (!empty($smtpConfig['smtp_from_email'])) {
+            $stmtSave->execute(['smtp_from_email', $smtpConfig['smtp_from_email']]);
+        }
+        if (!empty($smtpConfig['smtp_from_name'])) {
+            $stmtSave->execute(['smtp_from_name', $smtpConfig['smtp_from_name']]);
+        }
+    }
+
+    $subject = 'Tes Konfigurasi Gateway Email SMTP - JUMBARA PMR 2026';
+    $appName = $settings['app_name'] ?? 'JUMBARA PMR TINGKAT KABUPATEN 2026';
+    $timeStr = date('d F Y H:i:s T');
+
+    $html = '<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Uji Koneksi SMTP Berhasil</title></head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px; color: #334155;">
+    <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 22px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px;">✅ UJI KONEKSI EMAIL SMTP BERHASIL</h2>
+            <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.95;">' . htmlspecialchars($appName) . '</p>
+        </div>
+        <div style="padding: 24px;">
+            <p style="font-size: 15px; margin-top: 0;">Halo Administrator Jumbara,</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #475569;">
+                Ini adalah email uji coba resmi dari sistem <strong>JUMBARA PMR</strong>. Konfigurasi <strong>Gateway Email SMTP</strong> Anda telah berhasil diverifikasi dan terhubung ke mail server secara optimal!
+            </p>
+            <table width="100%" cellspacing="0" cellpadding="8" style="background: #f1f5f9; border-radius: 8px; font-size: 13px; margin: 20px 0;">
+                <tr><td style="font-weight: 600; width: 38%; color: #64748b;">Host SMTP:</td><td style="color: #0f172a; font-family: monospace;">' . htmlspecialchars($smtpConfig['smtp_host']) . '</td></tr>
+                <tr><td style="font-weight: 600; color: #64748b;">Port & Enkripsi:</td><td style="color: #0f172a; font-family: monospace;">' . htmlspecialchars($smtpConfig['smtp_port']) . ' (' . strtoupper($smtpConfig['smtp_secure']) . ')</td></tr>
+                <tr><td style="font-weight: 600; color: #64748b;">Pengirim Email:</td><td style="color: #0f172a;">' . htmlspecialchars($smtpConfig['smtp_from_name']) . ' &lt;' . htmlspecialchars($smtpConfig['smtp_from_email']) . '&gt;</td></tr>
+                <tr><td style="font-weight: 600; color: #64748b;">Waktu Pengujian:</td><td style="color: #0f172a;">' . htmlspecialchars($timeStr) . '</td></tr>
+            </table>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 0;">
+                Kini sistem akan otomatis mengirimkan bukti pendaftaran, kredensial login (username & password), serta notifikasi verifikasi peserta melalui email ini.
+            </p>
+        </div>
+        <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+            Palang Merah Indonesia Kabupaten &bull; Structured Native Application
+        </div>
+    </div>
+</body>
+</html>';
+
+    $result = sendSmtpMail($toEmail, $subject, $html, $smtpConfig);
+
+    if (!empty($result['status'])) {
+        jsonResponse([
+            'message' => 'Tes kirim email SMTP ke ' . $toEmail . ' BERHASIL! Silakan periksa inbox / spam email Anda.',
+            'result' => $result
+        ]);
+    } else {
+        jsonResponse([
+            'error' => 'Gagal mengirim email via SMTP: ' . ($result['error'] ?? 'Terjadi kesalahan pada mail server'),
+            'result' => $result
+        ], 400);
+    }
+}
+
 // POST Update Text Settings
 if ($method === 'POST') {
     requireUser(['kabupaten']);
@@ -206,10 +306,15 @@ if ($method === 'POST') {
                 }
             }
 
+            // Protection: do not overwrite smtp_pass with empty string if not changed by admin
+            if ($f === 'smtp_pass' && ($val === '' || $val === null)) {
+                continue;
+            }
+
             $stmt->execute([$f, $val]);
         }
     }
 
-    jsonResponse(['message' => 'Pengaturan Jumbara & Fonnte WA Gateway berhasil diperbarui ke MySQL!']);
+    jsonResponse(['message' => 'Pengaturan Jumbara, Fonnte WA & SMTP Gateway berhasil diperbarui ke MySQL!']);
 }
 

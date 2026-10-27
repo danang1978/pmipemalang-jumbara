@@ -127,6 +127,14 @@ function getAppSettings($forceRefresh = false) {
             'idcard_grid_cols' => '2',
             'fonnte_token' => '',
             'fonnte_enabled' => '0',
+            'smtp_enabled' => '0',
+            'smtp_host' => '',
+            'smtp_port' => '587',
+            'smtp_secure' => 'tls',
+            'smtp_user' => '',
+            'smtp_pass' => '',
+            'smtp_from_email' => '',
+            'smtp_from_name' => 'PMI Kabupaten Pemalang',
             'menu_config' => '{}',
             'menu_settings' => '{}',
             'jumbotron_images' => json_encode([
@@ -185,6 +193,14 @@ function getAppSettings($forceRefresh = false) {
             'reg_active' => '1',
             'fonnte_token' => '',
             'fonnte_enabled' => '0',
+            'smtp_enabled' => '0',
+            'smtp_host' => '',
+            'smtp_port' => '587',
+            'smtp_secure' => 'tls',
+            'smtp_user' => '',
+            'smtp_pass' => '',
+            'smtp_from_email' => '',
+            'smtp_from_name' => 'PMI Kabupaten Pemalang',
             'jumbotron_images' => json_encode([
                 'frontend/images/jumbotron-tema1-cerdas.jpg',
                 'frontend/images/jumbotron-tema2-ceria.jpg',
@@ -519,15 +535,198 @@ if (!function_exists('sendRegistrationEmail')) {
 </body>
 </html>';
 
+        $fromEmail = !empty($settings['smtp_from_email']) ? trim($settings['smtp_from_email']) : (!empty($contactEmail) ? $contactEmail : 'no-reply@jumbara-pmi.or.id');
+        $fromName = !empty($settings['smtp_from_name']) ? trim($settings['smtp_from_name']) : ($settings['organizer_name'] ?? 'PMI Kabupaten Pemalang');
+
+        // 1. Try sending via SMTP Gateway if enabled
+        $smtpEnabled = ($settings['smtp_enabled'] ?? '0') === '1' || ($settings['smtp_enabled'] ?? 0) === 1;
+        if ($smtpEnabled && !empty($settings['smtp_host'])) {
+            $smtpResult = sendSmtpMail($toEmail, $subject, $html, $settings);
+            if (!empty($smtpResult['status'])) {
+                return true;
+            }
+            error_log('[JUMBARA SMTP REGISTRATION EMAIL ERROR] ' . ($smtpResult['error'] ?? 'Unknown SMTP error'));
+        }
+
+        // 2. Fallback to PHP native mail()
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=UTF-8';
-        $headers[] = 'From: PMI Kabupaten Pemalang <no-reply@jumbara-pmi.or.id>';
+        $headers[] = 'From: ' . $fromName . ' <' . $fromEmail . '>';
         $headers[] = 'Reply-To: ' . $contactEmail;
         $headers[] = 'X-Mailer: PHP/' . phpversion();
 
         $sent = @mail($toEmail, $subject, $html, implode("\r\n", $headers));
         return $sent;
+    }
+}
+
+// ==========================================================================
+// SOCKET-BASED NATIVE SMTP CLIENT HELPER
+// Mendukung SSL/TLS, AUTH LOGIN, RFC 5321 Dot-Stuffing tanpa dependensi composer
+// ==========================================================================
+if (!function_exists('sendSmtpMail')) {
+    function sendSmtpMail($to, $subject, $htmlBody, $customConfig = null) {
+        $settings = is_array($customConfig) ? $customConfig : getAppSettings();
+
+        $host = trim($settings['smtp_host'] ?? '');
+        $port = intval($settings['smtp_port'] ?? 587);
+        if ($port <= 0) $port = 587;
+        $secure = strtolower(trim($settings['smtp_secure'] ?? 'tls')); // 'ssl', 'tls', or 'none'
+        $user = trim($settings['smtp_user'] ?? '');
+        $pass = $settings['smtp_pass'] ?? '';
+        $fromEmail = trim($settings['smtp_from_email'] ?? '');
+        if (!$fromEmail) {
+            $fromEmail = !empty($user) && filter_var($user, FILTER_VALIDATE_EMAIL) ? $user : ($settings['contact_email'] ?? 'no-reply@jumbara-pmi.or.id');
+        }
+        $fromName = trim($settings['smtp_from_name'] ?? '');
+        if (!$fromName) {
+            $fromName = $settings['organizer_name'] ?? 'PMI Kabupaten Pemalang';
+        }
+
+        if (empty($host)) {
+            return [
+                'status' => false,
+                'error' => 'SMTP Host belum dikonfigurasi di pengaturan sistem.'
+            ];
+        }
+
+        $timeout = 15;
+        $errNo = 0;
+        $errStr = '';
+
+        $protocol = ($secure === 'ssl') ? 'ssl://' : 'tcp://';
+
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]);
+
+        $socket = @stream_socket_client(
+            $protocol . $host . ':' . $port,
+            $errNo,
+            $errStr,
+            $timeout,
+            STREAM_CLIENT_CONNECT,
+            $context
+        );
+
+        if (!$socket) {
+            return [
+                'status' => false,
+                'error' => "Gagal terhubung ke SMTP server ($host:$port): $errStr ($errNo)"
+            ];
+        }
+
+        stream_set_timeout($socket, $timeout);
+
+        $readResponse = function() use ($socket) {
+            $response = '';
+            while (!feof($socket)) {
+                $line = fgets($socket, 1024);
+                if ($line === false) break;
+                $response .= $line;
+                if (strlen($line) >= 4 && substr($line, 3, 1) === ' ') {
+                    break;
+                }
+            }
+            return trim($response);
+        };
+
+        $sendCommand = function($cmd, $expectedCode) use ($socket, $readResponse) {
+            fputs($socket, $cmd . "\r\n");
+            $res = $readResponse();
+            $code = substr($res, 0, 3);
+            if ($code != $expectedCode) {
+                throw new Exception("SMTP Error [$cmd]: Harapan kode $expectedCode, respon server: $res");
+            }
+            return $res;
+        };
+
+        try {
+            $greeting = $readResponse();
+            if (substr($greeting, 0, 3) != '220') {
+                throw new Exception("SMTP Greeting gagal: $greeting");
+            }
+
+            $clientHost = !empty($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'localhost';
+            $sendCommand("EHLO $clientHost", 250);
+
+            if ($secure === 'tls') {
+                $sendCommand("STARTTLS", 220);
+                $crypto = @stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+                if (!$crypto) {
+                    throw new Exception("Gagal mengaktifkan enkripsi TLS pada koneksi SMTP.");
+                }
+                $sendCommand("EHLO $clientHost", 250);
+            }
+
+            if (!empty($user)) {
+                $sendCommand("AUTH LOGIN", 334);
+                $sendCommand(base64_encode($user), 334);
+                $sendCommand(base64_encode($pass), 235);
+            }
+
+            $cleanFromEmail = trim(preg_replace('/[^\w\.\@\-\+]/', '', $fromEmail));
+            $sendCommand("MAIL FROM:<$cleanFromEmail>", 250);
+
+            $cleanTo = trim(preg_replace('/[^\w\.\@\-\+]/', '', $to));
+            $sendCommand("RCPT TO:<$cleanTo>", 250);
+
+            $sendCommand("DATA", 354);
+
+            $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+            $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+            $messageId = '<' . time() . '.' . md5($cleanTo . uniqid()) . '@' . $clientHost . '>';
+            $date = date('r');
+
+            $headers = [];
+            $headers[] = "Date: $date";
+            $headers[] = "Message-ID: $messageId";
+            $headers[] = "From: $encodedFromName <$cleanFromEmail>";
+            $headers[] = "Reply-To: $cleanFromEmail";
+            $headers[] = "To: <$cleanTo>";
+            $headers[] = "Subject: $encodedSubject";
+            $headers[] = "MIME-Version: 1.0";
+            $headers[] = "Content-Type: text/html; charset=UTF-8";
+            $headers[] = "Content-Transfer-Encoding: 8bit";
+            $headers[] = "X-Mailer: Jumbara-PMR-SMTP/1.0";
+
+            $normalizedBody = str_replace(["\r\n", "\r"], "\n", $htmlBody);
+            $lines = explode("\n", $normalizedBody);
+            foreach ($lines as &$line) {
+                if (isset($line[0]) && $line[0] === '.') {
+                    $line = '.' . $line;
+                }
+            }
+            $finalBody = implode("\r\n", $lines);
+
+            $payload = implode("\r\n", $headers) . "\r\n\r\n" . $finalBody . "\r\n.";
+            fputs($socket, $payload . "\r\n");
+
+            $dataRes = $readResponse();
+            if (substr($dataRes, 0, 3) != '250') {
+                throw new Exception("SMTP Gagal mengirim data pesan: $dataRes");
+            }
+
+            @fputs($socket, "QUIT\r\n");
+            @fclose($socket);
+
+            return [
+                'status' => true,
+                'message' => 'Email berhasil dikirim via SMTP server.'
+            ];
+        } catch (Exception $ex) {
+            @fputs($socket, "QUIT\r\n");
+            @fclose($socket);
+            return [
+                'status' => false,
+                'error' => $ex->getMessage()
+            ];
+        }
     }
 }
 
