@@ -21,7 +21,7 @@ $settings = getAppSettings();
           <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)">Papan Pengumuman</a></li>
           <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)">Perolehan Medali</a></li>
           <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)">Peta & Lokasi Buperta</a></li>
-          <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)">Kotak Saran & Aspirasi</a></li>
+          <li><a href="javascript:void(0)" onclick="App.openFeedbackModal()"><i class="fa-solid fa-comment-dots"></i> Kotak Saran & Aspirasi</a></li>
         </ul>
       </div>
 

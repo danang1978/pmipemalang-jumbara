@@ -358,12 +358,11 @@ const App = {
         publicNavMenu.innerHTML = `
           <a href="#beranda" class="nav-link active" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda</a>
           <a href="#kegiatan" class="nav-link" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Agenda</a>
-          <a href="#materi" class="nav-link" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Materi & Juknis</a>
+          <a href="#materi" class="nav-link" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Materi</a>
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
-          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Rekap Medali</a>
-          <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen Unit</a>
+          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Medali</a>
+          <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen</a>
           <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
-          <a href="#kotak-saran" class="nav-link" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran</a>
         `;
         publicNavMenu.style.display = '';
       }
@@ -834,146 +833,6 @@ const App = {
           <!-- Materials Grid Container -->
           <div id="publicMaterialsList">
             <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Memuat daftar materi...</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION 8: KOTAK SARAN & ASPIRASI -->
-      <section class="landing-section" id="kotak-saran">
-        <div class="landing-section-inner">
-          <div class="sec-header-modern">
-            <div class="sec-header-left">
-              <span class="sec-kicker sec-kicker-red"><i class="fa-solid fa-comment-dots"></i> ASPIRASI & EVALUASI</span>
-              <h2 class="sec-title">Kotak Saran & Masukan Kontingen</h2>
-            </div>
-            <div class="sec-header-right">
-              <span class="sec-meta-badge"><i class="fa-solid fa-heart-circle-check"></i> Menuju Jumbara Berkualitas</span>
-            </div>
-          </div>
-
-          <div class="feedback-section-wrap">
-            <!-- Left Info Card -->
-            <div class="feedback-info-card">
-              <div>
-                <span class="feedback-info-badge">
-                  <i class="fa-solid fa-bullhorn"></i> Suara Anda Berharga
-                </span>
-                <h3 class="feedback-info-title">Bantu Kami Tingkatkan Pelayanan Jumbara XII</h3>
-                <p class="feedback-info-desc">
-                  Setiap masukan, kritik membangun, evaluasi fasilitas Buperta, maupun apresiasi dari Pembina, Peserta, Juri, dan Masyarakat sangat berarti bagi kemajuan pembinaan PMR di Kabupaten Pemalang.
-                </p>
-
-                <div class="feedback-points-list">
-                  <div class="feedback-point-item">
-                    <div class="feedback-point-icon">
-                      <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <div class="feedback-point-text">
-                      <h4>Opsi Privasi Anonim</h4>
-                      <p>Anda dapat memilih untuk menyampaikan saran secara anonim tanpa mencantumkan identitas.</p>
-                    </div>
-                  </div>
-
-                  <div class="feedback-point-item">
-                    <div class="feedback-point-icon">
-                      <i class="fa-solid fa-bolt"></i>
-                    </div>
-                    <div class="feedback-point-text">
-                      <h4>Tindak Lanjut Cepat Panitia</h4>
-                      <p>Saran terkait fasilitas sarpras, kebersihan, dan kesehatan ditindaklanjuti secara berkala oleh Posko Utama.</p>
-                    </div>
-                  </div>
-
-                  <div class="feedback-point-item">
-                    <div class="feedback-point-icon">
-                      <i class="fa-solid fa-star-half-stroke"></i>
-                    </div>
-                    <div class="feedback-point-text">
-                      <h4>Indeks Kepuasan Terbuka</h4>
-                      <p>Penilaian rating bintang membantu panitia mengukur standar kepuasan seluruh kontingen.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style="font-size: 0.82rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-                <i class="fa-solid fa-headset" style="color: #ef4444; margin-right: 0.35rem;"></i> Posko Pengaduan: <strong>${Utils.escapeHtml(s.contact_phone || '(021) 555-PMR-2026')}</strong>
-              </div>
-            </div>
-
-            <!-- Right Interactive Form Card -->
-            <div class="feedback-form-card">
-              <h3 class="feedback-form-title">
-                <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Kirimkan Masukan & Evaluasi
-              </h3>
-              <p class="feedback-form-subtitle">Sampaikan pengalaman, saran sarpras, atau catatan lomba Anda.</p>
-
-              <div id="landingFeedbackAlert" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;"></div>
-
-              <form onsubmit="App.handleFeedbackSubmit(event, 'landing')">
-                <div class="form-group" style="margin-bottom: 1rem;">
-                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Nama Pengirim</label>
-                  <input type="text" id="landingFeedbackSenderName" placeholder="Nama lengkap Anda..." class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                  <label class="anonymous-check-wrap" style="margin-top: 0.45rem;">
-                    <input type="checkbox" id="landingFeedbackIsAnon" onchange="App.toggleFeedbackAnon('landing')">
-                    <span>Kirim sebagai Anonim (Rahasiakan Nama Saya)</span>
-                  </label>
-                </div>
-
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Peran Anda *</label>
-                    <select id="landingFeedbackRole" class="form-control" required style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                      <option value="Peserta PMR">Peserta PMR</option>
-                      <option value="Pembina / Pendamping Unit">Pembina / Pendamping Unit</option>
-                      <option value="Dewan Juri / Penilai">Dewan Juri / Penilai</option>
-                      <option value="Panitia Pelaksana">Panitia Pelaksana</option>
-                      <option value="Orang Tua / Publik">Orang Tua / Masyarakat Umum</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Kategori Masukan *</label>
-                    <select id="landingFeedbackCategory" class="form-control" required style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                      <option value="Fasilitas & Sarpras Buperta">Fasilitas & Sarpras Buperta</option>
-                      <option value="Pelayanan & Konsumsi">Pelayanan & Konsumsi</option>
-                      <option value="Penyelenggaraan Lomba">Penyelenggaraan Lomba</option>
-                      <option value="Jadwal & Rundown Acara">Jadwal & Rundown Acara</option>
-                      <option value="Keamanan & Medis">Keamanan & Medis</option>
-                      <option value="Saran Umum & Inovasi">Saran Umum & Inovasi</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1rem;">
-                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Asal Unit Sekolah / Kontingen (Opsional)</label>
-                  <input type="text" id="landingFeedbackUnitName" placeholder="Contoh: SMAN 1 Pemalang / SMPN 2..." class="form-control" style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                </div>
-
-                <div class="rating-select-group" style="margin-bottom: 1rem;">
-                  <div class="rating-select-label">
-                    <span>Rating Kepuasan / Kualitas Layanan:</span>
-                    <span class="star-rating-text" id="landingFeedbackRatingText">5 Bintang (Sangat Memuaskan)</span>
-                  </div>
-                  <div class="star-rating-picker" id="landingStarPicker">
-                    <button type="button" class="star-btn active" data-val="1" onclick="App.setFeedbackRating(1, 'landing')"><i class="fa-solid fa-star"></i></button>
-                    <button type="button" class="star-btn active" data-val="2" onclick="App.setFeedbackRating(2, 'landing')"><i class="fa-solid fa-star"></i></button>
-                    <button type="button" class="star-btn active" data-val="3" onclick="App.setFeedbackRating(3, 'landing')"><i class="fa-solid fa-star"></i></button>
-                    <button type="button" class="star-btn active" data-val="4" onclick="App.setFeedbackRating(4, 'landing')"><i class="fa-solid fa-star"></i></button>
-                    <button type="button" class="star-btn active" data-val="5" onclick="App.setFeedbackRating(5, 'landing')"><i class="fa-solid fa-star"></i></button>
-                  </div>
-                  <input type="hidden" id="landingFeedbackRatingVal" value="5">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                  <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem;">Isi Saran, Kritik & Aspirasi Anda *</label>
-                  <textarea id="landingFeedbackMessage" rows="4" placeholder="Tuliskan saran perbaikan, keluhan fasilitas, kritik membangun, atau apresiasi Anda secara jelas..." required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.88rem; resize: vertical;"></textarea>
-                </div>
-
-                <button type="submit" id="landingFeedbackSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 8px; font-size: 0.95rem;">
-                  <i class="fa-solid fa-paper-plane"></i> Kirimkan Saran & Masukan
-                </button>
-              </form>
-            </div>
           </div>
         </div>
       </section>
@@ -9977,7 +9836,7 @@ const App = {
           <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Papan Pengumuman</a></li>
           <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Perolehan Medali</a></li>
           <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Peta & Lokasi Buperta</a></li>
-          <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
+          <li><a href="javascript:void(0)" onclick="App.openFeedbackModal()"><i class="fa-solid fa-comment-dots"></i> Kotak Saran & Aspirasi</a></li>
           <li><a href="javascript:void(0)" onclick="App.openLoginModal()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-to-bracket"></i> Login Portal</a></li>
         `;
       }
@@ -10000,7 +9859,7 @@ const App = {
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('peserta')"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('jadwal')"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a></li>
             <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
-            <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
+            <li><a href="javascript:void(0)" onclick="App.openFeedbackModal()"><i class="fa-solid fa-comment-dots"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('piagam')"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
           `;
@@ -10010,7 +9869,7 @@ const App = {
             <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda Publik</a></li>
             <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Jadwal Kegiatan</a></li>
             <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
-            <li><a href="#kotak-saran" onclick="App.scrollToSection('kotak-saran', event)"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
+            <li><a href="javascript:void(0)" onclick="App.openFeedbackModal()"><i class="fa-solid fa-comment-dots"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a></li>
           `;
         }
