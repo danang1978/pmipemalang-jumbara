@@ -14,12 +14,12 @@ $settings = getAppSettings();
 
       <div class="footer-col">
         <h4>Link Cepat</h4>
-        <ul>
-          <li><a href="#beranda" onclick="App.scrollToSection('beranda')">Beranda & Jumbotron</a></li>
-          <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan')">Jadwal & Rundown</a></li>
-          <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman')">Papan Pengumuman</a></li>
-          <li><a href="#klasemen" onclick="App.scrollToSection('klasemen')">Perolehan Medali</a></li>
-          <li><a href="#lokasi" onclick="App.scrollToSection('lokasi')">Peta & Lokasi Buperta</a></li>
+        <ul id="footerQuickLinks">
+          <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)">Beranda & Jumbotron</a></li>
+          <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)">Jadwal & Rundown</a></li>
+          <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)">Papan Pengumuman</a></li>
+          <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)">Perolehan Medali</a></li>
+          <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)">Peta & Lokasi Buperta</a></li>
         </ul>
       </div>
 
@@ -36,6 +36,7 @@ $settings = getAppSettings();
             <i class="fa-solid fa-map-location-dot"></i> Buka Google Maps &rarr;
           </a>
         </p>
+        <div id="footerAccountBox" style="margin-top: 0.85rem;"></div>
       </div>
     </div>
     <div class="footer-bottom">
@@ -89,6 +90,8 @@ $settings = getAppSettings();
 
       <form onsubmit="App.handleLogin(event)">
         <div class="modal-body" style="padding: 1.5rem 1.75rem 1.25rem 1.75rem;">
+          <!-- Dedicated inline notification alert box for login errors -->
+          <div id="loginAlertBox" style="display: none; margin-bottom: 1.15rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; align-items: center; gap: 0.6rem; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; line-height: 1.4;"></div>
           <div class="form-group" style="margin-bottom: 1.15rem;">
             <label class="form-label" style="font-weight: 600; margin-bottom: 0.4rem; display: block;">Username atau ID Pengguna *</label>
             <div class="input-icon-wrapper">

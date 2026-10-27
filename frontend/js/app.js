@@ -117,6 +117,25 @@ const App = {
         top: offsetPosition,
         behavior: 'smooth'
       });
+    } else {
+      const main = document.getElementById('mainContainer');
+      if (main) {
+        this.renderPublicLanding(main).then(() => {
+          setTimeout(() => {
+            const targetEl = document.getElementById(sectionId);
+            if (targetEl) {
+              const headerEl = document.querySelector('.site-header') || document.querySelector('.navbar');
+              const navHeight = headerEl ? headerEl.offsetHeight : 105;
+              const elementPosition = targetEl.getBoundingClientRect().top;
+              const offsetPosition = elementPosition + window.pageYOffset - navHeight - 10;
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+              });
+            }
+          }, 150);
+        });
+      }
     }
   },
 
@@ -266,6 +285,8 @@ const App = {
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('agenda'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-check"></i> Agenda & Presensi</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('penilaian'); App.closeMobileMenu();"><i class="fa-solid fa-award"></i> Penilaian & Laporan</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchAdminCategory('pengaturan'); App.closeMobileMenu();"><i class="fa-solid fa-gears"></i> Pengaturan & Akun</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.openChangePasswordModal(); App.closeMobileMenu();"><i class="fa-solid fa-key"></i> Ganti Password Akun</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.handleLogout(); App.closeMobileMenu();" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
           `;
           publicNavMenu.style.display = '';
         } else if (role === 'unit' || role === 'admin_unit') {
@@ -273,6 +294,8 @@ const App = {
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('peserta'); App.closeMobileMenu();"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('agenda'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('piagam'); App.closeMobileMenu();"><i class="fa-solid fa-certificate"></i> Cetak Piagam & Rekap</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.openChangePasswordModal(); App.closeMobileMenu();"><i class="fa-solid fa-key"></i> Ganti Password Akun</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.handleLogout(); App.closeMobileMenu();" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
           `;
           publicNavMenu.style.display = '';
         } else {
@@ -312,12 +335,12 @@ const App = {
         }
 
         container.innerHTML = `
-          <div class="user-badge">
+          <div class="user-badge" title="${Utils.escapeHtml(this.currentUser.username)} (${roleText})">
             <span>${Icons.peserta(18)} <strong>${Utils.escapeHtml(this.currentUser.username)}</strong></span>
             <span class="user-role-tag ${roleTagClass}">${roleText}</span>
           </div>
-          <button class="btn btn-outline btn-sm" onclick="App.openChangePasswordModal()" style="font-size: 0.8rem; padding: 0.35rem 0.65rem;" title="Ganti Password Akun"><i class="fa-solid fa-key"></i> Pass</button>
-          <button class="btn btn-danger btn-sm" onclick="App.handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+          <button class="btn btn-outline btn-sm btn-header-pass" onclick="App.openChangePasswordModal()" style="font-size: 0.8rem; padding: 0.35rem 0.65rem;" title="Ganti Password Akun"><i class="fa-solid fa-key"></i> Pass</button>
+          <button class="btn btn-danger btn-sm btn-header-logout" onclick="App.handleLogout()" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
         `;
       }
     } else {
@@ -345,36 +368,40 @@ const App = {
         `;
       }
     }
+    this.renderMobileBottomNav();
+    this.renderFooterNav();
   },
 
   async renderView() {
     const main = document.getElementById('mainContainer');
     if (!main) return;
 
+    const role = this.currentUser ? this.currentUser.role : null;
+    const isAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit'].includes(role);
+
     if (!this.currentUser) {
       document.body.classList.remove('has-mobile-portal');
-      this.renderPublicLanding(main);
-    } else if (['penilai', 'juri', 'panitia'].includes(this.currentUser.role)) {
-      // PENILAI, DEWAN JURI, & PANITIA -> MOBILE APP PORTAL
-      document.body.classList.add('has-mobile-portal');
-      this.renderPenilaiPortal(main);
-    } else if (['peserta', 'peninjau', 'tamu', 'media', 'user'].includes(this.currentUser.role)) {
-      // PESERTA, PANITIA, & USER PUBLIK -> MOBILE APP PORTAL
-      document.body.classList.add('has-mobile-portal');
-      this.renderPesertaPortal(main);
-    } else if (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit') {
-      // ADMIN UNIT PMR SEKOLAH -> DESKTOP DASHBOARD
+      await this.renderPublicLanding(main);
+    } else if (isAdmin) {
+      // ADMIN (Kabupaten & Unit) -> TETAP TAMPILAN DESKTOP
       document.body.classList.remove('has-mobile-portal');
-      this.renderAdminUnitPortal(main);
-    } else if (['kabupaten', 'admin_kabupaten', 'super_admin'].includes(this.currentUser.role)) {
-      // ADMIN KABUPATEN / SUPER ADMIN -> DESKTOP DASHBOARD
-      document.body.classList.remove('has-mobile-portal');
-      this.renderAdminKabupatenPortal(main);
+      if (['unit', 'admin_unit'].includes(role)) {
+        await this.renderAdminUnitPortal(main);
+      } else {
+        await this.renderAdminKabupatenPortal(main);
+      }
+    } else if (['penilai', 'juri'].includes(role)) {
+      // PENILAI / DEWAN JURI -> TAMPILAN MOBILE APP PORTAL
+      document.body.classList.add('has-mobile-portal');
+      await this.renderPenilaiPortal(main);
     } else {
-      // DEFAULT MOBILE PORTAL
+      // PESERTA, PENINJAU, TAMU, MEDIA, USER PUBLIK -> TAMPILAN MOBILE APP PORTAL
       document.body.classList.add('has-mobile-portal');
-      this.renderPesertaPortal(main);
+      await this.renderPesertaPortal(main);
     }
+
+    this.renderMobileBottomNav();
+    this.renderFooterNav();
   },
 
   startJumbotronCarousel() {
@@ -1778,19 +1805,23 @@ const App = {
     this.activeUnitTab = this.activeUnitTab || 'peserta';
 
     container.innerHTML = `
-      <div class="panel-card" style="background: linear-gradient(135deg, var(--secondary) 0%, #1e293b 100%); color: white; margin-bottom: 1.5rem; border-left: 5px solid var(--primary); padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <h2 style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #ffffff;">
-              <i class="fa-solid fa-school-flag" style="color: var(--primary);"></i> Portal Admin Unit: ${Utils.escapeHtml(this.currentUser.unit_name || 'Sekolah PMR')}
-            </h2>
-            <p style="opacity: 0.88; font-size: 0.88rem; margin-top: 0.35rem;">
-              Verifikasi Data Kontingen & Kelola Pendaftaran Peserta Sekolah ke Agenda Kegiatan Jumbara
+      <div class="panel-card admin-banner-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; position: relative; z-index: 2;">
+          <div style="min-width: 0; flex: 1 1 auto;">
+            <div class="banner-badge" style="background: rgba(37, 99, 235, 0.18); border-color: rgba(59, 130, 246, 0.3); color: #bfdbfe;"><span class="live-pulse-dot" style="background-color: #3b82f6; margin-right: 6px;"></span> Kontingen Unit Sekolah &bull; Portal Unit</div>
+            <h1 class="admin-banner-title">
+              <i class="fa-solid fa-school-flag" style="color: #3b82f6;"></i> <span>${Utils.escapeHtml(this.currentUser.unit_name || 'Kontingen Unit Sekolah')}</span>
+            </h1>
+            <p class="admin-banner-subtitle">
+              Pusat pengelolaan verifikasi data peserta sekolah, pendaftaran kegiatan lomba & pencetakan piagam penghargaan.
             </p>
           </div>
-          <div>
-            <button class="btn btn-primary btn-sm" onclick="App.openAddParticipantModal()" style="box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-              <i class="fa-solid fa-user-plus"></i> Tambah Peserta Manual
+          <div class="admin-banner-actions">
+            <button class="btn btn-banner-primary" onclick="App.openAddParticipantModal()">
+              <i class="fa-solid fa-user-plus"></i> <span>Tambah Peserta</span>
+            </button>
+            <button class="btn btn-banner-danger" onclick="App.handleLogout()">
+              <i class="fa-solid fa-right-from-bracket"></i> <span>Keluar</span>
             </button>
           </div>
         </div>
@@ -2415,11 +2446,28 @@ const App = {
     const struct = this.getMenuStructure();
     const categories = struct.categories || [];
 
-    return categories.map(cat => `
-      <button class="nav-cat-btn ${this.activeCategory === cat.id ? 'active' : ''}" data-cat="${cat.id}" onclick="App.switchAdminCategory('${cat.id}')">
-        <i class="${cat.icon || 'fa-solid fa-folder'}"></i> ${Utils.escapeHtml(cat.label)}
-      </button>
-    `).join('');
+    const meta = {
+      'peserta': { desc: 'Verifikasi, ID Card & Kontingen', color: '#2563eb', bg: '#eff6ff' },
+      'agenda': { desc: 'Jadwal, Lokasi & Presensi QR', color: '#059669', bg: '#ecfdf5' },
+      'penilaian': { desc: 'Dewan Juri & Rekap Medali', color: '#d97706', bg: '#fffbeb' },
+      'pengaturan': { desc: 'Konfigurasi DB & Akun User', color: '#7c3aed', bg: '#f5f3ff' }
+    };
+
+    return categories.map(cat => {
+      const info = meta[cat.id] || { desc: 'Modul Manajemen', color: '#2563eb', bg: '#eff6ff' };
+      const isActive = this.activeCategory === cat.id;
+      return `
+        <button class="nav-cat-btn ${isActive ? 'active' : ''} cat-${cat.id}" data-cat="${cat.id}" onclick="App.switchAdminCategory('${cat.id}')">
+          <div class="nav-cat-icon-wrap" style="--cat-color: ${info.color}; --cat-bg: ${info.bg};">
+            <i class="${cat.icon || 'fa-solid fa-folder'}"></i>
+          </div>
+          <div class="nav-cat-body">
+            <div class="nav-cat-title">${Utils.escapeHtml(cat.label)}</div>
+            <div class="nav-cat-desc">${info.desc}</div>
+          </div>
+        </button>
+      `;
+    }).join('');
   },
 
   renderAdminSubNavHtml(catKey) {
@@ -2427,12 +2475,12 @@ const App = {
     const visibleTabs = (struct.items || []).filter(item => item.enabled !== false && item.category === catKey);
 
     if (visibleTabs.length === 0) {
-      return `<em style="color: var(--text-muted); font-size: 0.82rem; padding: 0.25rem 0.5rem;">(Tidak ada sub-menu aktif di kategori ini)</em>`;
+      return `<em style="color: var(--text-muted); font-size: 0.82rem; padding: 0.35rem 0.75rem;">(Tidak ada sub-menu aktif di kategori ini)</em>`;
     }
 
     return visibleTabs.map(tab => `
       <button class="sub-tab-btn ${this.activeTab === tab.id ? 'active' : ''}" data-tab="${tab.id}" onclick="App.switchAdminTab('${tab.id}', false)">
-        <i class="${tab.icon}"></i> ${Utils.escapeHtml(tab.label)}
+        <i class="${tab.icon}"></i> <span>${Utils.escapeHtml(tab.label)}</span>
       </button>
     `).join('');
   },
@@ -2469,19 +2517,26 @@ const App = {
     if (!this.activeTab) this.activeTab = 'verifikasi';
 
     container.innerHTML = `
-      <div class="panel-card" style="background: linear-gradient(135deg, var(--secondary) 0%, #0f172a 100%); color: white; margin-bottom: 1.25rem; border-left: 5px solid var(--primary); padding: 1.25rem 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <h2 style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; color: #ffffff;">
-              <i class="fa-solid fa-user-shield" style="color: var(--primary);"></i> Dashboard Master Panitia PMI Kabupaten
-            </h2>
-            <p style="opacity: 0.88; font-size: 0.88rem; margin-top: 0.35rem;">
-              Pengelolaan Kegiatan, Verifikasi Peserta, Presensi QR Code, Penilaian & Laporan JUMBARA PMR 2026
+      <div class="panel-card admin-banner-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; position: relative; z-index: 2;">
+          <div style="min-width: 0; flex: 1 1 auto;">
+            <div class="banner-badge"><span class="live-pulse-dot" style="margin-right: 6px;"></span> Markas PMI Kabupaten &bull; Dashboard Utama</div>
+            <h1 class="admin-banner-title">
+              <i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i> <span>Dashboard Panitia JUMBARA 2026</span>
+            </h1>
+            <p class="admin-banner-subtitle">
+              Pusat kendali verifikasi peserta kontingen, presensi QR Code, penilaian dewan juri & rekapitulasi medali PMI Kabupaten.
             </p>
           </div>
-          <div>
-            <button class="btn btn-primary btn-sm" onclick="App.openAddParticipantModal()" style="box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-              <i class="fa-solid fa-user-plus"></i> Tambah Peserta Manual
+          <div class="admin-banner-actions">
+            <button class="btn btn-banner-primary" onclick="App.openAddParticipantModal()">
+              <i class="fa-solid fa-user-plus"></i> <span>Tambah Peserta</span>
+            </button>
+            <button class="btn btn-banner-outline" onclick="App.openAddEventModal()">
+              <i class="fa-solid fa-calendar-plus"></i> <span>Tambah Agenda</span>
+            </button>
+            <button class="btn btn-banner-danger" onclick="App.handleLogout()">
+              <i class="fa-solid fa-right-from-bracket"></i> <span>Keluar</span>
             </button>
           </div>
         </div>
@@ -3369,102 +3424,119 @@ const App = {
 
   async renderTabPresensi(container) {
     container.innerHTML = `
-      <div class="panel-card">
-        <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
-          <h3 class="panel-title">${Icons.qrcode(20, 'var(--primary)')} Modul Presensi Masuk & Keluar Kegiatan (Auto-Scan & Kamera HP)</h3>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Sistem memvalidasi status verifikasi peserta & pendaftaran resmi pada agenda kegiatan sebelum mencatat presensi.</p>
+      <div class="panel-card presensi-panel-card">
+        <div class="presensi-header-banner">
+          <div class="presensi-header-title">
+            <h3>
+              <i class="fa-solid fa-qrcode" style="color: #ef4444;"></i> <span>Pemindai Presensi Kegiatan & Agenda</span>
+            </h3>
+            <p>Sistem memvalidasi status verifikasi peserta & pendaftaran resmi pada agenda kegiatan sebelum mencatat presensi.</p>
+          </div>
         </div>
 
         <div class="presensi-grid-layout">
           
           <!-- SCANNER CONTROL PANEL -->
-          <div class="scanner-control-panel" style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+          <div class="scanner-control-panel">
             
             <!-- AUDIO SOUND BANNER -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.55rem 0.75rem; border-radius: 8px; margin-bottom: 1.1rem; flex-wrap: wrap; gap: 0.4rem; width: 100%; box-sizing: border-box;">
-              <span style="font-size: 0.8rem; color: #166534; font-weight: 700; display: flex; align-items: center; gap: 0.35rem; flex: 1; min-width: 170px; word-break: break-word;">
-                <i class="fa-solid fa-volume-high" style="color: #16a34a; font-size: 0.95rem;"></i> <strong>Suara Nada Scanner:</strong> <span style="color: #15803d; background: #dcfce7; padding: 0.12rem 0.45rem; border-radius: 12px; font-size: 0.75rem;">AKTIF</span>
-              </span>
-              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; font-weight: 700; color: #15803d; border-color: #86efac; background: #ffffff; flex-shrink: 0;" onclick="App.testAudioSound()">
-                <i class="fa-solid fa-circle-play"></i> 🔊 Tes Suara
+            <div class="audio-sound-banner">
+              <div class="audio-sound-info">
+                <i class="fa-solid fa-volume-high" style="color: #16a34a; font-size: 0.95rem;"></i>
+                <span>Nada Beep:</span>
+                <span class="audio-status-pill">AKTIF</span>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm btn-sound-test" onclick="App.testAudioSound()" title="Tes bunyi nada scanner">
+                <i class="fa-solid fa-circle-play"></i> <span>Tes Suara</span>
               </button>
             </div>
 
             <!-- MODE PRESENSI TOGGLE BUTTONS (MASUK / KELUAR) -->
-            <div class="form-group" style="margin-bottom: 1.1rem;">
-              <label class="form-label" style="font-weight: 800;">Pilih Mode Presensi *</label>
-              <div class="presensi-mode-toggle-grid">
-                <button type="button" id="btnPresensiMasuk" class="btn btn-success presensi-mode-btn" style="padding: 0.65rem 0.4rem; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="App.setPresensiMode('masuk')">
-                  <i class="fa-solid fa-right-to-bracket" style="font-size: 1.1rem;"></i> 🟢 Presensi Masuk (Check-In)
+            <div class="presensi-form-group">
+              <label class="presensi-form-label">Mode Presensi *</label>
+              <div class="presensi-mode-switcher">
+                <button type="button" id="btnPresensiMasuk" class="presensi-mode-tab active mode-masuk" onclick="App.setPresensiMode('masuk')">
+                  <span class="badge-dot dot-green"></span>
+                  <i class="fa-solid fa-right-to-bracket"></i>
+                  <span>Masuk (Check-In)</span>
                 </button>
-                <button type="button" id="btnPresensiKeluar" class="btn btn-outline presensi-mode-btn" style="padding: 0.65rem 0.4rem; font-weight: 800; font-size: 0.88rem; color: #dc2626; border-color: #fca5a5; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="App.setPresensiMode('keluar')">
-                  <i class="fa-solid fa-right-from-bracket" style="font-size: 1.1rem;"></i> 🔴 Presensi Keluar (Check-Out)
+                <button type="button" id="btnPresensiKeluar" class="presensi-mode-tab inactive" onclick="App.setPresensiMode('keluar')">
+                  <span class="badge-dot dot-red"></span>
+                  <i class="fa-solid fa-right-from-bracket"></i>
+                  <span>Keluar (Check-Out)</span>
                 </button>
               </div>
             </div>
 
             <!-- SELECT EVENT -->
-            <div class="form-group" style="margin-bottom: 1.1rem;">
-              <label class="form-label" style="font-weight: 800;">Pilih Agenda Kegiatan Jumbara *</label>
-              <select id="presensiEventId" required style="width: 100%; max-width: 100%; box-sizing: border-box;" onchange="App.loadEventAttendanceLog(this.value); App.focusScanInput();">
+            <div class="presensi-form-group">
+              <label class="presensi-form-label">Agenda Kegiatan Jumbara *</label>
+              <select id="presensiEventId" class="presensi-select" required onchange="App.loadEventAttendanceLog(this.value); App.focusScanInput();">
                 <option value="">-- Pilih Kegiatan / Lomba Jumbara --</option>
                 ${this.cachedEvents.map(e => `<option value="${e.id}">${Utils.escapeHtml(e.title)} (${e.event_date}) - [${e.category} / ${e.pmr_level}]</option>`).join('')}
               </select>
             </div>
 
             <!-- INPUT / AUTO SCANNER CODE -->
-            <div class="form-group" style="margin-bottom: 1.1rem;">
-              <label class="form-label" style="font-weight: 800;">Scan QR Code / Input Kode Peserta (JMB-2026-XXXX)</label>
-              <div style="display: flex; gap: 0.4rem; width: 100%;">
-                <input type="text" id="presensiScanCode" placeholder="Scan QR / ketik kode..." style="flex: 1; min-width: 0; font-size: 0.95rem; font-weight: 800; text-transform: uppercase;" onkeyup="if(event.key==='Enter') App.handleScanPresensi()" oninput="App.checkAutoScanTrigger(this.value)">
-                <button class="btn btn-primary" onclick="App.handleScanPresensi()" style="padding: 0 0.85rem; font-weight: 700; flex-shrink: 0; white-space: nowrap;">
-                  <i class="fa-solid fa-qrcode"></i> Scan
+            <div class="presensi-form-group">
+              <label class="presensi-form-label">Scan Barcode / Kode Peserta</label>
+              <div class="presensi-input-row">
+                <input type="text" id="presensiScanCode" class="presensi-input" placeholder="Scan QR / ketik JMB-2026-..." onkeyup="if(event.key==='Enter') App.handleScanPresensi()" oninput="App.checkAutoScanTrigger(this.value)">
+                <button class="btn btn-primary btn-scan-action" onclick="App.handleScanPresensi()">
+                  <i class="fa-solid fa-qrcode"></i> <span>Scan</span>
                 </button>
               </div>
-              <small style="color: #059669; font-weight: 700; margin-top: 0.4rem; display: block; word-break: break-word;">
-                ⚡ Auto-Scan Aktif: Barcode scanner USB akan langsung memproses presensi secara otomatis!
+              <small class="presensi-auto-hint">
+                <i class="fa-solid fa-bolt" style="color: #10b981;"></i> Auto-Scan Aktif untuk Barcode Scanner USB
               </small>
             </div>
 
             <!-- KAMERA HP / WEBCAM BUTTON -->
-            <div style="margin-bottom: 1.1rem;">
-              <button type="button" id="btnToggleCamera" class="btn btn-outline" style="width: 100%; font-weight: 800; padding: 0.65rem 0.5rem; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; word-break: break-word; white-space: normal;" onclick="App.toggleCameraScanner()">
-                <i class="fa-solid fa-camera"></i> 📷 Buka Kamera HP / Webcam untuk Scan QR
+            <div style="margin-bottom: 0.95rem;">
+              <button type="button" id="btnToggleCamera" class="btn btn-camera-toggle" onclick="App.toggleCameraScanner()">
+                <i class="fa-solid fa-camera"></i> <span>Buka Kamera HP / Webcam untuk Scan QR</span>
               </button>
             </div>
 
             <!-- CAMERA PREVIEW CONTAINER FOR MOBILE HP -->
-            <div id="cameraScannerWrapper" style="display: none; background: #ffffff; padding: 0.75rem; border-radius: 12px; border: 2px dashed #4f46e5; margin-bottom: 1.1rem; text-align: center; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08); width: 100%; box-sizing: border-box;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.35rem; width: 100%;">
-                <strong style="font-size: 0.85rem; color: #3730a3;"><i class="fa-solid fa-video"></i> Kamera Scan HP Aktif</strong>
-                <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
-                  <button type="button" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; color: #4f46e5; border-color: #c7d2fe; font-size: 0.75rem; font-weight: 700; white-space: nowrap;" onclick="App.switchCameraFacingMode()"><i class="fa-solid fa-camera-rotate"></i> 🔄 Ganti</button>
-                  <button type="button" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; color: #dc2626; border-color: #fca5a5; font-size: 0.75rem; font-weight: 700; white-space: nowrap;" onclick="App.stopCameraScanner()">&times; Tutup</button>
+            <div id="cameraScannerWrapper" style="display: none;">
+              <div class="camera-scanner-header">
+                <div class="camera-scanner-title">
+                  <span class="live-pulse-dot" style="background: #22c55e;"></span>
+                  <span>Kamera HP Aktif</span>
+                </div>
+                <div class="camera-scanner-actions">
+                  <button type="button" class="btn btn-sm btn-camera-switch" onclick="App.switchCameraFacingMode()" title="Ganti Kamera Depan/Belakang">
+                    <i class="fa-solid fa-camera-rotate"></i> <span>Ganti</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-camera-close" onclick="App.stopCameraScanner()" title="Tutup Kamera">
+                    <i class="fa-solid fa-xmark"></i> <span>Tutup</span>
+                  </button>
                 </div>
               </div>
-              <div id="qr-reader" style="width: 100%; max-width: 100%; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid #c7d2fe; box-sizing: border-box;"></div>
-              <div style="font-size: 0.78rem; color: #4338ca; margin-top: 0.5rem; font-weight: 600; word-break: break-word;">
-                <i class="fa-solid fa-info-circle"></i> Arahkan kamera HP ke QR Code ID Card peserta. System akan mendeteksi presensi secara otomatis!
+              <div id="qr-reader"></div>
+              <div class="camera-scanner-hint">
+                <i class="fa-solid fa-qrcode"></i> Arahkan kamera ke QR Code ID Card peserta. Presensi akan dicatat otomatis!
               </div>
             </div>
 
             <!-- LIVE SCAN RESULT ALERT BOX -->
-            <div id="scanResultAlert" style="display: none; margin-top: 1rem; padding: 0.85rem; border-radius: 8px;"></div>
+            <div id="scanResultAlert" style="display: none; margin-top: 0.75rem; padding: 0.85rem; border-radius: 10px;"></div>
           </div>
 
           <!-- LOG TABLE AREA -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-              <h4 style="font-size: 1rem; font-weight: 800; margin: 0; color: var(--secondary);">
-                <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Log Riwayat Presensi Peserta
+          <div class="attendance-log-column">
+            <div class="attendance-log-header">
+              <h4 class="attendance-log-title">
+                <i class="fa-solid fa-list-check"></i> <span>Log Riwayat Presensi Peserta</span>
               </h4>
-              <button class="btn btn-outline btn-sm" onclick="App.loadEventAttendanceLog(document.getElementById('presensiEventId')?.value)">
-                <i class="fa-solid fa-arrows-rotate"></i> Refresh
+              <button class="btn btn-outline btn-sm btn-refresh-attendance" onclick="App.loadEventAttendanceLog(document.getElementById('presensiEventId')?.value)">
+                <i class="fa-solid fa-arrows-rotate"></i> <span>Refresh</span>
               </button>
             </div>
 
             <div id="attendanceLogTableContainer">
-              <p style="color: var(--text-muted);">Pilih kegiatan di atas untuk melihat log presensi.</p>
+              <p style="color: var(--text-muted); font-size: 0.88rem; padding: 1rem 0;">Pilih kegiatan di atas untuk melihat log presensi.</p>
             </div>
           </div>
 
@@ -3519,21 +3591,11 @@ const App = {
     if (!btnMasuk || !btnKeluar) return;
 
     if (this.currentPresensiType === 'masuk') {
-      btnMasuk.className = 'btn btn-success';
-      btnMasuk.style.background = '#16a34a';
-      btnMasuk.style.color = '#ffffff';
-
-      btnKeluar.className = 'btn btn-outline';
-      btnKeluar.style.background = 'transparent';
-      btnKeluar.style.color = '#dc2626';
+      btnMasuk.className = 'presensi-mode-tab active mode-masuk';
+      btnKeluar.className = 'presensi-mode-tab inactive';
     } else {
-      btnMasuk.className = 'btn btn-outline';
-      btnMasuk.style.background = 'transparent';
-      btnMasuk.style.color = '#16a34a';
-
-      btnKeluar.className = 'btn btn-danger';
-      btnKeluar.style.background = '#dc2626';
-      btnKeluar.style.color = '#ffffff';
+      btnMasuk.className = 'presensi-mode-tab inactive';
+      btnKeluar.className = 'presensi-mode-tab active mode-keluar';
     }
   },
 
@@ -3564,7 +3626,7 @@ const App = {
     }
 
     wrapper.style.display = 'block';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-square-xmark"></i> 🔴 Tutup Kamera HP / Webcam';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-square-xmark"></i> <span>Tutup Kamera HP / Webcam</span>';
 
     try {
       if (this.html5QrScannerInstance) {
@@ -3603,7 +3665,15 @@ const App = {
         }, 1500);
       };
 
-      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+      const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxSize = Math.floor(minEdge * 0.72);
+        return {
+          width: Math.max(160, Math.min(qrboxSize, 240)),
+          height: Math.max(160, Math.min(qrboxSize, 240))
+        };
+      };
+      const config = { fps: 15, qrbox: qrboxFunction };
 
       const cameraConstraint = { facingMode: this.cameraFacingMode };
 
@@ -3625,7 +3695,7 @@ const App = {
     const wrapper = document.getElementById('cameraScannerWrapper');
     const btn = document.getElementById('btnToggleCamera');
     if (wrapper) wrapper.style.display = 'none';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-camera"></i> 📷 Buka Kamera HP / Webcam untuk Scan QR';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-camera"></i> <span>Buka Kamera HP / Webcam untuk Scan QR</span>';
 
     if (this.html5QrScannerInstance) {
       try {
@@ -3718,31 +3788,46 @@ const App = {
       let statsHtml = '';
       if (stats) {
         statsHtml = `
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.65rem; margin-bottom: 0.75rem;">
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.75rem; border-radius: 8px; text-align: center; cursor: pointer; transition: transform 0.2s;" onclick="App.openRegisteredParticipantsModal(${eventId})" title="Klik untuk lihat daftar pendaftar">
-              <div style="font-size: 0.72rem; font-weight: 800; color: #1e40af; text-transform: uppercase;">Total Pendaftar</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: #1d4ed8; margin: 0.15rem 0;">${stats.total_registered} <span style="font-size: 0.75rem; font-weight: 600;">Orang</span></div>
-              <small style="color: #3b82f6; font-size: 0.72rem; font-weight: 600;"><i class="fa-solid fa-users"></i> Terdaftar Resmi (Lihat 📋)</small>
+          <div class="presensi-stats-grid">
+            <div class="presensi-stat-card stat-total" onclick="App.openRegisteredParticipantsModal(${eventId})" title="Klik untuk lihat daftar pendaftar">
+              <div class="stat-top">
+                <span class="stat-label">Total Pendaftar</span>
+                <i class="fa-solid fa-users stat-icon"></i>
+              </div>
+              <div class="stat-value">${stats.total_registered} <span class="stat-unit">Orang</span></div>
+              <div class="stat-footer"><i class="fa-solid fa-clipboard-list"></i> Terdaftar (Lihat 📋)</div>
             </div>
-            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.75rem; border-radius: 8px; text-align: center;">
-              <div style="font-size: 0.72rem; font-weight: 800; color: #065f46; text-transform: uppercase;">Presensi Masuk</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: #047857; margin: 0.15rem 0;">${stats.total_masuk} <span style="font-size: 0.75rem; font-weight: 600;">(${stats.percentage}%)</span></div>
-              <small style="color: #10b981; font-size: 0.72rem; font-weight: 600;"><i class="fa-solid fa-right-to-bracket"></i> Check-In</small>
+
+            <div class="presensi-stat-card stat-masuk">
+              <div class="stat-top">
+                <span class="stat-label">Presensi Masuk</span>
+                <i class="fa-solid fa-right-to-bracket stat-icon"></i>
+              </div>
+              <div class="stat-value">${stats.total_masuk} <span class="stat-pct">(${stats.percentage}%)</span></div>
+              <div class="stat-footer"><span class="badge-dot dot-green"></span> Check-In</div>
             </div>
-            <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 0.75rem; border-radius: 8px; text-align: center;">
-              <div style="font-size: 0.72rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Presensi Keluar</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: #b45309; margin: 0.15rem 0;">${stats.total_keluar} <span style="font-size: 0.75rem; font-weight: 600;">Orang</span></div>
-              <small style="color: #d97706; font-size: 0.72rem; font-weight: 600;"><i class="fa-solid fa-right-from-bracket"></i> Check-Out</small>
+
+            <div class="presensi-stat-card stat-keluar">
+              <div class="stat-top">
+                <span class="stat-label">Presensi Keluar</span>
+                <i class="fa-solid fa-right-from-bracket stat-icon"></i>
+              </div>
+              <div class="stat-value">${stats.total_keluar} <span class="stat-unit">Orang</span></div>
+              <div class="stat-footer"><span class="badge-dot dot-amber"></span> Check-Out</div>
             </div>
-            <div style="background: #fff1f2; border: 1px solid #fecdd3; padding: 0.75rem; border-radius: 8px; text-align: center;">
-              <div style="font-size: 0.72rem; font-weight: 800; color: #9f1239; text-transform: uppercase;">Belum Presensi</div>
-              <div style="font-size: 1.3rem; font-weight: 800; color: #be123c; margin: 0.15rem 0;">${stats.belum_presensi} <span style="font-size: 0.75rem; font-weight: 600;">Orang</span></div>
-              <small style="color: #f43f5e; font-size: 0.72rem; font-weight: 600;"><i class="fa-solid fa-clock"></i> Belum Hadir</small>
+
+            <div class="presensi-stat-card stat-belum">
+              <div class="stat-top">
+                <span class="stat-label">Belum Presensi</span>
+                <i class="fa-solid fa-clock stat-icon"></i>
+              </div>
+              <div class="stat-value">${stats.belum_presensi} <span class="stat-unit">Orang</span></div>
+              <div class="stat-footer"><span class="badge-dot dot-rose"></span> Belum Hadir</div>
             </div>
           </div>
-          <div style="margin-bottom: 1rem;">
-            <button class="btn btn-outline btn-sm" style="width: 100%; font-weight: 800; color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; padding: 0.5rem;" onclick="App.openRegisteredParticipantsModal(${eventId})">
-              <i class="fa-solid fa-users"></i> 📋 Lihat Detail Daftar Peserta Terdaftar Kegiatan Ini (${stats.total_registered} Peserta)
+          <div style="margin-bottom: 0.85rem;">
+            <button type="button" class="btn btn-registered-detail" onclick="App.openRegisteredParticipantsModal(${eventId})">
+              <i class="fa-solid fa-users"></i> <span>📋 Lihat Detail Daftar Peserta Terdaftar Kegiatan Ini (${stats.total_registered} Peserta)</span>
             </button>
           </div>
         `;
@@ -3884,37 +3969,37 @@ const App = {
         }
 
         return `
-              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; margin-bottom: 0.75rem; box-shadow: 0 1px 4px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem;">
-                  <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
+              <div class="presensi-log-card">
+                <div class="presensi-log-user">
+                  <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" class="presensi-log-avatar">
                   <div style="flex: 1; min-width: 0;">
-                    <strong style="font-size: 0.9rem; color: #0f172a; display: block; line-height: 1.2;">${Utils.escapeHtml(p.full_name)}</strong>
-                    <div style="font-size: 0.78rem; color: #475569; margin-top: 0.15rem;">
+                    <strong style="font-size: 0.88rem; color: #0f172a; display: block; line-height: 1.25; word-break: break-word;">${Utils.escapeHtml(p.full_name)}</strong>
+                    <div style="font-size: 0.76rem; color: #475569; margin-top: 0.15rem; word-break: break-word;">
                       <code style="font-weight: 800; color: var(--primary);">${Utils.escapeHtml(p.participant_code)}</code> | Unit: <strong>${Utils.escapeHtml(p.unit_name)}</strong>
                     </div>
                   </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: #f8fafc; padding: 0.6rem; border-radius: 8px; border: 1px solid #f1f5f9;">
+                <div class="presensi-log-times">
                   <div style="border-right: 1px solid #e2e8f0; padding-right: 0.35rem;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #166534; text-transform: uppercase;">🟢 Jam Masuk</div>
+                    <div style="font-size: 0.68rem; font-weight: 700; color: #166534; text-transform: uppercase;">🟢 Jam Masuk</div>
                     ${masuk ? `
-                      <div style="font-size: 0.88rem; font-weight: 800; color: #166534;">${masuk.time}</div>
-                      <div style="font-size: 0.7rem; color: #64748b;">${masuk.date}</div>
-                    ` : '<div style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Belum</div>'}
+                      <div style="font-size: 0.84rem; font-weight: 800; color: #166534;">${masuk.time}</div>
+                      <div style="font-size: 0.68rem; color: #64748b;">${masuk.date}</div>
+                    ` : '<div style="font-size: 0.74rem; color: #94a3b8; font-style: italic;">Belum</div>'}
                   </div>
 
                   <div style="padding-left: 0.25rem;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #991b1b; text-transform: uppercase;">🔴 Jam Keluar</div>
+                    <div style="font-size: 0.68rem; font-weight: 700; color: #991b1b; text-transform: uppercase;">🔴 Jam Keluar</div>
                     ${keluar ? `
-                      <div style="font-size: 0.88rem; font-weight: 800; color: #991b1b;">${keluar.time}</div>
-                      <div style="font-size: 0.7rem; color: #64748b;">${keluar.date}</div>
-                    ` : '<div style="font-size: 0.75rem; color: #d97706; font-weight: 700;">🟡 Sedang Ikut</div>'}
+                      <div style="font-size: 0.84rem; font-weight: 800; color: #991b1b;">${keluar.time}</div>
+                      <div style="font-size: 0.68rem; color: #64748b;">${keluar.date}</div>
+                    ` : '<div style="font-size: 0.74rem; color: #d97706; font-weight: 700;">🟡 Sedang Ikut</div>'}
                   </div>
                 </div>
 
                 ${p.jam_masuk && p.jam_keluar ? `
-                  <div style="margin-top: 0.4rem; font-size: 0.74rem; color: #475569; text-align: right; font-weight: 600;">
+                  <div style="margin-top: 0.4rem; font-size: 0.72rem; color: #475569; text-align: right; font-weight: 600;">
                     ⏱️ Durasi: <strong style="color: #0284c7;">${duration}</strong>
                   </div>
                 ` : ''}
@@ -6831,6 +6916,12 @@ const App = {
   // =========================================================================
   async handleLogin(e) {
     e.preventDefault();
+    const alertBox = document.getElementById('loginAlertBox');
+    if (alertBox) {
+      alertBox.style.display = 'none';
+      alertBox.innerHTML = '';
+    }
+
     const u = document.getElementById('loginUsername').value.trim();
     const p = document.getElementById('loginPassword').value.trim();
 
@@ -6845,7 +6936,12 @@ const App = {
       this.renderHeaderNav();
       this.renderView();
     } catch (err) {
-      Utils.showToast(err.message, 'error');
+      if (alertBox) {
+        alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 1.15rem; flex-shrink: 0;"></i> <div>${Utils.escapeHtml(err.message || 'Username atau password salah. Silakan coba lagi.')}</div>`;
+        alertBox.style.display = 'flex';
+      } else {
+        Utils.showToast(err.message, 'error');
+      }
     }
   },
 
@@ -8604,7 +8700,19 @@ const App = {
       'kegiatan': 'mbNavAgenda',
       'pengumuman': 'mbNavAnnounce',
       'klasemen': 'mbNavStandings',
-      'portal': 'mbNavPortal'
+      'portal': 'mbNavPortal',
+      'peserta_bio': 'mbNavBio',
+      'peserta_lomba': 'mbNavLomba',
+      'peserta_agenda': 'mbNavPesertaAgenda',
+      'peserta_presensi': 'mbNavPresensi',
+      'penilai_presensi': 'mbNavPenilaiScan',
+      'penilai_nilai': 'mbNavPenilaiNilai',
+      'penilai_rekap': 'mbNavPenilaiRekap',
+      'admin_dashboard': 'mbNavAdminDash',
+      'admin_peserta': 'mbNavAdminPeserta',
+      'admin_agenda': 'mbNavAdminAgenda',
+      'admin_nilai': 'mbNavAdminNilai',
+      'logout': 'mbNavLogout'
     };
 
     const targetId = btnIdMap[key];
@@ -8612,48 +8720,202 @@ const App = {
       document.getElementById(targetId).classList.add('active');
     }
 
-    if (key === 'beranda') {
-      if (document.getElementById('jumbotronTitle')) {
-        this.scrollToSection('beranda');
+    if (key === 'logout') {
+      this.handleLogout();
+      return;
+    }
+
+    if (key === 'peserta_bio') {
+      this.switchPesertaMobileTab('bio');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'peserta_lomba') {
+      this.switchPesertaMobileTab('lomba');
+    } else if (key === 'peserta_agenda') {
+      this.switchPesertaMobileTab('agenda');
+    } else if (key === 'peserta_presensi') {
+      this.switchPesertaMobileTab('presensi');
+    } else if (key === 'penilai_presensi') {
+      this.switchPenilaiSubTab('presensi');
+    } else if (key === 'penilai_nilai') {
+      this.openEventScoringModal();
+    } else if (key === 'penilai_rekap') {
+      this.switchPenilaiSubTab('input');
+    } else if (key === 'admin_dashboard') {
+      if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
+        this.switchUnitTab('peserta');
       } else {
-        this.renderView();
+        this.switchAdminCategory('peserta');
       }
+    } else if (key === 'admin_peserta') {
+      if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
+        this.switchUnitTab('peserta');
+      } else {
+        this.switchAdminTab('verifikasi');
+      }
+    } else if (key === 'admin_agenda') {
+      if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
+        this.switchUnitTab('jadwal');
+      } else {
+        this.switchAdminTab('jadwal');
+      }
+    } else if (key === 'admin_nilai') {
+      if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
+        this.switchUnitTab('piagam');
+      } else {
+        this.switchAdminTab('aspek');
+      }
+    } else if (key === 'beranda') {
+      this.scrollToSection('beranda');
     } else if (key === 'kegiatan') {
-      if (document.getElementById('kegiatan')) {
-        this.scrollToSection('kegiatan');
-      } else {
-        this.renderView().then(() => this.scrollToSection('kegiatan'));
-      }
+      this.scrollToSection('kegiatan');
     } else if (key === 'pengumuman') {
-      if (document.getElementById('pengumuman')) {
-        this.scrollToSection('pengumuman');
-      } else {
-        this.renderView().then(() => this.scrollToSection('pengumuman'));
-      }
+      this.scrollToSection('pengumuman');
     } else if (key === 'klasemen') {
-      if (document.getElementById('klasemen')) {
-        this.scrollToSection('klasemen');
-      } else {
-        this.renderView().then(() => this.scrollToSection('klasemen'));
-      }
+      this.scrollToSection('klasemen');
     } else if (key === 'portal') {
       if (this.currentUser) {
-        if (this.currentUser.role === 'admin_kabupaten' || this.currentUser.role === 'super_admin' || this.currentUser.role === 'kabupaten') {
-          this.renderAdminKabupatenPortal(document.getElementById('mainContainer'));
-        } else if (this.currentUser.role === 'admin_unit' || this.currentUser.role === 'unit') {
-          this.renderAdminUnitPortal(document.getElementById('mainContainer'));
-        } else if (this.currentUser.role === 'penilai' || this.currentUser.role === 'juri') {
-          this.renderPenilaiPortal(document.getElementById('mainContainer'));
-        } else {
-          this.renderPesertaPortal(document.getElementById('mainContainer'));
-        }
+        this.renderView();
       } else {
         this.openLoginModal();
       }
     }
   },
 
+  renderMobileBottomNav() {
+    const nav = document.getElementById('mobileBottomNav');
+    if (!nav) return;
+
+    if (!this.currentUser) {
+      nav.style.display = 'none';
+      nav.innerHTML = '';
+      return;
+    }
+
+    const role = this.currentUser.role;
+    const isAdmin = ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit', 'panitia'].includes(role);
+
+    // ADMIN TETAP DESKTOP: Jangan pernah tampilkan bottom nav bar untuk Admin!
+    if (isAdmin) {
+      nav.style.display = 'none';
+      nav.innerHTML = '';
+      return;
+    }
+
+    if (['peserta', 'peninjau', 'tamu', 'media', 'user'].includes(role)) {
+      nav.style.display = 'flex';
+      nav.innerHTML = `
+        <button class="mobile-nav-btn active" id="mbNavBio" onclick="App.handleMobileNav('peserta_bio')">
+          <i class="fa-solid fa-id-badge"></i>
+          <span>Profil</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavLomba" onclick="App.handleMobileNav('peserta_lomba')">
+          <i class="fa-solid fa-award"></i>
+          <span>Cabang</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPesertaAgenda" onclick="App.handleMobileNav('peserta_agenda')">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Agenda</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPresensi" onclick="App.handleMobileNav('peserta_presensi')">
+          <i class="fa-solid fa-clipboard-user"></i>
+          <span>Presensi</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavLogout" onclick="App.handleMobileNav('logout')" style="color: #ef4444;">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Keluar</span>
+        </button>
+      `;
+    } else if (['penilai', 'juri'].includes(role)) {
+      nav.style.display = 'flex';
+      nav.innerHTML = `
+        <button class="mobile-nav-btn active" id="mbNavPenilaiScan" onclick="App.handleMobileNav('penilai_presensi')">
+          <i class="fa-solid fa-qrcode"></i>
+          <span>Scanner</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPenilaiNilai" onclick="App.handleMobileNav('penilai_nilai')">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>Nilai</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPenilaiRekap" onclick="App.handleMobileNav('penilai_rekap')">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Rekap</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavLogout" onclick="App.handleMobileNav('logout')" style="color: #ef4444;">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Keluar</span>
+        </button>
+      `;
+    } else {
+      nav.style.display = 'none';
+      nav.innerHTML = '';
+    }
+  },
+
+  renderFooterNav() {
+    const list = document.getElementById('footerQuickLinks');
+    const accBox = document.getElementById('footerAccountBox');
+
+    if (!this.currentUser) {
+      if (list) {
+        list.innerHTML = `
+          <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda & Jumbotron</a></li>
+          <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Jadwal & Rundown</a></li>
+          <li><a href="#pengumuman" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Papan Pengumuman</a></li>
+          <li><a href="#klasemen" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Perolehan Medali</a></li>
+          <li><a href="#lokasi" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Peta & Lokasi Buperta</a></li>
+          <li><a href="javascript:void(0)" onclick="App.openLoginModal()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-to-bracket"></i> Login Portal</a></li>
+        `;
+      }
+      if (accBox) accBox.innerHTML = '';
+    } else {
+      const role = this.currentUser.role;
+      if (list) {
+        if (['kabupaten', 'admin_kabupaten', 'super_admin'].includes(role)) {
+          list.innerHTML = `
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('peserta')"><i class="fa-solid fa-users"></i> Kelola & Verifikasi Peserta</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda')"><i class="fa-solid fa-calendar-days"></i> Agenda & Presensi Jumbara</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('penilaian')"><i class="fa-solid fa-trophy"></i> Penilaian & Rekap Medali</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('pengaturan')"><i class="fa-solid fa-gear"></i> Pengaturan Aplikasi</a></li>
+            <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
+          `;
+        } else if (['unit', 'admin_unit'].includes(role)) {
+          list.innerHTML = `
+            <li><a href="javascript:void(0)" onclick="App.switchUnitTab('peserta')"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchUnitTab('jadwal')"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchUnitTab('piagam')"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a></li>
+            <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
+          `;
+        } else {
+          list.innerHTML = `
+            <li><a href="javascript:void(0)" onclick="App.renderView()"><i class="fa-solid fa-id-badge"></i> Portal Peserta</a></li>
+            <li><a href="#beranda" onclick="App.scrollToSection('beranda', event)"><i class="fa-solid fa-house"></i> Beranda Publik</a></li>
+            <li><a href="#kegiatan" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Jadwal Kegiatan</a></li>
+            <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a></li>
+          `;
+        }
+      }
+
+      if (accBox) {
+        accBox.innerHTML = `
+          <div style="background: rgba(15, 23, 42, 0.05); border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.82rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+            <div>
+              <span style="color: #64748b;">Login:</span> <strong>${Utils.escapeHtml(this.currentUser.username)}</strong>
+            </div>
+            <button class="btn btn-danger btn-xs" onclick="App.handleLogout()" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar
+            </button>
+          </div>
+        `;
+      }
+    }
+  },
+
   openLoginModal() {
+    const alertBox = document.getElementById('loginAlertBox');
+    if (alertBox) {
+      alertBox.style.display = 'none';
+      alertBox.innerHTML = '';
+    }
     this.openModal('loginModal');
   },
 
@@ -9187,6 +9449,11 @@ const App = {
   },
 
   openLoginModalWithCredentials(username = '', password = '') {
+    const alertBox = document.getElementById('loginAlertBox');
+    if (alertBox) {
+      alertBox.style.display = 'none';
+      alertBox.innerHTML = '';
+    }
     const userEl = document.getElementById('loginUsername');
     const passEl = document.getElementById('loginPassword');
     if (userEl && username) userEl.value = username;
