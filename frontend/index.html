@@ -351,6 +351,25 @@
     </div>
   </div>
 
+  <!-- MODAL: QR CODE PRESENSI BESAR -->
+  <div class="modal-overlay" id="largeQrModal">
+    <div class="modal-container" style="max-width: 440px; border-radius: 24px; overflow: hidden; padding: 0;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #090d16 0%, #1e1b4b 50%, #0284c7 100%); color: #ffffff; padding: 1rem 1.25rem;">
+        <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">
+          <i class="fa-solid fa-qrcode" style="color: #38bdf8; margin-right: 0.4rem;"></i> E-Presensi QR Code Resmi
+        </h3>
+        <button class="modal-close" onclick="App.closeModal('largeQrModal')" style="color: #ffffff;">&times;</button>
+      </div>
+      <div class="modal-body" id="largeQrModalBody" style="background: #ffffff; padding: 1.5rem 1.25rem; text-align: center;"></div>
+      <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="App.closeModal('largeQrModal')" style="border-radius: 12px; font-weight: 700;">Tutup</button>
+        <button type="button" id="largeQrDownloadBtn" class="btn btn-primary btn-sm" style="border-radius: 12px; font-weight: 800;">
+          <i class="fa-solid fa-download"></i> Unduh QR
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 4. MODAL REJECT REASON -->
   <div class="modal-overlay" id="rejectModal">
     <div class="modal-container" style="max-width: 450px;">

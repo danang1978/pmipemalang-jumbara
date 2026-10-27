@@ -43,6 +43,10 @@ if ($method === 'GET' && $action === 'me') {
     if (isset($part['sub_categories']) && is_string($part['sub_categories'])) {
         $part['sub_categories'] = json_decode($part['sub_categories'], true) ?: [];
     }
+    if (empty($part['qr_code_base64'])) {
+        $qrData = $part['code'] ?? ('JMB-2026-' . str_pad($part['id'], 4, '0', STR_PAD_LEFT));
+        $part['qr_code_base64'] = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrData);
+    }
     jsonResponse($part);
 }
 

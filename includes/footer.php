@@ -439,6 +439,33 @@ $settings = getAppSettings();
     </div>
   </div>
 
+  <!-- Modal 4.5: QR Code Presensi Besar Fokus Scanner Lapangan -->
+  <div class="modal" id="largeQrModal">
+    <div class="modal-dialog" style="max-width: 440px; margin: 1.5rem auto;">
+      <div class="modal-content" style="border-radius: 24px; overflow: hidden; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #090d16 0%, #1e1b4b 50%, #0284c7 100%); color: #ffffff; padding: 1rem 1.25rem; border: none;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-qrcode" style="color: #38bdf8; font-size: 1.25rem;"></i>
+            <div>
+              <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">E-Presensi QR Code Resmi</h3>
+              <p style="margin: 0; font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">JUMBARA PMR PMI KABUPATEN</p>
+            </div>
+          </div>
+          <button class="modal-close" onclick="App.closeModal('largeQrModal')" style="color: #ffffff; opacity: 0.85;">&times;</button>
+        </div>
+        <div class="modal-body" id="largeQrModalBody" style="background: #ffffff; padding: 1.5rem 1.25rem; text-align: center;"></div>
+        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('largeQrModal')" style="border-radius: 12px; font-weight: 700;">
+            <i class="fa-solid fa-xmark"></i> Tutup
+          </button>
+          <button type="button" id="largeQrDownloadBtn" class="btn btn-primary btn-sm" style="border-radius: 12px; font-weight: 800;">
+            <i class="fa-solid fa-download"></i> Unduh Gambar QR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal 5: Input Penilaian Lomba -->
   <div class="modal" id="scoreModal">
     <div class="modal-dialog">

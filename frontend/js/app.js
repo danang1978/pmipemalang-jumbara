@@ -1701,47 +1701,68 @@ const App = {
             ` : ''}
           </div>
 
-          <!-- QUICK ACTION 4-GRID MOBILE WIDGETS -->
-          <div style="padding: 1.1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
-            <div style="font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
-              Fitur & Layanan Peserta:
+          <!-- MODERN APP LAUNCHER GRID (3x2 KEKINIAN) -->
+          <div style="padding: 1.15rem 1rem; background: #ffffff; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding: 0 0.25rem;">
+              <span style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-shapes" style="color: #0284c7;"></i> Fitur & Layanan Utama
+              </span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; background: #f8fafc; padding: 2px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">6 Menu Cepat</span>
             </div>
             
             <div class="peserta-action-grid">
-              <div class="peserta-action-card" onclick="App.openIDCardModal(${profile.id})">
-                <i class="fa-solid fa-id-card" style="color: #0284c7;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Kartu ID & QR</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Pratinjau & Cetak</span>
+              <!-- 1. QR CODE PRESENSI CEPAT (FOKUS SCANNER BESAR) -->
+              <div class="peserta-action-item" onclick="App.openLargeQRCodeModal()">
+                <div class="action-squircle squircle-rose">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <span class="action-title">QR Presensi</span>
+                <span class="action-sub">E-Pass Scanner</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.downloadRegistrationFormPDF()">
-                <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Unduh Form PDF</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Bukti Registrasi</span>
+              <!-- 2. CETAK ID CARD FISIK -->
+              <div class="peserta-action-item" onclick="App.openIDCardModal(${profile.id})">
+                <div class="action-squircle squircle-blue">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <span class="action-title">ID Card</span>
+                <span class="action-sub">Cetak Fisik</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPesertaMobileTab('agenda')">
-                <i class="fa-solid fa-calendar-days" style="color: #d97706;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Agenda Jumbara</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Rundown Kegiatan</span>
+              <!-- 3. UNDUH FORM BUKTI REGISTRASI PDF -->
+              <div class="peserta-action-item" onclick="App.downloadRegistrationFormPDF()">
+                <div class="action-squircle squircle-sky">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <span class="action-title">Bukti PDF</span>
+                <span class="action-sub">Formulir PMR</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPesertaMobileTab('presensi')">
-                <i class="fa-solid fa-clipboard-user" style="color: #16a34a;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Log Presensi</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Riwayat Check-In</span>
+              <!-- 4. RUNDOWN & JADWAL ACARA -->
+              <div class="peserta-action-item" onclick="App.switchPesertaMobileTab('agenda')">
+                <div class="action-squircle squircle-amber">
+                  <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <span class="action-title">Rundown</span>
+                <span class="action-sub">Jadwal Acara</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPesertaMobileTab('medali')">
-                <i class="fa-solid fa-trophy" style="color: #eab308;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Klasemen Medali</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Pantau Medali</span>
+              <!-- 5. KLASEMEN & MEDALI KONTINGEN -->
+              <div class="peserta-action-item" onclick="App.switchPesertaMobileTab('medali')">
+                <div class="action-squircle squircle-gold">
+                  <i class="fa-solid fa-trophy"></i>
+                </div>
+                <span class="action-title">Medali</span>
+                <span class="action-sub">Klasemen Unit</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.openChangePasswordModal()">
-                <i class="fa-solid fa-key" style="color: #6366f1;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Keamanan Akun</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Ganti Password</span>
+              <!-- 6. KEAMANAN & GANTI PASSWORD -->
+              <div class="peserta-action-item" onclick="App.openChangePasswordModal()">
+                <div class="action-squircle squircle-purple">
+                  <i class="fa-solid fa-key"></i>
+                </div>
+                <span class="action-title">Keamanan</span>
+                <span class="action-sub">Ganti Password</span>
               </div>
             </div>
           </div>
@@ -1937,28 +1958,71 @@ const App = {
               </div>
             </div>
 
-            <!-- TAB 4: RIWAYAT PRESENSI SCAN -->
+            <!-- TAB 4: RIWAYAT & KARTU PRESENSI SCAN -->
             <div id="pesertaTabPresensi" style="display: none;">
-              <div class="peserta-info-card">
+              <!-- MODERN DIGITAL PASS E-TIKET PRESENSI CARD -->
+              <div class="peserta-ticket-card">
+                <!-- Ticket Header -->
+                <div class="ticket-header">
+                  <div style="display: flex; align-items: center; gap: 0.55rem;">
+                    <img src="${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Logo" style="height: 24px; width: auto;">
+                    <div>
+                      <div style="font-size: 0.72rem; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">E-Presensi Digital Resmi</div>
+                      <div style="font-size: 0.65rem; color: #64748b; font-weight: 600;">JUMBARA PMR KABUPATEN</div>
+                    </div>
+                  </div>
+                  <span class="ticket-status-pill">
+                    <span class="live-dot"></span> SIAP DI-SCAN
+                  </span>
+                </div>
+
+                <!-- TICKET QR SECTION BESAR FULL FOKUS -->
+                <div class="ticket-qr-area">
+                  <div class="ticket-qr-wrapper">
+                    <img src="${profile.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(profile.code || 'JMB-2026-0001')}`}" 
+                         alt="QR Presensi" class="ticket-qr-img">
+                  </div>
+                  
+                  <div class="ticket-code-tag">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: 2px; color: #0f172a;">
+                      ${profile.code || '-'}
+                    </span>
+                    <button type="button" class="btn-copy-code" onclick="navigator.clipboard.writeText('${profile.code || ''}'); Utils.showToast('Kode berhasil disalin!', 'success');" title="Salin Kode">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                  </div>
+
+                  <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
+                    ${Utils.escapeHtml(profile.full_name || 'Peserta PMR')}
+                  </h3>
+                  <div style="font-size: 0.8rem; color: #475569; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="fa-solid fa-school" style="color: #0284c7;"></i> ${Utils.escapeHtml(profile.unit_name || 'Kontingen Sekolah')}
+                  </div>
+
+                  <!-- TICKET PERFORATED CUTOUT DIVIDER -->
+                  <div class="ticket-divider">
+                    <div class="ticket-cutout-left"></div>
+                    <div class="ticket-dash-line"></div>
+                    <div class="ticket-cutout-right"></div>
+                  </div>
+
+                  <!-- ACTION BUTTONS: PERBESAR FULLSCREEN & CETAK ID CARD -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; width: 100%; margin-top: 0.75rem;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="App.openLargeQRCodeModal()" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
+                      <i class="fa-solid fa-expand"></i> Perbesar Layar Penuh
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${profile.id})" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
+                      <i class="fa-solid fa-id-card"></i> Cetak ID Card
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LOG JAM MASUK / KELUAR -->
+              <div class="peserta-info-card" style="margin-top: 1rem;">
                 <div class="peserta-info-header">
-                  <i class="fa-solid fa-history" style="color: #16a34a;"></i> Log & Status Presensi QR Scanner
+                  <i class="fa-solid fa-clock-rotate-left" style="color: #16a34a;"></i> Riwayat Check-In & Check-Out Presensi
                 </div>
-                
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 0.85rem; border-radius: 12px; font-size: 0.82rem; margin-bottom: 0.85rem;">
-                  <strong><i class="fa-solid fa-qrcode"></i> Informasi Presensi Masuk / Keluar:</strong><br>
-                  Tunjukkan Kartu ID Card QR Code Anda kepada Panitia / Petugas Presensi di lokasi kegiatan untuk melakukan scan Check-In (Masuk) dan Check-Out (Keluar).
-                </div>
-
-                <div style="text-align: center; padding: 1rem 0.5rem; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 1rem;">
-                  <button type="button" class="btn btn-primary btn-sm" onclick="App.openIDCardModal(${profile.id})" style="margin: 0 auto 0.5rem auto; font-weight: 800; border-radius: 10px;">
-                    <i class="fa-solid fa-id-card"></i> Tampilkan QR Code Presensi Saya
-                  </button>
-                  <p style="font-size: 0.75rem; color: #64748b; margin: 0;">
-                    Kode QR Aktif: <strong>${profile.code || '-'}</strong>
-                  </p>
-                </div>
-
-                <!-- DYNAMIC JAM MASUK & JAM KELUAR CONTAINER -->
                 <div id="pesertaMyAttendanceLog"></div>
               </div>
             </div>
@@ -2165,44 +2229,76 @@ const App = {
           </div>
 
           <!-- STATUS PENINJAU NOTICE -->
-          <div style="background: #f0fdf4; padding: 0.9rem 1.25rem; border-bottom: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center;">
+          <div style="background: #f0fdf4; padding: 0.9rem 1.25rem; border-bottom: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <div style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 0.45rem;">
               <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> Status Akses: Peninjau Resmi Terdaftar
             </div>
-            <button onclick="App.openIDCardModal(${profile.id})" class="btn btn-outline btn-xs" style="color: #047857; border-color: #059669; font-weight: 800; font-size: 0.72rem; border-radius: 8px;">
-              <i class="fa-solid fa-qrcode"></i> Kartu ID
-            </button>
+            <div style="display: flex; gap: 0.4rem;">
+              <button onclick="App.openLargeQRCodeModal({ code: '${pnjCode}', full_name: '${Utils.escapeHtml(userName)}', unit_name: '${Utils.escapeHtml(unitName)}', level: 'Peninjau Resmi' })" class="btn btn-primary btn-xs" style="font-weight: 800; font-size: 0.72rem; border-radius: 8px;">
+                <i class="fa-solid fa-qrcode"></i> QR Akses Besar
+              </button>
+              <button onclick="App.openIDCardModal(${profile.id})" class="btn btn-outline btn-xs" style="color: #047857; border-color: #059669; font-weight: 800; font-size: 0.72rem; border-radius: 8px;">
+                <i class="fa-solid fa-id-card"></i> ID Card
+              </button>
+            </div>
           </div>
 
-          <!-- QUICK ACTION 4-GRID MOBILE WIDGETS -->
-          <div style="padding: 1.1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
-            <div style="font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
-              Layanan Peninjau Jumbara:
+          <!-- MODERN APP LAUNCHER GRID (3x2 KEKINIAN) -->
+          <div style="padding: 1.15rem 1rem; background: #ffffff; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding: 0 0.25rem;">
+              <span style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-shapes" style="color: #059669;"></i> Menu & Layanan Peninjau
+              </span>
+              <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; background: #f8fafc; padding: 2px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">6 Menu Cepat</span>
             </div>
             
             <div class="peserta-action-grid">
-              <div class="peserta-action-card" onclick="App.openIDCardModal(${profile.id})">
-                <i class="fa-solid fa-id-card" style="color: #059669;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Kartu ID QR</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Akses Masuk</span>
+              <div class="peserta-action-item" onclick="App.openLargeQRCodeModal({ code: '${pnjCode}', full_name: '${Utils.escapeHtml(userName)}', unit_name: '${Utils.escapeHtml(unitName)}', level: 'Peninjau Resmi' })">
+                <div class="action-squircle squircle-emerald">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <span class="action-title">QR Akses</span>
+                <span class="action-sub">E-Pass Masuk</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('agenda')">
-                <i class="fa-solid fa-calendar-days" style="color: #d97706;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Jadwal Acara</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Rundown Kegiatan</span>
+              <div class="peserta-action-item" onclick="App.openIDCardModal(${profile.id})">
+                <div class="action-squircle squircle-blue">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <span class="action-title">Kartu ID</span>
+                <span class="action-sub">Badge Resmi</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('medali')">
-                <i class="fa-solid fa-trophy" style="color: #eab308;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Klasemen</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Perolehan Medali</span>
+              <div class="peserta-action-item" onclick="App.switchPeninjauMobileTab('agenda')">
+                <div class="action-squircle squircle-amber">
+                  <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <span class="action-title">Jadwal</span>
+                <span class="action-sub">Rundown Acara</span>
               </div>
 
-              <div class="peserta-action-card" onclick="App.switchPeninjauMobileTab('lokasi')">
-                <i class="fa-solid fa-map-location-dot" style="color: #0284c7;"></i>
-                <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a;">Peta Buperta</span>
-                <span style="font-size: 0.68rem; color: #64748b;">Lokasi & Tenda</span>
+              <div class="peserta-action-item" onclick="App.switchPeninjauMobileTab('medali')">
+                <div class="action-squircle squircle-gold">
+                  <i class="fa-solid fa-trophy"></i>
+                </div>
+                <span class="action-title">Klasemen</span>
+                <span class="action-sub">Medali Unit</span>
+              </div>
+
+              <div class="peserta-action-item" onclick="App.switchPeninjauMobileTab('lokasi')">
+                <div class="action-squircle squircle-sky">
+                  <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <span class="action-title">Peta Buperta</span>
+                <span class="action-sub">Lokasi & Tenda</span>
+              </div>
+
+              <div class="peserta-action-item" onclick="App.openChangePasswordModal()">
+                <div class="action-squircle squircle-purple">
+                  <i class="fa-solid fa-key"></i>
+                </div>
+                <span class="action-title">Keamanan</span>
+                <span class="action-sub">Ganti Password</span>
               </div>
             </div>
           </div>
@@ -2229,6 +2325,60 @@ const App = {
           <div style="padding: 1.25rem;">
             <!-- TAB 1: PROFIL & INFO PENINJAU -->
             <div id="peninjauTabInfo" style="display: block;">
+              <!-- DIGITAL PASS PENINJAU RESMI -->
+              <div class="peserta-ticket-card" style="margin-bottom: 1rem;">
+                <div class="ticket-header">
+                  <div style="display: flex; align-items: center; gap: 0.55rem;">
+                    <img src="${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}" alt="Logo" style="height: 24px; width: auto;">
+                    <div>
+                      <div style="font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">E-Pass Peninjau Jumbara</div>
+                      <div style="font-size: 0.65rem; color: #64748b; font-weight: 600;">AKSES MASUK RESMI BUPERTA</div>
+                    </div>
+                  </div>
+                  <span class="ticket-status-pill" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+                    <span class="live-dot" style="background: #10b981;"></span> TERAKREDITASI
+                  </span>
+                </div>
+
+                <div class="ticket-qr-area">
+                  <div class="ticket-qr-wrapper">
+                    <img src="${profile.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(pnjCode)}`}" 
+                         alt="QR Peninjau" class="ticket-qr-img">
+                  </div>
+                  
+                  <div class="ticket-code-tag">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: 2px; color: #0f172a;">
+                      ${pnjCode}
+                    </span>
+                    <button type="button" class="btn-copy-code" onclick="navigator.clipboard.writeText('${pnjCode}'); Utils.showToast('Kode disalin!', 'success');" title="Salin Kode">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                  </div>
+
+                  <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
+                    ${Utils.escapeHtml(userName)}
+                  </h3>
+                  <div style="font-size: 0.8rem; color: #475569; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="fa-solid fa-building-columns" style="color: #059669;"></i> ${Utils.escapeHtml(unitName)}
+                  </div>
+
+                  <div class="ticket-divider">
+                    <div class="ticket-cutout-left"></div>
+                    <div class="ticket-dash-line"></div>
+                    <div class="ticket-cutout-right"></div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; width: 100%; margin-top: 0.75rem;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="App.openLargeQRCodeModal({ code: '${pnjCode}', full_name: '${Utils.escapeHtml(userName)}', unit_name: '${Utils.escapeHtml(unitName)}', level: 'Peninjau Resmi' })" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; background: #059669; border-color: #059669;">
+                      <i class="fa-solid fa-expand"></i> Perbesar QR
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${profile.id})" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
+                      <i class="fa-solid fa-id-card"></i> Cetak Badge
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div class="peserta-info-card">
                 <div class="peserta-info-header">
                   <i class="fa-solid fa-id-badge" style="color: #059669;"></i> Identitas Resmi Peninjau
@@ -8745,6 +8895,105 @@ const App = {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Simpan & Kirim Ulang Verifikasi';
       }
+    }
+  },
+
+  async openLargeQRCodeModal(customData) {
+    const modalBody = document.getElementById('largeQrModalBody');
+    if (!modalBody) return;
+
+    modalBody.innerHTML = `
+      <div style="padding: 2.5rem 1rem; text-align: center;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #0284c7; margin-bottom: 0.85rem;"></i>
+        <p style="color: #64748b; font-weight: 600; font-size: 0.9rem;">Menyiapkan QR Code Presensi...</p>
+      </div>
+    `;
+    this.openModal('largeQrModal');
+
+    try {
+      let data = customData;
+      if (!data) {
+        data = await API.getParticipantMe();
+      }
+
+      const code = data.code || data.registration_code || 'JMB-2026-0001';
+      const name = data.full_name || (this.currentUser ? this.currentUser.username : 'Peserta Jumbara');
+      const unit = data.unit_name || 'Kontingen PMI';
+      const level = data.level || (data.registration_type || 'Peserta');
+      const qrUrl = data.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(code)}`;
+
+      modalBody.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <!-- RADAR PULSING STATUS -->
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.4rem 0.9rem; border-radius: 9999px; margin-bottom: 1.1rem; box-shadow: 0 2px 6px rgba(16,185,129,0.12);">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.25);"></span>
+            <span style="color: #047857; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+              Siap Di-Scan Presensi Lapangan
+            </span>
+          </div>
+
+          <!-- BIG HIGH-CONTRAST QR CODE CONTAINER -->
+          <div style="background: #ffffff; padding: 1.25rem; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04); margin-bottom: 1.1rem; max-width: 280px; width: 100%;">
+            <img src="${qrUrl}" alt="QR Presensi ${code}" 
+                 style="width: 100%; height: auto; aspect-ratio: 1/1; display: block; border-radius: 12px;" 
+                 loading="eager">
+          </div>
+
+          <!-- MONOSPACED CODE BOX -->
+          <div style="background: #f1f5f9; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.65rem; margin-bottom: 0.9rem;">
+            <span style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 2px;">
+              ${code}
+            </span>
+            <button type="button" onclick="navigator.clipboard.writeText('${code}'); Utils.showToast('Kode berhasil disalin!', 'success');" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 2px 6px; font-size: 0.85rem;" title="Salin Kode">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+
+          <!-- PARTICIPANT IDENTITY -->
+          <h4 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0; line-height: 1.3;">
+            ${Utils.escapeHtml(name)}
+          </h4>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
+            <span style="background: #e0f2fe; color: #0369a1; font-weight: 800; font-size: 0.75rem; padding: 0.2rem 0.65rem; border-radius: 9999px;">
+              ${Utils.escapeHtml(level)}
+            </span>
+            <span style="font-size: 0.8rem; color: #64748b;">•</span>
+            <span style="font-size: 0.82rem; color: #475569; font-weight: 600;">
+              ${Utils.escapeHtml(unit)}
+            </span>
+          </div>
+
+          <!-- SCANNER TIPS -->
+          <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.6rem 0.85rem; border-radius: 12px; font-size: 0.74rem; margin-top: 0.6rem; display: flex; align-items: center; gap: 0.5rem; text-align: left; max-width: 340px;">
+            <i class="fa-solid fa-lightbulb" style="color: #f59e0b; font-size: 1rem; flex-shrink: 0;"></i>
+            <span>Tunjukkan layar HP ini ke Panitia / Juri untuk Check-In & Check-Out presensi kegiatan secara otomatis.</span>
+          </div>
+        </div>
+      `;
+
+      // Download button logic
+      const downloadBtn = document.getElementById('largeQrDownloadBtn');
+      if (downloadBtn) {
+        downloadBtn.onclick = () => {
+          const link = document.createElement('a');
+          link.href = qrUrl;
+          link.download = `QR-Presensi-${code}.png`;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          Utils.showToast('Membuka unduhan QR Code...', 'info');
+        };
+      }
+    } catch (err) {
+      console.error('Error opening large QR modal:', err);
+      modalBody.innerHTML = `
+        <div style="padding: 1.5rem; color: #ef4444; text-align: center;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+          <p style="font-weight: 700;">Gagal memuat QR Code Presensi.</p>
+          <p style="font-size: 0.8rem; color: #64748b;">${Utils.escapeHtml(err.message || 'Terjadi kesalahan sistem.')}</p>
+        </div>
+      `;
     }
   },
 
