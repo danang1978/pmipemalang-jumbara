@@ -1927,13 +1927,41 @@ const App = {
     }
   },
 
+  currentUnitLimit: 25,
+
+  changeUnitLimit(limit) {
+    this.currentUnitLimit = parseInt(limit) || 25;
+    this.loadUnitParticipants(1);
+  },
+
+  resetUnitFilter() {
+    const searchEl = document.getElementById('filterUnitSearch');
+    const catEl = document.getElementById('filterUnitCategory');
+    if (searchEl) searchEl.value = '';
+    if (catEl) catEl.value = '';
+    this.loadUnitParticipants(1);
+  },
+
   async renderUnitTabPeserta(container) {
     container.innerHTML = `
-      <div class="panel-card">
-        <div class="panel-header" style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-          <h3 class="panel-title"><i class="fa-solid fa-users-line" style="color: var(--primary);"></i> Data Peserta & Kontingen Unit Sekolah</h3>
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-            <select id="filterUnitCategory" style="width: auto;" onchange="App.loadUnitParticipants(1)">
+      <div class="panel-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+          <h3 class="panel-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-users-line" style="color: var(--primary);"></i> Data Peserta & Kontingen Unit Sekolah
+          </h3>
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.openAddParticipantModal ? App.openAddParticipantModal() : (window.location.hash='#tambah-peserta')" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-user-plus"></i> Tambah Anggota
+          </button>
+        </div>
+
+        <!-- Filter Toolbar -->
+        <div class="table-filter-bar">
+          <div class="filter-group-left">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="filterUnitSearch" placeholder="Cari nama / kode..." onkeydown="if(event.key==='Enter') App.loadUnitParticipants(1)">
+            </div>
+            <select id="filterUnitCategory" class="filter-select" onchange="App.loadUnitParticipants(1)">
               <option value="">Semua Kategori</option>
               <option value="Peserta">Peserta PMR</option>
               <option value="Panitia">Panitia</option>
@@ -1941,13 +1969,23 @@ const App = {
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
-            <input type="text" id="filterUnitSearch" placeholder="Cari nama / kode..." style="width: 170px; padding: 0.4rem 0.6rem; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px;" onkeyup="if(event.key==='Enter') App.loadUnitParticipants(1)">
-            <button class="btn btn-outline btn-sm" onclick="App.loadUnitParticipants(1)"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <button type="button" class="btn-filter-reset" onclick="App.resetUnitFilter()" title="Reset Filter">
+              <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+          </div>
+          <div class="filter-group-right">
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">Tampilkan:</span>
+            <select id="filterUnitLimit" class="filter-select" style="width: auto; padding: 0.35rem 0.5rem;" onchange="App.changeUnitLimit(this.value)">
+              <option value="10" ${this.currentUnitLimit === 10 ? 'selected' : ''}>10</option>
+              <option value="25" ${(!this.currentUnitLimit || this.currentUnitLimit === 25) ? 'selected' : ''}>25</option>
+              <option value="50" ${this.currentUnitLimit === 50 ? 'selected' : ''}>50</option>
+              <option value="100" ${this.currentUnitLimit === 100 ? 'selected' : ''}>100</option>
+            </select>
           </div>
         </div>
 
         <div id="unitParticipantTableContainer">
-          <p style="color: var(--text-muted);">Memuat daftar peserta unit...</p>
+          <p style="color: var(--text-muted); padding: 1.5rem; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat daftar peserta unit...</p>
         </div>
       </div>
     `;
@@ -1975,34 +2013,38 @@ const App = {
   },
 
   renderPaginationHtml(pagination, callbackFnName) {
-    if (!pagination || pagination.total_pages <= 1) {
-      if (pagination && pagination.total > 0) {
-        return `<div style="padding: 0.5rem 0; font-size: 0.85rem; color: var(--text-muted);">Total: <strong>${pagination.total.toLocaleString('id-ID')}</strong> data peserta</div>`;
-      }
-      return '';
-    }
-
+    if (!pagination) return '';
     const { total, page, limit, total_pages } = pagination;
+    if (total === 0) return '';
+
     const start = ((page - 1) * limit) + 1;
     const end = Math.min(page * limit, total);
 
     return `
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; margin-top: 0.8rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem; font-size: 0.85rem;">
-        <div style="color: var(--text-muted);">
+      <div class="table-pagination-bar">
+        <div class="pagination-info">
           Menampilkan <strong>${start.toLocaleString('id-ID')} - ${end.toLocaleString('id-ID')}</strong> dari total <strong>${total.toLocaleString('id-ID')}</strong> peserta
         </div>
-        <div style="display: flex; gap: 0.3rem; align-items: center;">
-          <button class="btn btn-outline btn-sm" ${page <= 1 ? 'disabled' : ''} onclick="${callbackFnName}(1)" title="Halaman Pertama">
+        <div class="pagination-controls">
+          <button class="btn-page-nav" ${page <= 1 ? 'disabled' : ''} onclick="${callbackFnName}(1)" title="Halaman Pertama">
             <i class="fa-solid fa-angles-left"></i>
           </button>
-          <button class="btn btn-outline btn-sm" ${page <= 1 ? 'disabled' : ''} onclick="${callbackFnName}(${page - 1})" title="Halaman Sebelumnya">
+          <button class="btn-page-nav" ${page <= 1 ? 'disabled' : ''} onclick="${callbackFnName}(${page - 1})" title="Halaman Sebelumnya">
             <i class="fa-solid fa-chevron-left"></i>
           </button>
-          <span style="padding: 0 0.5rem; font-weight: 700; color: var(--secondary);">Hal ${page} / ${total_pages.toLocaleString('id-ID')}</span>
-          <button class="btn btn-outline btn-sm" ${page >= total_pages ? 'disabled' : ''} onclick="${callbackFnName}(${page + 1})" title="Halaman Selanjutnya">
+          
+          <div class="pagination-jump">
+            <span>Hal</span>
+            <input type="number" class="input-jump-page" min="1" max="${total_pages}" value="${page}" 
+              onkeydown="if(event.key==='Enter'){ const p = parseInt(this.value); if(p >= 1 && p <= ${total_pages}) ${callbackFnName}(p); }" 
+              onblur="const p = parseInt(this.value); if(p >= 1 && p <= ${total_pages} && p !== ${page}) ${callbackFnName}(p);">
+            <span>dari <strong>${total_pages.toLocaleString('id-ID')}</strong></span>
+          </div>
+
+          <button class="btn-page-nav" ${page >= total_pages ? 'disabled' : ''} onclick="${callbackFnName}(${page + 1})" title="Halaman Selanjutnya">
             <i class="fa-solid fa-chevron-right"></i>
           </button>
-          <button class="btn btn-outline btn-sm" ${page >= total_pages ? 'disabled' : ''} onclick="${callbackFnName}(${total_pages})" title="Halaman Terakhir">
+          <button class="btn-page-nav" ${page >= total_pages ? 'disabled' : ''} onclick="${callbackFnName}(${total_pages})" title="Halaman Terakhir">
             <i class="fa-solid fa-angles-right"></i>
           </button>
         </div>
@@ -2016,6 +2058,7 @@ const App = {
 
     const category = document.getElementById('filterUnitCategory')?.value || '';
     const search = document.getElementById('filterUnitSearch')?.value || '';
+    const limit = this.currentUnitLimit || 25;
 
     try {
       const res = await API.getParticipants({
@@ -2023,102 +2066,114 @@ const App = {
         registration_type: category,
         search,
         page,
-        limit: 25
+        limit
       });
       const participants = Array.isArray(res) ? res : (res.data || []);
       const pagination = res.pagination || null;
 
       if (!participants.length) {
-        container.innerHTML = '<p style="color: var(--text-muted);">Belum ada pendaftar yang sesuai filter.</p>';
+        container.innerHTML = `
+          <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+            <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
+            <p style="margin: 0; font-weight: 500;">Belum ada pendaftar yang sesuai filter pencarian.</p>
+          </div>
+        `;
         return;
       }
 
       const desktopTableHtml = `
-        <div class="master-p-desktop-table table-responsive">
+        <div class="master-p-desktop-table table-responsive" style="margin: 0;">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Kode</th>
-                <th>Nama Pendaftar</th>
-                <th>Kategori / Tingkat</th>
-                <th>Jenis Kelamin</th>
-                <th>Gol. Darah</th>
-                <th>Kontak HP</th>
-                <th>Surat Tugas</th>
-                <th>Status</th>
-                <th>Aksi Validasi</th>
+                <th class="col-code">Kode</th>
+                <th class="col-name">Nama Pendaftar</th>
+                <th class="col-category">Kategori / Tingkat</th>
+                <th style="width: 110px; text-align: center;">Jenis Kelamin</th>
+                <th class="col-blood">Gol. Darah</th>
+                <th style="width: 130px;">Kontak HP</th>
+                <th class="col-doc">Surat Tugas</th>
+                <th class="col-status">Status</th>
+                <th class="col-actions">Aksi Validasi</th>
               </tr>
             </thead>
             <tbody>
               ${participants.map(p => {
         const isNonPeserta = p.registration_type && p.registration_type !== 'Peserta';
         const badgeCategoryHtml = isNonPeserta ? Utils.getLevelBadgeHtml(p.registration_type) : Utils.getLevelBadgeHtml(p.level);
+        const escapedName = Utils.escapeHtml(p.full_name || '');
+        const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+        const subtext = isNonPeserta ? ('Kategori: ' + Utils.escapeHtml(p.registration_type)) : ('NISN: ' + (p.nisn || '-'));
+        const hasBlood = p.blood_type && p.blood_type !== '-';
+
         return `
                 <tr>
-                  <td><strong>${p.code}</strong></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                      <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" loading="lazy" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="window.open('${p.photo_url || '#'}', '_blank')" title="Klik untuk lihat foto">
-                      <div>
-                        <strong>${Utils.escapeHtml(p.full_name)}</strong><br>
-                        <small style="color: var(--text-muted);">${isNonPeserta ? 'Kategori: ' + Utils.escapeHtml(p.registration_type) : 'NISN: ' + (p.nisn || '-')}</small>
+                  <td class="col-code"><span class="badge-code">${p.code}</span></td>
+                  <td class="col-name">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                      <img src="${photoUrl}" class="participant-avatar" loading="lazy" onclick="window.open('${p.photo_url || photoUrl}', '_blank')" title="Klik untuk lihat foto asli">
+                      <div style="min-width: 0; flex: 1;">
+                        <div class="participant-name" title="${escapedName}">${escapedName}</div>
+                        <div class="participant-subtext">${subtext}</div>
                       </div>
                     </div>
                   </td>
-                  <td>${badgeCategoryHtml}</td>
-                  <td>${p.gender === 'L' ? 'Laki-Laki' : 'Perempuan'}</td>
-                  <td><strong style="color: var(--primary);">${p.blood_type || '-'}</strong></td>
-                  <td>${Utils.escapeHtml(p.phone || '-')}</td>
-                  <td>
+                  <td class="col-category">${badgeCategoryHtml}</td>
+                  <td style="text-align: center; white-space: nowrap;">${p.gender === 'L' ? '<span style="color:#0284c7; font-weight:600;"><i class="fa-solid fa-mars"></i> Laki-Laki</span>' : '<span style="color:#db2777; font-weight:600;"><i class="fa-solid fa-venus"></i> Perempuan</span>'}</td>
+                  <td class="col-blood"><span class="blood-badge ${hasBlood ? 'has-blood' : ''}">${p.blood_type || '-'}</span></td>
+                  <td style="white-space: nowrap; font-size: 0.82rem; color: #475569;">${Utils.escapeHtml(p.phone || '-')}</td>
+                  <td class="col-doc">
                     ${p.assignment_letter_url ? `
-                      <a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="color: var(--primary); border-color: var(--primary); font-size: 0.75rem;"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
-                    ` : `<span style="color: var(--text-muted); font-size: 0.78rem;">Belum Upload</span>`}
+                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
+                    ` : `<span class="badge-no-doc">Belum Upload</span>`}
                   </td>
-                  <td>${Utils.getStatusBadgeHtml(p.status)}</td>
-                  <td>
-                    <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
-                      <button class="btn btn-warning btn-sm" style="font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
-                      <button class="btn btn-primary btn-sm" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit & Verifikasi</button>
-                      <button class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(14)} ID Card</button>
-                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                  <td class="col-status">${Utils.getStatusBadgeHtml(p.status)}</td>
+                  <td class="col-actions">
+                    <div class="action-btn-group">
+                      <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
+                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
+                      <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                   </td>
                 </tr>
-              `}).join('')}
+              `;}).join('')}
             </tbody>
           </table>
         </div>
       `;
 
       const mobileCardsHtml = `
-        <div class="master-p-mobile-cards">
+        <div class="master-p-mobile-cards" style="padding: 0.75rem;">
           ${participants.map(p => {
         const isNonPeserta = p.registration_type && p.registration_type !== 'Peserta';
         const badgeCategoryHtml = isNonPeserta ? Utils.getLevelBadgeHtml(p.registration_type) : Utils.getLevelBadgeHtml(p.level);
+        const escapedName = Utils.escapeHtml(p.full_name || '');
+        const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
         return `
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
-                  <code style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">${Utils.escapeHtml(p.code)}</code>
+                  <span class="badge-code">${Utils.escapeHtml(p.code)}</span>
                   <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
                     ${badgeCategoryHtml}
                     ${Utils.getStatusBadgeHtml(p.status)}
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
-                  <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
+                  <img src="${photoUrl}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
                   <div style="flex: 1; min-width: 0; word-break: break-word;">
-                    <strong style="font-size: 0.92rem; color: #0f172a; display: block; line-height: 1.25;">${Utils.escapeHtml(p.full_name)}</strong>
+                    <strong style="font-size: 0.92rem; color: #0f172a; display: block; line-height: 1.25;">${escapedName}</strong>
                     <div style="font-size: 0.78rem; color: #475569; margin-top: 0.15rem; word-break: break-word;">
                       ${isNonPeserta ? 'Kategori: ' + Utils.escapeHtml(p.registration_type) : 'NISN: ' + (p.nisn || '-')} | HP: ${Utils.escapeHtml(p.phone || '-')} | Gol. Darah: <strong style="color: var(--primary);">${p.blood_type || '-'}</strong>
                     </div>
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">
-                  <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
+                  <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
-                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700;" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
               </div>
             `;
@@ -2128,7 +2183,7 @@ const App = {
 
       container.innerHTML = desktopTableHtml + mobileCardsHtml + this.renderPaginationHtml(pagination, 'App.loadUnitParticipants');
     } catch (err) {
-      container.innerHTML = `<p style="color: red;">Gagal memuat peserta: ${err.message}</p>`;
+      container.innerHTML = `<p style="color: red; padding: 1.5rem;">Gagal memuat peserta: ${err.message}</p>`;
     }
   },
 
@@ -2652,19 +2707,50 @@ const App = {
   },
 
   // --- TAB 1: VERIFIKASI PESERTA ---
+  currentKabLimit: 25,
+
+  changeKabLimit(limit) {
+    this.currentKabLimit = parseInt(limit) || 25;
+    this.loadKabupatenParticipants(1);
+  },
+
+  resetKabFilter() {
+    const searchEl = document.getElementById('filterKabSearch');
+    const catEl = document.getElementById('filterKabCategory');
+    const unitEl = document.getElementById('filterKabUnit');
+    const statusEl = document.getElementById('filterKabStatus');
+    if (searchEl) searchEl.value = '';
+    if (catEl) catEl.value = '';
+    if (unitEl) unitEl.value = '';
+    if (statusEl) statusEl.value = '';
+    this.loadKabupatenParticipants(1);
+  },
+
   async renderTabVerifikasi(container) {
     container.innerHTML = `
-      <div class="panel-card">
-        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-          <h3 class="panel-title">${Icons.verification(20, 'var(--primary)')} Verifikasi Final Peserta & Kontingen Kabupaten</h3>
+      <div class="panel-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+          <h3 class="panel-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+            ${Icons.verification(22, 'var(--primary)')} Verifikasi Final Peserta & Kontingen Kabupaten
+          </h3>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-            <button type="button" class="btn btn-primary btn-sm" style="font-weight: 700; font-size: 0.8rem;" onclick="App.openUnitBreakdownModal()">
-              <i class="fa-solid fa-school-flag"></i> 🏫 Rekap Peserta per Unit
+            <button type="button" class="btn btn-primary btn-sm" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.openUnitBreakdownModal()">
+              <i class="fa-solid fa-school-flag"></i> Rekap Peserta per Unit
             </button>
-            <button type="button" class="btn btn-success btn-sm" style="font-weight: 700; font-size: 0.8rem; background: #059669; border-color: #059669; color: white;" onclick="App.openEventParticipantsOverviewModal()">
-              <i class="fa-solid fa-users"></i> 📅 Peserta per Kegiatan
+            <button type="button" class="btn btn-success btn-sm" style="font-weight: 700; font-size: 0.8rem; background: #059669; border-color: #059669; color: white; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.openEventParticipantsOverviewModal()">
+              <i class="fa-solid fa-users"></i> Peserta per Kegiatan
             </button>
-            <select id="filterKabCategory" style="width: auto;" onchange="App.loadKabupatenParticipants(1)">
+          </div>
+        </div>
+
+        <!-- Filter & Control Toolbar -->
+        <div class="table-filter-bar">
+          <div class="filter-group-left">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="filterKabSearch" placeholder="Cari nama / kode..." onkeydown="if(event.key==='Enter') App.loadKabupatenParticipants(1)">
+            </div>
+            <select id="filterKabCategory" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Kategori</option>
               <option value="Peserta">Peserta PMR</option>
               <option value="Panitia">Panitia</option>
@@ -2672,23 +2758,33 @@ const App = {
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
-            <select id="filterKabUnit" style="width: auto;" onchange="App.loadKabupatenParticipants(1)">
+            <select id="filterKabUnit" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Unit Sekolah</option>
             </select>
-            <select id="filterKabStatus" style="width: auto;" onchange="App.loadKabupatenParticipants(1)">
+            <select id="filterKabStatus" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Status</option>
-              <option value="verified_unit">Diverifikasi Unit (Menunggu Kabupaten)</option>
+              <option value="verified_unit">Diverifikasi Unit</option>
               <option value="verified_kabupaten">Disetujui Kabupaten</option>
               <option value="pending_unit">Pending Unit</option>
               <option value="rejected">Ditolak</option>
             </select>
-            <input type="text" id="filterKabSearch" placeholder="Cari nama / kode..." style="width: 170px; padding: 0.4rem 0.6rem; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px;" onkeyup="if(event.key==='Enter') App.loadKabupatenParticipants(1)">
-            <button class="btn btn-outline btn-sm" onclick="App.loadKabupatenParticipants(1)"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <button type="button" class="btn-filter-reset" onclick="App.resetKabFilter()" title="Reset semua filter">
+              <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+          </div>
+          <div class="filter-group-right">
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">Tampilkan:</span>
+            <select id="filterKabLimit" class="filter-select" style="width: auto; padding: 0.35rem 0.5rem;" onchange="App.changeKabLimit(this.value)">
+              <option value="10" ${this.currentKabLimit === 10 ? 'selected' : ''}>10</option>
+              <option value="25" ${(!this.currentKabLimit || this.currentKabLimit === 25) ? 'selected' : ''}>25</option>
+              <option value="50" ${this.currentKabLimit === 50 ? 'selected' : ''}>50</option>
+              <option value="100" ${this.currentKabLimit === 100 ? 'selected' : ''}>100</option>
+            </select>
           </div>
         </div>
 
         <div id="kabParticipantTableContainer">
-          <p style="color: var(--text-muted);">Memuat data peserta...</p>
+          <p style="color: var(--text-muted); padding: 1.5rem; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data peserta...</p>
         </div>
       </div>
     `;
@@ -2710,6 +2806,7 @@ const App = {
     const status = document.getElementById('filterKabStatus')?.value || '';
     const category = document.getElementById('filterKabCategory')?.value || '';
     const search = document.getElementById('filterKabSearch')?.value || '';
+    const limit = this.currentKabLimit || 25;
 
     try {
       const res = await API.getParticipants({
@@ -2718,100 +2815,115 @@ const App = {
         registration_type: category,
         search,
         page,
-        limit: 25
+        limit
       });
       const participants = Array.isArray(res) ? res : (res.data || []);
       const pagination = res.pagination || null;
 
       if (!participants.length) {
-        container.innerHTML = '<p style="color: var(--text-muted);">Tidak ada pendaftar sesuai filter.</p>';
+        container.innerHTML = `
+          <div style="padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
+            <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
+            <p style="margin: 0; font-weight: 500;">Tidak ada pendaftar yang sesuai dengan filter pencarian.</p>
+          </div>
+        `;
         return;
       }
 
       const desktopTableHtml = `
-        <div class="verifikasi-desktop-table table-responsive">
+        <div class="verifikasi-desktop-table table-responsive" style="margin: 0;">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Kode</th>
-                <th>Nama Pendaftar</th>
-                <th>Unit PMR</th>
-                <th>Kategori / Tingkat</th>
-                <th>Gol. Darah</th>
-                <th>Surat Tugas</th>
-                <th>Status</th>
-                <th>Aksi Verifikasi Final</th>
+                <th class="col-code">Kode</th>
+                <th class="col-name">Nama Pendaftar</th>
+                <th class="col-unit">Unit PMR</th>
+                <th class="col-category">Kategori / Tingkat</th>
+                <th class="col-blood">Gol. Darah</th>
+                <th class="col-doc">Surat Tugas</th>
+                <th class="col-status">Status</th>
+                <th class="col-actions">Aksi Verifikasi Final</th>
               </tr>
             </thead>
             <tbody>
               ${participants.map(p => {
         const isNonPeserta = p.registration_type && p.registration_type !== 'Peserta';
         const badgeCategoryHtml = isNonPeserta ? Utils.getLevelBadgeHtml(p.registration_type) : Utils.getLevelBadgeHtml(p.level);
+        const escapedName = Utils.escapeHtml(p.full_name || '');
+        const escapedUnit = Utils.escapeHtml(p.unit_name || '-');
+        const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+        const subtext = isNonPeserta ? Utils.escapeHtml(p.registration_type) : (p.phone || '-');
+        const hasBlood = p.blood_type && p.blood_type !== '-';
+
         return `
                 <tr>
-                  <td><code>${p.code}</code></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                      <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" loading="lazy" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" onclick="window.open('${p.photo_url || '#'}', '_blank')" title="Klik untuk lihat foto">
-                      <div>
-                        <strong>${Utils.escapeHtml(p.full_name)}</strong><br>
-                        <small style="color: var(--text-muted);">${isNonPeserta ? Utils.escapeHtml(p.registration_type) : (p.phone || '-')}</small>
+                  <td class="col-code"><span class="badge-code">${p.code}</span></td>
+                  <td class="col-name">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                      <img src="${photoUrl}" class="participant-avatar" loading="lazy" onclick="window.open('${p.photo_url || photoUrl}', '_blank')" title="Klik untuk lihat foto asli">
+                      <div style="min-width: 0; flex: 1;">
+                        <div class="participant-name" title="${escapedName}">${escapedName}</div>
+                        <div class="participant-subtext">${subtext}</div>
                       </div>
                     </div>
                   </td>
-                  <td>${Utils.escapeHtml(p.unit_name)}</td>
-                  <td>${badgeCategoryHtml}</td>
-                  <td><strong style="color: var(--primary);">${p.blood_type || '-'}</strong></td>
-                  <td>
-                    ${p.assignment_letter_url ? `
-                      <a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="color: var(--primary); border-color: var(--primary); font-size: 0.75rem;"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
-                    ` : `<span style="color: var(--text-muted); font-size: 0.78rem;">Belum Upload</span>`}
+                  <td class="col-unit"><span title="${escapedUnit}">${escapedUnit}</span></td>
+                  <td class="col-category">${badgeCategoryHtml}</td>
+                  <td class="col-blood">
+                    <span class="blood-badge ${hasBlood ? 'has-blood' : ''}">${p.blood_type || '-'}</span>
                   </td>
-                  <td>${Utils.getStatusBadgeHtml(p.status)}</td>
-                  <td>
-                    <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
-                      <button class="btn btn-warning btn-sm" style="font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
-                      <button class="btn btn-primary btn-sm" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit & Verifikasi</button>
-                      <button class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(14)} ID Card</button>
-                      <button class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                  <td class="col-doc">
+                    ${p.assignment_letter_url ? `
+                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
+                    ` : `<span class="badge-no-doc">Belum Upload</span>`}
+                  </td>
+                  <td class="col-status">${Utils.getStatusBadgeHtml(p.status)}</td>
+                  <td class="col-actions">
+                    <div class="action-btn-group">
+                      <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
+                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
+                      <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                   </td>
                 </tr>
-              `}).join('')}
+              `;}).join('')}
             </tbody>
           </table>
         </div>
       `;
 
       const mobileCardsHtml = `
-        <div class="verifikasi-mobile-cards">
+        <div class="verifikasi-mobile-cards" style="padding: 0.75rem;">
           ${participants.map(p => {
         const isNonPeserta = p.registration_type && p.registration_type !== 'Peserta';
         const badgeCategoryHtml = isNonPeserta ? Utils.getLevelBadgeHtml(p.registration_type) : Utils.getLevelBadgeHtml(p.level);
+        const escapedName = Utils.escapeHtml(p.full_name || '');
+        const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
         return `
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
-                  <code style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">${Utils.escapeHtml(p.code)}</code>
+                  <span class="badge-code">${Utils.escapeHtml(p.code)}</span>
                   <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
                     ${badgeCategoryHtml}
                     ${Utils.getStatusBadgeHtml(p.status)}
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
-                  <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
+                  <img src="${photoUrl}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
                   <div style="flex: 1; min-width: 0; word-break: break-word;">
-                    <strong style="font-size: 0.92rem; color: #0f172a; display: block; line-height: 1.25;">${Utils.escapeHtml(p.full_name)}</strong>
+                    <strong style="font-size: 0.92rem; color: #0f172a; display: block; line-height: 1.25;">${escapedName}</strong>
                     <div style="font-size: 0.78rem; color: #475569; margin-top: 0.15rem; word-break: break-word;">
                       Unit: <strong>${Utils.escapeHtml(p.unit_name || '-')}</strong> | Gol. Darah: <strong style="color: var(--primary);">${p.blood_type || '-'}</strong>
                     </div>
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">
-                  <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
+                  <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
-                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
+                  <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700;" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
               </div>
             `;
@@ -2821,7 +2933,7 @@ const App = {
 
       container.innerHTML = desktopTableHtml + mobileCardsHtml + this.renderPaginationHtml(pagination, 'App.loadKabupatenParticipants');
     } catch (err) {
-      container.innerHTML = `<p style="color: red;">Gagal memuat peserta: ${err.message}</p>`;
+      container.innerHTML = `<p style="color: red; padding: 1.5rem;">Gagal memuat peserta: ${err.message}</p>`;
     }
   },
 

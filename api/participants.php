@@ -142,13 +142,23 @@ if ($method === 'GET') {
     $stmtCount->execute($params);
     $totalRecords = (int)$stmtCount->fetchColumn();
 
+    $columns = "
+        p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, 
+        p.gender, p.blood_type, p.phone, p.photo_url, p.status, p.created_at, 
+        p.assignment_letter_url, p.registration_type, p.certificate_number,
+        un.name AS unit_name, un.code AS unit_code
+    ";
+
     if ($noPaginate) {
+        // Safe cap to prevent memory exhaustion on huge datasets (100k+ records)
+        $capLimit = 1000;
         $sql = "
-            SELECT p.*, un.name AS unit_name, un.code AS unit_code 
+            SELECT $columns 
             FROM participants p 
             LEFT JOIN units un ON p.unit_id = un.id 
             $whereSql 
             ORDER BY p.id DESC
+            LIMIT $capLimit
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -159,13 +169,13 @@ if ($method === 'GET') {
             'pagination' => [
                 'total' => $totalRecords,
                 'page' => 1,
-                'limit' => $totalRecords,
+                'limit' => count($items),
                 'total_pages' => 1
             ]
         ]);
     } else {
         $sql = "
-            SELECT p.*, un.name AS unit_name, un.code AS unit_code 
+            SELECT $columns 
             FROM participants p 
             LEFT JOIN units un ON p.unit_id = un.id 
             $whereSql 
