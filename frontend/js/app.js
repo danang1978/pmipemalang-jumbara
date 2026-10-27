@@ -3304,9 +3304,7 @@ const App = {
     if (!confirm('Apakah Anda yakin ingin menghapus gambar background template kustom? Card akan kembali menggunakan header standar PMI.')) return;
     try {
       this.transientTemplateDataUrl = null;
-      await API.updateSettings({
-        idcard_template: ''
-      });
+      await API.resetSettingFile('idcard_template');
       Utils.showToast('Gambar background template kustom berhasil dihapus.', 'success');
       this.appSettings = await API.getSettings();
       const content = document.getElementById('adminTabContent');
@@ -5912,6 +5910,15 @@ const App = {
         const res = await API.uploadSettingFile(type, base64Data);
         Utils.showToast(res.message, 'success');
         await this.loadSettings();
+        if (type === 'logo' && document.getElementById('setAppLogo')) {
+          document.getElementById('setAppLogo').value = res.url;
+        } else if (type === 'event_logo' && document.getElementById('setEventLogo')) {
+          document.getElementById('setEventLogo').value = res.url;
+        } else if (type === 'favicon' && document.getElementById('setAppFavicon')) {
+          document.getElementById('setAppFavicon').value = res.url;
+        } else if (type === 'kop' && document.getElementById('setAppKop')) {
+          document.getElementById('setAppKop').value = res.url;
+        }
         const content = document.getElementById('adminTabContent');
         if (content) this.renderTabPengaturan(content);
       } catch (err) {
@@ -5931,6 +5938,15 @@ const App = {
         const res = await API.uploadSettingFile(type, base64Data);
         Utils.showToast(res.message, 'success');
         await this.loadSettings();
+        if (type === 'logo' && document.getElementById('setAppLogo')) {
+          document.getElementById('setAppLogo').value = res.url;
+        } else if (type === 'event_logo' && document.getElementById('setEventLogo')) {
+          document.getElementById('setEventLogo').value = res.url;
+        } else if (type === 'favicon' && document.getElementById('setAppFavicon')) {
+          document.getElementById('setAppFavicon').value = res.url;
+        } else if (type === 'kop' && document.getElementById('setAppKop')) {
+          document.getElementById('setAppKop').value = res.url;
+        }
         const content = document.getElementById('adminTabContent');
         if (content) this.renderTabPengaturan(content);
       } catch (err) {
@@ -5970,10 +5986,10 @@ const App = {
       contact_hours: document.getElementById('setContactHours')?.value.trim() || '',
       contact_wa: document.getElementById('setContactWa')?.value.trim() || '',
       footer_copyright: document.getElementById('setFooterCopyright').value.trim(),
-      app_logo: document.getElementById('setAppLogo')?.value.trim() || 'frontend/images/logo-pmi.svg',
-      event_logo: document.getElementById('setEventLogo')?.value.trim() || this.appSettings.event_logo || 'frontend/images/logo-jumbara-xii.png',
-      app_favicon: document.getElementById('setAppFavicon')?.value.trim() || 'frontend/favicon.svg',
-      app_kop: document.getElementById('setAppKop')?.value.trim() || '',
+      app_logo: document.getElementById('setAppLogo')?.value.trim() || this.appSettings?.app_logo || 'frontend/images/logo-pmi.svg',
+      event_logo: document.getElementById('setEventLogo')?.value.trim() || this.appSettings?.event_logo || 'frontend/images/logo-jumbara-xii.png',
+      app_favicon: document.getElementById('setAppFavicon')?.value.trim() || this.appSettings?.app_favicon || 'frontend/favicon.svg',
+      app_kop: document.getElementById('setAppKop')?.value.trim() || this.appSettings?.app_kop || '',
       jumbotron_title: document.getElementById('setJumbotronTitle').value.trim(),
       jumbotron_subtitle: document.getElementById('setJumbotronSubtitle').value.trim(),
       reg_deadline: document.getElementById('setRegDeadline').value,
@@ -7559,12 +7575,14 @@ const App = {
           <div class="pmi-card-top-header">
             <div class="pmi-event-brand">
               <div class="pmi-event-logo">
+                ${s.event_logo ? `<img src="${s.event_logo}" alt="Logo Kegiatan" style="width: 38px; height: 34px; object-fit: contain;">` : `
                 <svg width="38" height="34" viewBox="0 0 100 80">
                   <path d="M10,40 Q30,10 60,30 T90,40 Q60,70 30,50 Z" fill="#ea580c" opacity="0.9" />
                   <path d="M15,40 C30,20 50,20 65,40 C50,60 30,60 15,40 Z" fill="#0284c7" />
                   <circle cx="55" cy="35" r="7" fill="#16a34a" />
                   <path d="M75,25 L95,15 L85,40 L95,65 L75,55 Z" fill="#dc2626" />
                 </svg>
+                `}
               </div>
               <div class="pmi-event-text">
                 <span class="pmi-event-title">${Utils.escapeHtml(eventTitle)}</span>
@@ -7574,11 +7592,13 @@ const App = {
 
             <div class="pmi-official-brand">
               <div class="pmi-logo-badge">
+                ${s.app_logo ? `<img src="${s.app_logo}" alt="Logo PMI" style="width: 32px; height: 32px; object-fit: contain;">` : `
                 <svg width="32" height="32" viewBox="0 0 100 100">
                   <path d="M50,5 C60,5 65,18 75,18 C85,18 92,28 92,38 C92,48 95,60 88,68 C81,76 72,82 62,86 C52,90 48,95 38,95 C28,95 20,86 14,78 C8,70 8,58 8,48 C8,38 15,25 25,20 C35,15 40,5 50,5 Z" fill="#ffffff" stroke="#dc2626" stroke-width="4"/>
                   <rect x="42" y="25" width="16" height="50" rx="2" fill="#dc2626"/>
                   <rect x="25" y="42" width="50" height="16" rx="2" fill="#dc2626"/>
                 </svg>
+                `}
               </div>
               <div class="pmi-official-text">
                 <span>Palang</span>
@@ -11605,7 +11625,7 @@ const App = {
             <!-- Default Logo & Header Palang Merah Indonesia -->
             <div style="text-align: center; margin-bottom: 25px; position: relative;">
               <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
-                <img src="frontend/images/logo-pmi.svg" style="height: 65px; margin-bottom: 4px;">
+                <img src="${(this.appSettings && this.appSettings.app_logo) || 'frontend/images/logo-pmi.svg'}" style="height: 65px; margin-bottom: 4px; object-fit: contain;">
                 <span style="font-family: 'Trebuchet MS', sans-serif; font-weight: 700; font-size: 13pt; color: #000000; letter-spacing: 0.5px;">Palang Merah Indonesia</span>
               </div>
             </div>

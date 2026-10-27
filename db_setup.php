@@ -271,9 +271,9 @@ try {
     try { $pdo->exec("CREATE INDEX idx_full_name ON participants (full_name)"); } catch (Exception $e) {}
     try { $pdo->exec("CREATE INDEX idx_reg_type ON participants (registration_type)"); } catch (Exception $e) {}
 
-    // Always seed/update settings & master options
+    // Always seed initial settings & master options (IGNORE if already exists to preserve custom logos/settings)
     $pdo->exec("
-        INSERT INTO settings (`key`, `value`) VALUES
+        INSERT IGNORE INTO settings (`key`, `value`) VALUES
         ('app_name', 'JUMBARA PMR TINGKAT KABUPATEN 2026'),
         ('organizer_name', 'Palang Merah Indonesia Kabupaten'),
         ('jumbotron_title', 'Jumpa Bakti Gembira Palang Merah Remaja'),
@@ -289,8 +289,7 @@ try {
         ('option_genders', '[{\"value\": \"L\", \"label\": \"Laki-laki\"}, {\"value\": \"P\", \"label\": \"Perempuan\"}]'),
         ('option_levels', '[{\"value\": \"Wira\", \"label\": \"Wira (SMA / SMK / MA)\"}, {\"value\": \"Madya\", \"label\": \"Madya (SMP / MTs)\"}, {\"value\": \"Mula\", \"label\": \"Mula (SD / MI)\"}]'),
         ('option_disability_statuses', '[{\"value\": \"Tidak\", \"label\": \"Tidak (Non-Disabilitas)\"}, {\"value\": \"Ya\", \"label\": \"Ya (Penyandang Disabilitas)\"}]'),
-        ('option_disability_types', '[\"Tidak Ada\", \"Disabilitas Fisik / Daksa\", \"Disabilitas Netra\", \"Disabilitas Rungu / Wicara\", \"Disabilitas Intelektual / Grahita\", \"Disabilitas Mental\", \"Lainnya\"]')
-        ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
+        ('option_disability_types', '[\"Tidak Ada\", \"Disabilitas Fisik / Daksa\", \"Disabilitas Netra\", \"Disabilitas Rungu / Wicara\", \"Disabilitas Intelektual / Grahita\", \"Disabilitas Mental\", \"Lainnya\"]');
     ");
 
     if (php_sapi_name() !== 'cli') {

@@ -184,9 +184,28 @@ if ($method === 'POST') {
 
     $stmt = $pdo->prepare("INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
 
+    // Fetch existing settings to protect uploaded assets from accidental reset
+    $stmtProtected = $pdo->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('app_logo', 'event_logo', 'app_favicon', 'app_kop', 'idcard_template')");
+    $currentAssets = [];
+    while ($row = $stmtProtected->fetch(PDO::FETCH_ASSOC)) {
+        $currentAssets[$row['key']] = $row['value'];
+    }
+
     foreach ($input as $f => $valRaw) {
         if (preg_match('/^[a-z0-9_]+$/i', $f)) {
             $val = is_array($valRaw) ? json_encode($valRaw) : (is_string($valRaw) ? trim($valRaw) : (string)$valRaw);
+
+            // Protection: if this field is an asset (logo, kop, template) and the incoming value is empty or default,
+            // while the DB already has a custom uploaded file, do NOT overwrite it!
+            if (array_key_exists($f, $currentAssets) && !empty($currentAssets[$f])) {
+                $cur = $currentAssets[$f];
+                if (strpos($cur, 'uploads/') === 0) {
+                    if (empty($val) || $val === 'frontend/images/logo-pmi.svg' || $val === 'frontend/images/logo-jumbara-xii.png' || $val === 'frontend/favicon.svg') {
+                        continue; // Keep the existing uploaded asset!
+                    }
+                }
+            }
+
             $stmt->execute([$f, $val]);
         }
     }
