@@ -170,6 +170,11 @@ const API = {
     return this.request(`/participants.php?${query}`);
   },
 
+  getParticipantStats(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/participants.php?action=stats${query ? '&' + query : ''}`);
+  },
+
   getParticipantMe() {
     return this.request('/participants.php?action=me');
   },

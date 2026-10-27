@@ -18,7 +18,7 @@ if ($method === 'GET' && $action === 'unit_events') {
     $stmtEvt = $pdo->query("SELECT * FROM events ORDER BY event_date ASC, start_time ASC");
     $events = $stmtEvt->fetchAll();
 
-    $stmtUnitPart = $pdo->prepare("SELECT id, code, full_name, level, sub_categories, photo_url FROM participants WHERE unit_id = ? AND status = 'verified_kabupaten' ORDER BY full_name ASC");
+    $stmtUnitPart = $pdo->prepare("SELECT id, code, full_name, level, sub_categories, photo_url, status, registration_type FROM participants WHERE unit_id = ? AND status != 'rejected' ORDER BY full_name ASC");
     $stmtUnitPart->execute([$unitId]);
     $unitParticipants = $stmtUnitPart->fetchAll();
 

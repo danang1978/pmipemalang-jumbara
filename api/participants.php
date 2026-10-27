@@ -99,6 +99,43 @@ if ($method === 'GET' && $action === 'idcard') {
     jsonResponse($part);
 }
 
+// GET /api/participants.php?action=stats (Statistik jumlah peserta per status untuk counter dashboard)
+if ($method === 'GET' && $action === 'stats') {
+    $user = getCurrentUser();
+    if (!$user) {
+        jsonResponse(['error' => 'Akses ditolak.'], 401);
+    }
+    $targetUnitId = ($user['role'] === 'unit') ? (int)($user['unit_id'] ?? 0) : (int)($_GET['unit_id'] ?? 0);
+    $where = [];
+    $params = [];
+    if ($targetUnitId > 0) {
+        $where[] = "unit_id = ?";
+        $params[] = $targetUnitId;
+    }
+    $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'pending_unit' THEN 1 ELSE 0 END) AS pending_unit,
+            SUM(CASE WHEN status = 'verified_unit' THEN 1 ELSE 0 END) AS verified_unit,
+            SUM(CASE WHEN status = 'verified_kabupaten' THEN 1 ELSE 0 END) AS verified_kabupaten,
+            SUM(CASE WHEN status = 'revision' THEN 1 ELSE 0 END) AS revision,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected
+        FROM participants
+        $whereSql
+    ");
+    $stmt->execute($params);
+    $counts = $stmt->fetch() ?: [
+        'total' => 0, 'pending_unit' => 0, 'verified_unit' => 0, 
+        'verified_kabupaten' => 0, 'revision' => 0, 'rejected' => 0
+    ];
+    foreach ($counts as $k => $v) {
+        $counts[$k] = (int)$v;
+    }
+    jsonResponse($counts);
+}
+
 // GET /api/participants.php (Protected with Multi-Tenant & Role Authorization)
 if ($method === 'GET') {
     $user = getCurrentUser();
@@ -379,6 +416,19 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
     $emergencyContact = trim($input['emergency_contact'] ?? $part['emergency_contact']);
     $status = $input['status'] ?? $part['status'];
 
+    $birthPlace = trim($input['birth_place'] ?? $part['birth_place'] ?? '');
+    $birthDate = trim($input['birth_date'] ?? $part['birth_date'] ?? '');
+    $religion = trim($input['religion'] ?? $part['religion'] ?? 'Islam');
+    $isDisabled = $input['is_disabled'] ?? $part['is_disabled'] ?? 'Tidak';
+    $disabilityType = trim($input['disability_type'] ?? $part['disability_type'] ?? 'Tidak Ada');
+    $address = trim($input['address'] ?? $part['address'] ?? '');
+    $email = trim($input['email'] ?? $part['email'] ?? '');
+    
+    $subCategories = $part['sub_categories'];
+    if (isset($input['sub_categories'])) {
+        $subCategories = is_array($input['sub_categories']) ? json_encode($input['sub_categories']) : $input['sub_categories'];
+    }
+
     $photoUrl = $part['photo_url'];
     if (!empty($input['photo_data'])) {
         $uploadedPhoto = saveBase64File($input['photo_data'], 'pasfoto');
@@ -394,15 +444,19 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
     $stmtUpdate = $pdo->prepare("
         UPDATE participants SET 
             full_name = ?, nisn = ?, registration_type = ?, level = ?, gender = ?, blood_type = ?,
-            phone = ?, emergency_contact = ?, status = ?, photo_url = ?, assignment_letter_url = ?
+            phone = ?, emergency_contact = ?, status = ?, photo_url = ?, assignment_letter_url = ?,
+            birth_place = ?, birth_date = ?, religion = ?, is_disabled = ?, disability_type = ?,
+            address = ?, email = ?, sub_categories = ?
         WHERE id = ?
     ");
     $stmtUpdate->execute([
         $fullName, $nisn, $registrationType, $level, $gender, $bloodType,
-        $phone, $emergencyContact, $status, $photoUrl, $assignmentLetterUrl, $id
+        $phone, $emergencyContact, $status, $photoUrl, $assignmentLetterUrl,
+        $birthPlace, $birthDate, $religion, $isDisabled, $disabilityType,
+        $address, $email, $subCategories, $id
     ]);
 
-    jsonResponse(['message' => 'Data peserta berhasil diperbarui oleh Admin!']);
+    jsonResponse(['message' => 'Data dan berkas peserta berhasil diperbarui!']);
 }
 
 // DELETE /api/participants.php?id=123 (Hapus Peserta & Akun User Terkait)

@@ -58,6 +58,10 @@ $settings = getAppSettings();
       <i class="fa-solid fa-calendar-days"></i>
       <span>Agenda</span>
     </button>
+    <button class="mobile-nav-btn" id="mbNavMateri" onclick="App.handleMobileNav('materi')">
+      <i class="fa-solid fa-book-bookmark"></i>
+      <span>Materi</span>
+    </button>
     <button class="mobile-nav-btn" id="mbNavAnnounce" onclick="App.handleMobileNav('pengumuman')">
       <i class="fa-solid fa-bullhorn"></i>
       <span>Info</span>
@@ -907,23 +911,76 @@ $settings = getAppSettings();
               </select>
             </div>
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">No. WhatsApp HP</label>
-              <input type="text" id="adminEditPhone" placeholder="08xxx" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Agama</label>
+              <select id="adminEditReligion" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                <option value="Islam">Islam</option>
+                <option value="Kristen Protestan">Kristen Protestan</option>
+                <option value="Katolik">Katolik</option>
+                <option value="Hindu">Hindu</option>
+                <option value="Buddha">Buddha</option>
+                <option value="Konghucu">Konghucu</option>
+              </select>
             </div>
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Pembina / Ortu</label>
-              <input type="text" id="adminEditEmergencyContact" placeholder="Kontak Pembina" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Penyandang Disabilitas</label>
+              <select id="adminEditIsDisabled" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                <option value="Tidak">Tidak</option>
+                <option value="Ya">Ya (Disabilitas)</option>
+              </select>
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Ganti Pas Foto Baru (Opsional)</label>
-              <input type="file" id="adminEditPhotoFile" accept="image/*" style="width: 100%; font-size: 0.8rem;">
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Tempat Lahir</label>
+              <input type="text" id="adminEditBirthPlace" placeholder="Kota / Kabupaten Lahir" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
             </div>
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Ganti Surat Tugas Baru (Opsional)</label>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Tanggal Lahir</label>
+              <input type="date" id="adminEditBirthDate" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">No. WhatsApp HP *</label>
+              <input type="text" id="adminEditPhone" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Nama & Kontak Pembina / Ortu</label>
+              <input type="text" id="adminEditEmergencyContact" placeholder="Nama & No HP Pembina/Ortu" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 0.85rem;">
+            <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Alamat Lengkap Domisili</label>
+            <textarea id="adminEditAddress" rows="2" placeholder="Nama jalan, RT/RW, Desa/Kelurahan, Kecamatan..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px; resize: vertical;"></textarea>
+          </div>
+
+          <!-- Pratinjau & Upload Berkas Foto & Surat Tugas -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color); background: #f8fafc; padding: 0.85rem; border-radius: 8px;">
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary); display: block; margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-image" style="color: #0284c7;"></i> Pas Foto 3x4 Peserta
+              </label>
+              <div id="adminEditCurrentPhotoBox" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <img id="adminEditPhotoPreview" src="frontend/images/default-avatar.svg" style="width: 60px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: white;">
+                <span id="adminEditPhotoStatus" style="font-size: 0.75rem; color: #64748b;">Pas foto terdaftar</span>
+              </div>
+              <input type="file" id="adminEditPhotoFile" accept="image/*" style="width: 100%; font-size: 0.8rem;">
+              <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.2rem;">Pilih foto baru jika ingin mengganti pas foto (Maks. 5MB).</small>
+            </div>
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary); display: block; margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Surat Tugas Sekolah
+              </label>
+              <div id="adminEditCurrentLetterBox" style="margin-bottom: 0.5rem; font-size: 0.8rem;">
+                <a id="adminEditLetterLink" href="#" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Surat Tugas Saat Ini
+                </a>
+              </div>
               <input type="file" id="adminEditAssignmentFile" accept=".pdf,image/*" style="width: 100%; font-size: 0.8rem;">
+              <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.2rem;">Pilih berkas baru (PDF / Gambar) jika ingin mengganti.</small>
             </div>
           </div>
         </div>

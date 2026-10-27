@@ -55,9 +55,14 @@
           </div>
           <div class="brand-text">
             <h1 id="brandAppName">JUMBARA PMR 2026</h1>
-            <p id="brandOrganizer">Palang Merah Indonesia Kabupaten</p>
+            <p id="brandOrganizer">PMI Kabupaten Pemalang</p>
           </div>
         </div>
+
+        <!-- Hamburger Menu Toggle Button (Mobile) -->
+        <button class="nav-toggle-btn" id="navToggleBtn" onclick="App.toggleMobileMenu()" aria-label="Toggle Navigation">
+          <i class="fa-solid fa-bars" id="navToggleIcon"></i>
+        </button>
 
         <!-- Navigation Links -->
         <nav class="nav-menu" id="publicNavMenu">
@@ -136,6 +141,10 @@
     <button class="mobile-nav-btn" id="mbNavAgenda" onclick="App.handleMobileNav('kegiatan')">
       <i class="fa-solid fa-calendar-days"></i>
       <span>Agenda</span>
+    </button>
+    <button class="mobile-nav-btn" id="mbNavMateri" onclick="App.handleMobileNav('materi')">
+      <i class="fa-solid fa-book-bookmark"></i>
+      <span>Materi</span>
     </button>
     <button class="mobile-nav-btn" id="mbNavAnnounce" onclick="App.handleMobileNav('pengumuman')">
       <i class="fa-solid fa-bullhorn"></i>

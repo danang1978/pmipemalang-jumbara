@@ -300,8 +300,9 @@ const App = {
         } else if (role === 'unit' || role === 'admin_unit') {
           publicNavMenu.innerHTML = `
             <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('peserta'); App.closeMobileMenu();"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('agenda'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('piagam'); App.closeMobileMenu();"><i class="fa-solid fa-certificate"></i> Cetak Piagam & Rekap</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('jadwal'); App.closeMobileMenu();"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('nilai'); App.closeMobileMenu();"><i class="fa-solid fa-award"></i> Rekap Nilai & Medali</a>
+            <a href="javascript:void(0)" class="nav-link" onclick="App.switchUnitTab('piagam'); App.closeMobileMenu();"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.openChangePasswordModal(); App.closeMobileMenu();"><i class="fa-solid fa-key"></i> Ganti Password Akun</a>
             <a href="javascript:void(0)" class="nav-link" onclick="App.handleLogout(); App.closeMobileMenu();" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a>
           `;
@@ -4311,6 +4312,9 @@ const App = {
         <button class="tab-btn ${this.activeUnitTab === 'jadwal' ? 'active' : ''}" id="unit-tab-jadwal" onclick="App.switchUnitTab('jadwal')">
           <i class="fa-solid fa-calendar-check"></i> Jadwal & Pendaftaran Kegiatan
         </button>
+        <button class="tab-btn ${this.activeUnitTab === 'nilai' ? 'active' : ''}" id="unit-tab-nilai" onclick="App.switchUnitTab('nilai')">
+          <i class="fa-solid fa-award"></i> Rekap Nilai & Medali
+        </button>
         <button class="tab-btn ${this.activeUnitTab === 'piagam' ? 'active' : ''}" id="unit-tab-piagam" onclick="App.switchUnitTab('piagam')">
           <i class="fa-solid fa-scroll"></i> Piagam Penghargaan Unit
         </button>
@@ -4338,6 +4342,8 @@ const App = {
       this.renderUnitTabPeserta(content);
     } else if (tabName === 'jadwal') {
       this.renderUnitTabJadwal(content);
+    } else if (tabName === 'nilai') {
+      this.renderUnitTabNilai(content);
     } else if (tabName === 'piagam') {
       this.renderUnitTabPiagam(content);
     }
@@ -4404,7 +4410,229 @@ const App = {
     }
   },
 
+  async renderUnitTabNilai(container) {
+    container.innerHTML = `
+      <div class="panel-card">
+        <div class="panel-header" style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h3 class="panel-title" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-award" style="color: #f59e0b;"></i> Rekap Nilai, Medali & Klasemen Kontingen
+            </h3>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: var(--text-muted);">
+              Pantau perolehan medali, rincian skor aspek dewan juri tiap cabang kegiatan, dan kedudukan kontingen sekolah di klasemen umum se-Kabupaten Pemalang.
+            </p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="App.renderUnitTabNilai(document.getElementById('unitTabContent'))">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh Nilai
+          </button>
+        </div>
+
+        <div id="unitNilaiContentContainer">
+          <p style="text-align: center; padding: 2.5rem 0; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi nilai dan medali kontingen...</p>
+        </div>
+      </div>
+    `;
+
+    try {
+      const [scores, standings] = await Promise.all([
+        API.getScores({ unit_id: this.currentUser.unit_id }),
+        API.getStandings()
+      ]);
+
+      const contentBox = document.getElementById('unitNilaiContentContainer');
+      if (!contentBox) return;
+
+      const myUnitId = Number(this.currentUser.unit_id);
+      const myRankIndex = standings.findIndex(s => Number(s.unit_id) === myUnitId);
+      const myStanding = myRankIndex !== -1 ? standings[myRankIndex] : null;
+      const myRank = myRankIndex !== -1 ? (myRankIndex + 1) : '-';
+
+      const emasCount = myStanding ? parseInt(myStanding.emas || 0) : 0;
+      const perakCount = myStanding ? parseInt(myStanding.perak || 0) : 0;
+      const perungguCount = myStanding ? parseInt(myStanding.perunggu || 0) : 0;
+
+      contentBox.innerHTML = `
+        <!-- KPI MEDALI SUMMARY CARDS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 14px; padding: 1.1rem; box-shadow: 0 4px 12px rgba(15,23,42,0.15);">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Peringkat Kontingen</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">
+              #${myRank} <span style="font-size: 0.85rem; font-weight: 500; color: #cbd5e1;">dari ${standings.length} Unit</span>
+            </div>
+          </div>
+          <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fde68a; border-radius: 14px; padding: 1.1rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #b45309; text-transform: uppercase;">🥇 Medali Emas</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;">${emasCount}</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.1rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #475569; text-transform: uppercase;">🥈 Medali Perak</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #334155; margin-top: 0.2rem;">${perakCount}</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fed7aa; border-radius: 14px; padding: 1.1rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #c2410c; text-transform: uppercase;">🥉 Medali Perunggu</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #ea580c; margin-top: 0.2rem;">${perungguCount}</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.1rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #15803d; text-transform: uppercase;">Lomba Diikuti</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;">${scores.length} <span style="font-size: 0.85rem; font-weight: 500; color: #15803d;">Cabang</span></div>
+          </div>
+        </div>
+
+        <!-- TABEL RINCIAN NILAI CABANG LOMBA UNIT SEKOLAH -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+          <div style="padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a;">
+              <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Rincian Nilai Cabang Lomba Kontingen Anda (${scores.length})
+            </h4>
+            <span style="font-size: 0.78rem; color: #64748b;">Update nilai langsung dari dewan juri & penilai</span>
+          </div>
+
+          ${!scores.length ? `
+            <div style="padding: 2.5rem 1rem; text-align: center; color: #64748b;">
+              <i class="fa-solid fa-clipboard" style="font-size: 2.2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
+              <p style="margin: 0; font-weight: 600;">Belum ada hasil penilaian dewan juri untuk kontingen sekolah Anda.</p>
+              <p style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.25rem;">Nilai akan tampil otomatis setelah juri pos/cabang menyelesaikan penilaian & validasi.</p>
+            </div>
+          ` : `
+            <div class="table-responsive" style="margin: 0;">
+              <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th style="padding: 10px 14px;">Cabang Kegiatan / Lomba</th>
+                    <th style="padding: 10px 14px;">Peserta / Tim</th>
+                    <th style="padding: 10px 14px; text-align: center;">Skor Akhir</th>
+                    <th style="padding: 10px 14px; text-align: center;">Predikat Medali</th>
+                    <th style="padding: 10px 14px;">Rincian Aspek Penilaian & Catatan Juri</th>
+                    <th style="padding: 10px 14px; text-align: center;">Status Kunci</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${scores.map(s => {
+                    let gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #475569;">Partisipasi</span>';
+                    if (s.grade === 'Emas') gradeBadge = '<span class="badge badge-verified" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;"><i class="fa-solid fa-medal"></i> Emas</span>';
+                    else if (s.grade === 'Perak') gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: 800;"><i class="fa-solid fa-medal"></i> Perak</span>';
+                    else if (s.grade === 'Perunggu') gradeBadge = '<span class="badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;"><i class="fa-solid fa-medal"></i> Perunggu</span>';
+
+                    const aspectsHtml = (s.aspect_details && s.aspect_details.length) ? `
+                      <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem;">
+                        ${s.aspect_details.map(a => `
+                          <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.73rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 0.15rem 0.45rem; border-radius: 6px;">
+                            <strong style="color: #334155;">${Utils.escapeHtml(a.aspect_name)}:</strong>
+                            <span style="color: var(--primary); font-weight: 700;">${a.score_val}</span>
+                          </span>
+                        `).join('')}
+                      </div>
+                    ` : '';
+
+                    return `
+                      <tr>
+                        <td style="padding: 12px 14px;">
+                          <strong style="font-size: 0.92rem; color: #0f172a; display: block;">${Utils.escapeHtml(s.branch_name || s.event_title || 'Lomba Jumbara')}</strong>
+                          <span class="badge badge-info" style="font-size: 0.72rem; margin-top: 0.2rem;">${Utils.escapeHtml(s.category_type || 'Jumpa')}</span>
+                        </td>
+                        <td style="padding: 12px 14px;">
+                          ${s.participant_name ? `
+                            <strong style="font-size: 0.88rem; color: #1e293b; display: block;">${Utils.escapeHtml(s.participant_name)}</strong>
+                            <span style="font-size: 0.76rem; color: #64748b; font-family: monospace;">${Utils.escapeHtml(s.participant_code || '')}</span>
+                          ` : `<span style="font-size: 0.85rem; color: #64748b; font-style: italic;"><i class="fa-solid fa-users"></i> Regu Kontingen Unit</span>`}
+                        </td>
+                        <td style="padding: 12px 14px; text-align: center;">
+                          <span style="font-size: 1.25rem; font-weight: 800; color: #0f172a; font-family: monospace;">${parseFloat(s.score_val || 0).toFixed(1)}</span>
+                        </td>
+                        <td style="padding: 12px 14px; text-align: center;">
+                          ${gradeBadge}
+                        </td>
+                        <td style="padding: 12px 14px; font-size: 0.82rem;">
+                          ${aspectsHtml}
+                          ${s.notes ? `<div style="color: #475569; font-style: italic; background: #fffbeb; padding: 0.25rem 0.5rem; border-radius: 4px; border-left: 2px solid #f59e0b; margin-bottom: 0.25rem;"><i class="fa-solid fa-quote-left" style="font-size: 0.7rem;"></i> ${Utils.escapeHtml(s.notes)}</div>` : ''}
+                          <div style="font-size: 0.72rem; color: #94a3b8;">Oleh: <strong>${Utils.escapeHtml(s.judge_name || s.evaluator_username || 'Penilai')}</strong></div>
+                        </td>
+                        <td style="padding: 12px 14px; text-align: center;">
+                          ${(s.status === 'validated' || s.status === 'final') ? `
+                            <span class="badge badge-verified" style="background: #ecfdf5; color: #065f46; font-size: 0.72rem;"><i class="fa-solid fa-lock"></i> Final Valid</span>
+                          ` : `
+                            <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.72rem;"><i class="fa-solid fa-clock"></i> Draft / Verif</span>
+                          `}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `}
+        </div>
+
+        <!-- TABEL KLASEMEN UMUM LEADERBOARD KABUPATEN -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+          <div style="padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a;">
+              <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i> Klasemen Perolehan Medali Se-Kabupaten Pemalang
+            </h4>
+            <span style="font-size: 0.78rem; color: #64748b;"><strong style="color: #2563eb;">Baris biru</strong> menandakan posisi kontingen Anda</span>
+          </div>
+
+          <div class="table-responsive" style="margin: 0;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.86rem;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 10px 12px; width: 60px; text-align: center;">Rank</th>
+                  <th style="padding: 10px 14px;">Kontingen Unit Sekolah</th>
+                  <th style="padding: 10px 12px; text-align: center;">Tingkat</th>
+                  <th style="padding: 10px 12px; text-align: center; color: #d97706; font-weight: 800;">🥇 Emas</th>
+                  <th style="padding: 10px 12px; text-align: center; color: #475569; font-weight: 800;">🥈 Perak</th>
+                  <th style="padding: 10px 12px; text-align: center; color: #c2410c; font-weight: 800;">🥉 Perunggu</th>
+                  <th style="padding: 10px 12px; text-align: center;">Total Lomba</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${standings.map((st, idx) => {
+                  const isCurrent = Number(st.unit_id) === myUnitId;
+                  const rowBg = isCurrent ? '#eff6ff' : (idx % 2 === 1 ? '#fafafa' : '#ffffff');
+                  const rowBorder = isCurrent ? '2px solid #3b82f6' : '1px solid #f1f5f9';
+
+                  return `
+                    <tr style="background: ${rowBg}; border-top: ${rowBorder}; border-bottom: ${rowBorder};">
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: ${idx === 0 ? '#d97706' : (idx === 1 ? '#475569' : (idx === 2 ? '#b45309' : '#0f172a'))};">
+                        ${idx === 0 ? '🏆 1' : (idx === 1 ? '🥈 2' : (idx === 2 ? '🥉 3' : (idx + 1)))}
+                      </td>
+                      <td style="padding: 10px 14px;">
+                        <strong style="color: ${isCurrent ? '#1d4ed8' : '#0f172a'};">${Utils.escapeHtml(st.unit_name)}</strong>
+                        ${isCurrent ? '<span class="badge badge-info" style="margin-left: 0.5rem; font-size: 0.7rem; background: #2563eb; color: white;">Kontingen Anda</span>' : ''}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center;">
+                        ${Utils.getLevelBadgeHtml(st.level_category || 'Madya')}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #d97706; font-size: 0.95rem;">
+                        ${st.emas || 0}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #475569; font-size: 0.95rem;">
+                        ${st.perak || 0}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #c2410c; font-size: 0.95rem;">
+                        ${st.perunggu || 0}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 600; color: #64748b;">
+                        ${st.total_lomba || 0}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      const contentBox = document.getElementById('unitNilaiContentContainer');
+      if (contentBox) {
+        contentBox.innerHTML = `<p style="color: red; padding: 2rem 0; text-align: center;">Gagal memuat data nilai & klasemen: ${err.message}</p>`;
+      }
+    }
+  },
+
   currentUnitLimit: 25,
+  currentUnitStatusFilter: '',
 
   changeUnitLimit(limit) {
     this.currentUnitLimit = parseInt(limit) || 25;
@@ -4412,15 +4640,75 @@ const App = {
   },
 
   resetUnitFilter() {
+    this.currentUnitStatusFilter = '';
     const searchEl = document.getElementById('filterUnitSearch');
     const catEl = document.getElementById('filterUnitCategory');
+    const statusEl = document.getElementById('filterUnitStatus');
     if (searchEl) searchEl.value = '';
     if (catEl) catEl.value = '';
+    if (statusEl) statusEl.value = '';
+    document.querySelectorAll('.unit-stat-card').forEach(c => c.classList.remove('active'));
+    const allCard = document.getElementById('statCardAll');
+    if (allCard) allCard.classList.add('active');
     this.loadUnitParticipants(1);
+  },
+
+  filterUnitByStatus(status) {
+    this.currentUnitStatusFilter = status;
+    const statusEl = document.getElementById('filterUnitStatus');
+    if (statusEl) statusEl.value = status;
+    
+    document.querySelectorAll('.unit-stat-card').forEach(c => c.classList.remove('active'));
+    const targetCard = document.getElementById(`statCard_${status || 'all'}`);
+    if (targetCard) targetCard.classList.add('active');
+
+    this.loadUnitParticipants(1);
+  },
+
+  async quickApproveUnitParticipant(id, name) {
+    if (!confirm(`Konfirmasi Verifikasi Anggota Unit:\n\nSetujui data dan pendaftaran untuk "${name}"?\nStatus akan berubah menjadi "Disetujui Unit" dan diteruskan ke Panitia Kabupaten untuk validasi final.`)) {
+      return;
+    }
+    try {
+      const res = await API.updateParticipantStatus(id, 'verified_unit', 'Disetujui oleh Pembina / Admin Unit');
+      Utils.showToast(res.message || 'Pendaftaran peserta berhasil diverifikasi oleh Unit!', 'success');
+      this.loadUnitParticipants();
+    } catch (err) {
+      Utils.showToast(err.message || 'Gagal memverifikasi anggota unit', 'error');
+    }
   },
 
   async renderUnitTabPeserta(container) {
     container.innerHTML = `
+      <!-- TOP STATUS KPI CARDS -->
+      <div class="unit-stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="unit-stat-card ${!this.currentUnitStatusFilter ? 'active' : ''}" id="statCard_all" onclick="App.filterUnitByStatus('')" style="cursor: pointer; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem 1rem; border-left: 4px solid #64748b; transition: all 0.2s ease;">
+          <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Anggota</div>
+          <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;" id="unitStatTotal"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1rem;"></i></div>
+          <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 0.15rem;">Klik untuk semua</div>
+        </div>
+        <div class="unit-stat-card ${this.currentUnitStatusFilter === 'pending_unit' ? 'active' : ''}" id="statCard_pending_unit" onclick="App.filterUnitByStatus('pending_unit')" style="cursor: pointer; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 0.85rem 1rem; border-left: 4px solid #f59e0b; transition: all 0.2s ease;">
+          <div style="font-size: 0.72rem; color: #b45309; font-weight: 700; text-transform: uppercase;">Perlu Verifikasi</div>
+          <div style="font-size: 1.45rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;" id="unitStatPending"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1rem;"></i></div>
+          <div style="font-size: 0.68rem; color: #b45309; margin-top: 0.15rem;">Menunggu Unit</div>
+        </div>
+        <div class="unit-stat-card ${this.currentUnitStatusFilter === 'verified_unit' ? 'active' : ''}" id="statCard_verified_unit" onclick="App.filterUnitByStatus('verified_unit')" style="cursor: pointer; background: #eff6ff; border: 1px solid #dbeafe; border-radius: 10px; padding: 0.85rem 1rem; border-left: 4px solid #3b82f6; transition: all 0.2s ease;">
+          <div style="font-size: 0.72rem; color: #1d4ed8; font-weight: 700; text-transform: uppercase;">Disetujui Unit</div>
+          <div style="font-size: 1.45rem; font-weight: 800; color: #2563eb; margin-top: 0.2rem;" id="unitStatVerifiedUnit"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1rem;"></i></div>
+          <div style="font-size: 0.68rem; color: #1d4ed8; margin-top: 0.15rem;">Pending Kab</div>
+        </div>
+        <div class="unit-stat-card ${this.currentUnitStatusFilter === 'verified_kabupaten' ? 'active' : ''}" id="statCard_verified_kabupaten" onclick="App.filterUnitByStatus('verified_kabupaten')" style="cursor: pointer; background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 10px; padding: 0.85rem 1rem; border-left: 4px solid #10b981; transition: all 0.2s ease;">
+          <div style="font-size: 0.72rem; color: #15803d; font-weight: 700; text-transform: uppercase;">Verified Kab</div>
+          <div style="font-size: 1.45rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;" id="unitStatVerifiedKab"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1rem;"></i></div>
+          <div style="font-size: 0.68rem; color: #15803d; margin-top: 0.15rem;">Siap Kegiatan</div>
+        </div>
+        <div class="unit-stat-card ${this.currentUnitStatusFilter === 'revision' ? 'active' : ''}" id="statCard_revision" onclick="App.filterUnitByStatus('revision')" style="cursor: pointer; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 10px; padding: 0.85rem 1rem; border-left: 4px solid #ea580c; transition: all 0.2s ease;">
+          <div style="font-size: 0.72rem; color: #c2410c; font-weight: 700; text-transform: uppercase;">Perlu Revisi</div>
+          <div style="font-size: 1.45rem; font-weight: 800; color: #ea580c; margin-top: 0.2rem;" id="unitStatRevision"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1rem;"></i></div>
+          <div style="font-size: 0.68rem; color: #c2410c; margin-top: 0.15rem;">Perbaiki Berkas</div>
+        </div>
+      </div>
+
       <div class="panel-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
           <h3 class="panel-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
@@ -4438,6 +4726,14 @@ const App = {
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
               <input type="text" id="filterUnitSearch" placeholder="Cari nama / kode..." onkeydown="if(event.key==='Enter') App.loadUnitParticipants(1)">
             </div>
+            <select id="filterUnitStatus" class="filter-select" onchange="App.loadUnitParticipants(1)">
+              <option value="">Semua Status</option>
+              <option value="pending_unit" ${this.currentUnitStatusFilter === 'pending_unit' ? 'selected' : ''}>⏳ Menunggu Verifikasi Unit</option>
+              <option value="verified_unit" ${this.currentUnitStatusFilter === 'verified_unit' ? 'selected' : ''}>🔵 Disetujui Unit (Pending Kab)</option>
+              <option value="verified_kabupaten" ${this.currentUnitStatusFilter === 'verified_kabupaten' ? 'selected' : ''}>🟢 Verified Kabupaten</option>
+              <option value="revision" ${this.currentUnitStatusFilter === 'revision' ? 'selected' : ''}>🟡 Perlu Revisi / Perbaikan</option>
+              <option value="rejected" ${this.currentUnitStatusFilter === 'rejected' ? 'selected' : ''}>🔴 Ditolak</option>
+            </select>
             <select id="filterUnitCategory" class="filter-select" onchange="App.loadUnitParticipants(1)">
               <option value="">Semua Kategori</option>
               <option value="Peserta">Peserta PMR</option>
@@ -4533,13 +4829,31 @@ const App = {
     const container = document.getElementById('unitParticipantTableContainer');
     if (!container) return;
 
+    const statusEl = document.getElementById('filterUnitStatus');
+    const status = statusEl ? statusEl.value : (this.currentUnitStatusFilter || '');
+    this.currentUnitStatusFilter = status;
     const category = document.getElementById('filterUnitCategory')?.value || '';
     const search = document.getElementById('filterUnitSearch')?.value || '';
     const limit = this.currentUnitLimit || 25;
 
+    // Load asynchronous status counts in background
+    API.getParticipantStats({ unit_id: this.currentUser.unit_id }).then(stats => {
+      const totEl = document.getElementById('unitStatTotal');
+      const penEl = document.getElementById('unitStatPending');
+      const verUtiEl = document.getElementById('unitStatVerifiedUnit');
+      const verKabEl = document.getElementById('unitStatVerifiedKab');
+      const revEl = document.getElementById('unitStatRevision');
+      if (totEl) totEl.textContent = Number(stats.total || 0).toLocaleString('id-ID');
+      if (penEl) penEl.textContent = Number(stats.pending_unit || 0).toLocaleString('id-ID');
+      if (verUtiEl) verUtiEl.textContent = Number(stats.verified_unit || 0).toLocaleString('id-ID');
+      if (verKabEl) verKabEl.textContent = Number(stats.verified_kabupaten || 0).toLocaleString('id-ID');
+      if (revEl) revEl.textContent = Number(stats.revision || 0).toLocaleString('id-ID');
+    }).catch(e => console.warn('Gagal memuat stats unit:', e));
+
     try {
       const res = await API.getParticipants({
         unit_id: this.currentUser.unit_id,
+        status: status,
         registration_type: category,
         search,
         page,
@@ -4571,7 +4885,7 @@ const App = {
                 <th style="width: 130px;">Kontak HP</th>
                 <th class="col-doc">Surat Tugas</th>
                 <th class="col-status">Status</th>
-                <th class="col-actions">Aksi Validasi</th>
+                <th class="col-actions">Aksi Pengelolaan & Verifikasi</th>
               </tr>
             </thead>
             <tbody>
@@ -4582,9 +4896,10 @@ const App = {
         const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
         const subtext = isNonPeserta ? ('Kategori: ' + Utils.escapeHtml(p.registration_type)) : ('NISN: ' + (p.nisn || '-'));
         const hasBlood = p.blood_type && p.blood_type !== '-';
+        const isPending = p.status === 'pending_unit';
 
         return `
-                <tr>
+                <tr style="${isPending ? 'background: #fffdf5;' : ''}">
                   <td class="col-code"><span class="badge-code">${p.code}</span></td>
                   <td class="col-name">
                     <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -4607,8 +4922,11 @@ const App = {
                   <td class="col-status">${Utils.getStatusBadgeHtml(p.status)}</td>
                   <td class="col-actions">
                     <div class="action-btn-group">
+                      ${isPending ? `
+                        <button class="btn-act" onclick="App.quickApproveUnitParticipant(${p.id}, '${escapedName}')" style="background: #10b981; color: white; border-color: #10b981; font-weight: 700;" title="Setujui Verifikasi Unit Langsung"><i class="fa-solid fa-circle-check"></i> Setujui</button>
+                      ` : ''}
                       <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
-                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data Lengkap & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
                       <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
                       <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
@@ -4627,8 +4945,10 @@ const App = {
         const badgeCategoryHtml = isNonPeserta ? Utils.getLevelBadgeHtml(p.registration_type) : Utils.getLevelBadgeHtml(p.level);
         const escapedName = Utils.escapeHtml(p.full_name || '');
         const photoUrl = p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+        const isPending = p.status === 'pending_unit';
+
         return `
-              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
+              <div style="background: ${isPending ? '#fffdf5' : '#ffffff'}; border: 1px solid ${isPending ? '#fef3c7' : '#e2e8f0'}; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
                   <span class="badge-code">${Utils.escapeHtml(p.code)}</span>
                   <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
@@ -4646,6 +4966,9 @@ const App = {
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">
+                  ${isPending ? `
+                    <button class="btn btn-success btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #10b981; border-color: #10b981; color: white;" onclick="App.quickApproveUnitParticipant(${p.id}, '${escapedName}')"><i class="fa-solid fa-circle-check"></i> Setujui</button>
+                  ` : ''}
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                   <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
@@ -5020,6 +5343,9 @@ const App = {
   },
 
   switchAdminCategory(catName, targetTabId = null) {
+    if (typeof this.stopCameraScanner === 'function') this.stopCameraScanner();
+    if (typeof this.stopScoringCameraQR === 'function') this.stopScoringCameraQR();
+
     this.activeCategory = catName;
     document.querySelectorAll('.nav-cat-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.cat === catName);
@@ -5095,6 +5421,9 @@ const App = {
   },
 
   async switchAdminTab(tabName, updateCategory = true) {
+    if (typeof this.stopCameraScanner === 'function') this.stopCameraScanner();
+    if (typeof this.stopScoringCameraQR === 'function') this.stopScoringCameraQR();
+
     this.activeTab = tabName;
     const struct = this.getMenuStructure();
     const tabItem = (struct.items || []).find(i => i.id === tabName);
@@ -5720,11 +6049,7 @@ const App = {
         return;
       }
 
-      const cardsHtml = await Promise.all(verifiedParticipants.map(async p => {
-        const idcardData = await API.getParticipantIDCard(p.id);
-        return this.generateIDCardHtml(idcardData);
-      }));
-
+      const cardsHtml = verifiedParticipants.map(p => this.generateIDCardHtml(p));
       batchContainer.innerHTML = cardsHtml.join('');
     } catch (err) {
       console.error('ID Card batch error:', err);
@@ -10225,7 +10550,7 @@ const App = {
               </div>
 
               <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="App.openAdminEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.openEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
                   <i class="fa-solid fa-pen-to-square"></i> Edit Data Lengkap
                 </button>
                 <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-size: 0.8rem;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)">
@@ -10285,18 +10610,88 @@ const App = {
       const p = await API.getParticipantIDCard(id);
       if (!p) return;
 
-      document.getElementById('adminEditParticipantId').value = p.id;
-      document.getElementById('adminEditFullName').value = p.full_name || '';
-      document.getElementById('adminEditNisn').value = p.nisn || '';
-      document.getElementById('adminEditRegistrationType').value = p.registration_type || 'Peserta';
-      document.getElementById('adminEditLevel').value = p.level || 'Wira';
-      document.getElementById('adminEditStatus').value = p.status || 'pending_unit';
-      document.getElementById('adminEditGender').value = p.gender || 'L';
-      document.getElementById('adminEditBloodType').value = p.blood_type || 'O';
-      document.getElementById('adminEditPhone').value = p.phone || '';
-      document.getElementById('adminEditEmergencyContact').value = p.emergency_contact || '';
-      document.getElementById('adminEditPhotoFile').value = '';
-      document.getElementById('adminEditAssignmentFile').value = '';
+      const isUnitAdmin = this.currentUser && this.currentUser.role === 'unit';
+
+      const idEl = document.getElementById('adminEditParticipantId');
+      if (idEl) idEl.value = p.id;
+      const fnEl = document.getElementById('adminEditFullName');
+      if (fnEl) fnEl.value = p.full_name || '';
+      const nisnEl = document.getElementById('adminEditNisn');
+      if (nisnEl) nisnEl.value = p.nisn || '';
+      const regEl = document.getElementById('adminEditRegistrationType');
+      if (regEl) regEl.value = p.registration_type || 'Peserta';
+      const lvlEl = document.getElementById('adminEditLevel');
+      if (lvlEl) lvlEl.value = p.level || 'Wira';
+      
+      const statusEl = document.getElementById('adminEditStatus');
+      if (statusEl) {
+        if (isUnitAdmin) {
+          statusEl.innerHTML = `
+            <option value="pending_unit">Pending Unit (Menunggu Verifikasi)</option>
+            <option value="verified_unit">🟢 Disetujui Unit (Diteruskan ke Kab)</option>
+            <option value="revision">🟡 Minta Perbaikan / Revisi</option>
+            <option value="rejected">🔴 Ditolak</option>
+          `;
+        } else {
+          statusEl.innerHTML = `
+            <option value="pending_unit">Pending Unit</option>
+            <option value="verified_unit">Disetujui Unit (Pending Kab)</option>
+            <option value="verified_kabupaten">🟢 Verified Kabupaten</option>
+            <option value="revision">🟡 Minta Perbaikan / Revisi</option>
+            <option value="rejected">🔴 Ditolak</option>
+          `;
+        }
+        statusEl.value = p.status || 'pending_unit';
+      }
+
+      const gEl = document.getElementById('adminEditGender');
+      if (gEl) gEl.value = p.gender || 'L';
+      const bEl = document.getElementById('adminEditBloodType');
+      if (bEl) bEl.value = p.blood_type || 'O';
+      const relEl = document.getElementById('adminEditReligion');
+      if (relEl) relEl.value = p.religion || 'Islam';
+      const disEl = document.getElementById('adminEditIsDisabled');
+      if (disEl) disEl.value = p.is_disabled || 'Tidak';
+      const bpEl = document.getElementById('adminEditBirthPlace');
+      if (bpEl) bpEl.value = p.birth_place || '';
+      const bdEl = document.getElementById('adminEditBirthDate');
+      if (bdEl) bdEl.value = p.birth_date ? p.birth_date.substring(0, 10) : '';
+      const phEl = document.getElementById('adminEditPhone');
+      if (phEl) phEl.value = p.phone || '';
+      const ecEl = document.getElementById('adminEditEmergencyContact');
+      if (ecEl) ecEl.value = p.emergency_contact || '';
+      const addrEl = document.getElementById('adminEditAddress');
+      if (addrEl) addrEl.value = p.address || '';
+
+      // Set photo preview
+      const photoPrev = document.getElementById('adminEditPhotoPreview');
+      const photoStatus = document.getElementById('adminEditPhotoStatus');
+      if (photoPrev) {
+        photoPrev.src = p.photo_url || 'frontend/images/default-avatar.svg';
+      }
+      if (photoStatus) {
+        photoStatus.innerHTML = p.photo_url 
+          ? `<span style="color: #059669; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Pas foto sudah diunggah</span>` 
+          : `<span style="color: #dc2626;"><i class="fa-solid fa-circle-xmark"></i> Belum ada pas foto</span>`;
+      }
+
+      // Set assignment letter link
+      const letterLink = document.getElementById('adminEditLetterLink');
+      if (letterLink) {
+        if (p.assignment_letter_url) {
+          letterLink.href = p.assignment_letter_url;
+          letterLink.style.display = 'inline-flex';
+          letterLink.innerHTML = `<i class="fa-solid fa-file-pdf"></i> Lihat Surat Tugas Terdaftar`;
+        } else {
+          letterLink.href = '#';
+          letterLink.style.display = 'none';
+        }
+      }
+
+      const filePhotoInput = document.getElementById('adminEditPhotoFile');
+      if (filePhotoInput) filePhotoInput.value = '';
+      const fileAssignInput = document.getElementById('adminEditAssignmentFile');
+      if (fileAssignInput) fileAssignInput.value = '';
 
       this.openModal('adminEditParticipantModal');
     } catch (err) {
@@ -10343,8 +10738,13 @@ const App = {
         status: document.getElementById('adminEditStatus')?.value,
         gender: document.getElementById('adminEditGender')?.value,
         blood_type: document.getElementById('adminEditBloodType')?.value,
+        religion: document.getElementById('adminEditReligion')?.value,
+        is_disabled: document.getElementById('adminEditIsDisabled')?.value,
+        birth_place: document.getElementById('adminEditBirthPlace')?.value.trim(),
+        birth_date: document.getElementById('adminEditBirthDate')?.value,
         phone: document.getElementById('adminEditPhone')?.value.trim(),
         emergency_contact: document.getElementById('adminEditEmergencyContact')?.value.trim(),
+        address: document.getElementById('adminEditAddress')?.value.trim(),
         photo_data: photoData,
         assignment_letter_data: assignmentData
       };
@@ -12118,10 +12518,18 @@ const App = {
 
     const btnIdMap = {
       'beranda': 'mbNavHome',
+      'home': 'mbNavHome',
       'kegiatan': 'mbNavAgenda',
+      'agenda': 'mbNavAgenda',
+      'materi': 'mbNavMateri',
       'pengumuman': 'mbNavAnnounce',
+      'info': 'mbNavAnnounce',
       'klasemen': 'mbNavStandings',
+      'medali': 'mbNavStandings',
+      'standings': 'mbNavStandings',
       'portal': 'mbNavPortal',
+      'login': 'mbNavPortal',
+      'daftar': 'mbNavPortal',
       'peserta_home': 'mbNavPesertaHome',
       'peserta_presensi': 'mbNavPesertaPresensi',
       'peserta_agenda': 'mbNavPesertaAgenda',
@@ -12221,24 +12629,28 @@ const App = {
       }
     } else if (key === 'admin_nilai') {
       if (this.currentUser && (this.currentUser.role === 'unit' || this.currentUser.role === 'admin_unit')) {
-        this.switchUnitTab('piagam');
+        this.switchUnitTab('nilai');
       } else {
         this.switchAdminTab('aspek');
       }
-    } else if (key === 'beranda') {
+    } else if (key === 'beranda' || key === 'home') {
       this.scrollToSection('beranda');
-    } else if (key === 'kegiatan') {
+    } else if (key === 'kegiatan' || key === 'agenda') {
       this.scrollToSection('kegiatan');
-    } else if (key === 'pengumuman') {
+    } else if (key === 'materi') {
+      this.scrollToSection('materi');
+    } else if (key === 'pengumuman' || key === 'info') {
       this.scrollToSection('pengumuman');
-    } else if (key === 'klasemen') {
+    } else if (key === 'klasemen' || key === 'medali' || key === 'standings') {
       this.scrollToSection('klasemen');
-    } else if (key === 'portal') {
+    } else if (key === 'portal' || key === 'login') {
       if (this.currentUser) {
         this.renderView();
       } else {
         this.openLoginModal();
       }
+    } else if (key === 'daftar') {
+      this.openRegisterModal();
     }
   },
 
@@ -12247,8 +12659,33 @@ const App = {
     if (!nav) return;
 
     if (!this.currentUser) {
-      nav.style.display = 'none';
-      nav.innerHTML = '';
+      nav.style.display = 'flex';
+      nav.innerHTML = `
+        <button class="mobile-nav-btn active" id="mbNavHome" onclick="App.handleMobileNav('beranda')">
+          <i class="fa-solid fa-house"></i>
+          <span>Beranda</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavAgenda" onclick="App.handleMobileNav('kegiatan')">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Agenda</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavMateri" onclick="App.handleMobileNav('materi')">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span>Materi</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavAnnounce" onclick="App.handleMobileNav('pengumuman')">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>Info</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavStandings" onclick="App.handleMobileNav('klasemen')">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Medali</span>
+        </button>
+        <button class="mobile-nav-btn" id="mbNavPortal" onclick="App.handleMobileNav('portal')">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Login</span>
+        </button>
+      `;
       return;
     }
 

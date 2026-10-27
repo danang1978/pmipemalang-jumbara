@@ -95,7 +95,7 @@ else if ($favExt === 'png') $favType = 'image/png';
           </div>
           <div class="brand-text">
             <h1 id="brandAppName"><?php echo htmlspecialchars($settings['app_name']); ?></h1>
-            <p id="brandOrganizer"><?php echo htmlspecialchars($settings['organizer_name']); ?></p>
+            <p id="brandOrganizer"><?php echo htmlspecialchars(!empty($settings['organizer_name']) ? $settings['organizer_name'] : 'PMI Kabupaten Pemalang'); ?></p>
           </div>
         </div>
 

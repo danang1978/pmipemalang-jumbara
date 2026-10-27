@@ -3019,12 +3019,11 @@ table.data-table tbody tr:hover {
   }
 }
 
-/* Hide public frontend menu when user is logged in to dashboard or on standalone views */
-body.user-logged-in .nav-menu,
-body.user-logged-in #publicNavMenu,
-body.user-logged-in #navToggleBtn,
+/* Hide public frontend menu when it has hidden class */
 .nav-menu.hidden,
-#publicNavMenu.hidden {
+#publicNavMenu.hidden,
+.nav-toggle-btn.hidden,
+#navToggleBtn.hidden {
   display: none !important;
 }
 
@@ -3037,15 +3036,28 @@ body.user-logged-in .nav-actions {
   padding-top: 0 !important;
 }
 
+@keyframes mobileMenuSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Mobile & Tablet Navigation Rules (max-width: 1040px) */
 @media (max-width: 1040px) {
   .nav-container {
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 0.5rem 0.85rem !important;
+    padding: 0 0.85rem !important;
     gap: 0.5rem !important;
+    position: relative !important;
+    overflow: visible !important;
   }
 
   .navbar-brand {
@@ -3072,29 +3084,80 @@ body.user-logged-in .nav-actions {
     justify-content: center !important;
     flex-shrink: 0 !important;
     margin-left: 0.25rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 9px !important;
+    color: #0f172a !important;
+    font-size: 1.05rem !important;
+    cursor: pointer !important;
+    z-index: 1001 !important;
   }
 
   .nav-menu {
-    order: 4 !important;
     display: none;
-    flex-direction: column !important;
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
-    border-top: 1px solid var(--border-color);
-    padding-top: 0.65rem;
-    margin-top: 0.4rem;
-    gap: 0.35rem;
-    align-items: stretch;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18) !important;
+    border-bottom: 3px solid var(--primary) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.85) !important;
+    padding: 1rem 1.25rem 2rem 1.25rem !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    z-index: 99999 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
   }
 
   .nav-menu.open {
     display: flex !important;
+    animation: mobileMenuSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 
   .nav-menu .nav-link {
-    width: 100%;
-    border-radius: var(--radius-sm);
-    padding: 0.55rem 0.85rem;
-    justify-content: flex-start;
+    width: 100% !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    color: #1e293b !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    box-sizing: border-box !important;
+    transition: all 0.18s ease;
+  }
+
+  .nav-menu .nav-link i {
+    width: 22px !important;
+    text-align: center !important;
+    font-size: 1.05rem !important;
+    color: var(--primary) !important;
+  }
+
+  .nav-menu .nav-link:hover,
+  .nav-menu .nav-link.active {
+    background: var(--primary-gradient) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px -2px rgba(220, 38, 38, 0.35) !important;
+  }
+
+  .nav-menu .nav-link.active i,
+  .nav-menu .nav-link:hover i {
+    color: #ffffff !important;
   }
 }
 
@@ -3268,12 +3331,20 @@ html, body {
     text-overflow: ellipsis !important;
     word-break: normal !important;
     word-wrap: normal !important;
-    font-size: 0.88rem !important;
-    line-height: 1.2 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.15 !important;
     margin: 0 !important;
   }
   .brand-text p {
-    display: none !important;
+    display: block !important;
+    font-size: 0.7rem !important;
+    color: var(--primary, #dc2626) !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    margin: 1px 0 0 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   .navbar-logo-jumbara,
   .logo-divider {
@@ -3579,13 +3650,15 @@ body.has-mobile-portal #mainContainer {
     padding-right: 0 !important;
   }
 
-  /* Bottom nav ONLY in mobile portal (peserta/penilai/peninjau) */
-  body:not(.has-mobile-portal) .mobile-bottom-nav {
+  /* Bottom nav for mobile portal (peserta/penilai/peninjau) AND public frontend visitors */
+  body.user-logged-in:not(.has-mobile-portal) .mobile-bottom-nav {
     display: none !important;
   }
 
+  body:not(.user-logged-in) .mobile-bottom-nav,
   body.has-mobile-portal .mobile-bottom-nav {
     display: flex !important;
+    position: fixed !important;
     left: 12px !important;
     right: 12px !important;
     bottom: 12px !important;
@@ -3595,6 +3668,20 @@ body.has-mobile-portal #mainContainer {
     margin: 0 auto !important;
     border-radius: 26px !important;
     height: 64px !important;
+    z-index: 9999 !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 0 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+
+  body:not(.user-logged-in) {
+    padding-bottom: 84px !important;
   }
 
   /* 1. Hide Desktop Top Bar on Mobile */
@@ -3646,13 +3733,14 @@ body.has-mobile-portal #mainContainer {
     justify-content: space-between !important;
     flex-wrap: nowrap !important;
     gap: 0.45rem !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    position: relative !important;
   }
 
   .navbar-brand {
     display: flex !important;
     align-items: center !important;
-    gap: 0.5rem !important;
+    gap: 0.45rem !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
@@ -3680,13 +3768,16 @@ body.has-mobile-portal #mainContainer {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
   }
 
   .brand-text h1 {
-    font-size: 0.88rem !important;
+    font-size: 0.8rem !important;
     color: #0f172a !important;
     font-weight: 800 !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -3697,7 +3788,15 @@ body.has-mobile-portal #mainContainer {
   }
 
   .brand-text p {
-    display: none !important;
+    display: block !important;
+    font-size: 0.65rem !important;
+    color: var(--primary, #dc2626) !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    margin: 1px 0 0 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .nav-actions {
