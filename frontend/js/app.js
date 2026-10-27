@@ -1535,10 +1535,14 @@ const App = {
     // Update bottom nav buttons
     const navBtnMap = {
       'home': 'mbNavPesertaHome',
+      'idcard': 'mbNavPesertaPresensi',
       'presensi': 'mbNavPesertaPresensi',
       'agenda': 'mbNavPesertaAgenda',
       'medali': 'mbNavPesertaMedali',
-      'bio': 'mbNavPesertaBio'
+      'bio': 'mbNavPesertaBio',
+      'info': 'mbNavPesertaHome',
+      'lokasi': 'mbNavPesertaHome',
+      'lomba': 'mbNavPesertaHome'
     };
     document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
     if (navBtnMap[tabId] && document.getElementById(navBtnMap[tabId])) {
@@ -1546,26 +1550,143 @@ const App = {
     }
 
     // Toggle Tab Sections
-    const secHome = document.getElementById('pesertaTabHome');
-    const secBio = document.getElementById('pesertaTabBio');
-    const secLomba = document.getElementById('pesertaTabLomba');
-    const secAgenda = document.getElementById('pesertaTabAgenda');
-    const secPresensi = document.getElementById('pesertaTabPresensi');
-    const secMedali = document.getElementById('pesertaTabMedali');
+    const tabs = ['home', 'idcard', 'info', 'lokasi', 'presensi', 'agenda', 'medali', 'bio', 'lomba'];
+    tabs.forEach(t => {
+      const el = document.getElementById('pesertaTab' + t.charAt(0).toUpperCase() + t.slice(1));
+      if (el) el.style.display = (tabId === t) ? 'block' : 'none';
+    });
 
-    if (secHome) secHome.style.display = (tabId === 'home') ? 'block' : 'none';
-    if (secBio) secBio.style.display = (tabId === 'bio') ? 'block' : 'none';
-    if (secLomba) secLomba.style.display = (tabId === 'lomba') ? 'block' : 'none';
-    if (secAgenda) secAgenda.style.display = (tabId === 'agenda') ? 'block' : 'none';
-    if (secPresensi) secPresensi.style.display = (tabId === 'presensi') ? 'block' : 'none';
-    if (secMedali) secMedali.style.display = (tabId === 'medali') ? 'block' : 'none';
-
-    if (tabId === 'presensi') {
+    if (tabId === 'idcard') {
+      this.loadPesertaMobileIDCard();
+    } else if (tabId === 'presensi') {
       this.loadPesertaMyAttendanceLog();
     } else if (tabId === 'medali') {
       this.loadPesertaStandingsMobile();
+    } else if (tabId === 'info') {
+      this.loadPesertaMobileMaterials();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  async loadPesertaMobileIDCard() {
+    const container = document.getElementById('pesertaMobileIDCardContainer');
+    if (!container) return;
+    if (container.dataset.loaded === 'true') return;
+
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2rem; color: #64748b;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: #4f46e5; margin-bottom: 0.75rem;"></i>
+        <p style="font-size: 0.88rem; font-weight: 600;">Menyiapkan Kartu Peserta Digital...</p>
+      </div>
+    `;
+
+    try {
+      const profile = await API.getParticipantMe();
+      const cardData = await API.getParticipantIDCard(profile.id);
+      this.currentParticipantCardData = cardData;
+
+      container.innerHTML = `
+        <div class="mobile-idcard-viewport" style="display: flex; justify-content: center; width: 100%;">
+          ${this.generateIDCardHtml(cardData)}
+        </div>
+      `;
+      container.dataset.loaded = 'true';
+    } catch (e) {
+      container.innerHTML = `
+        <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 1.25rem; border-radius: 14px; text-align: center;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.75rem; margin-bottom: 0.5rem;"></i>
+          <p style="font-size: 0.85rem; font-weight: 600;">Gagal memuat kartu peserta: ${Utils.escapeHtml(e.message)}</p>
+        </div>
+      `;
+    }
+  },
+
+  printCurrentParticipantIDCard() {
+    if (!this.currentParticipantCardData) {
+      window.print();
+      return;
+    }
+    const cardHtml = this.generateIDCardHtml(this.currentParticipantCardData);
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+    printWin.document.open();
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Cetak ID Card Peserta Jumbara</title>
+        <link rel="stylesheet" href="frontend/css/style.css">
+        <link rel="stylesheet" href="frontend/css/idcard.css">
+        <style>
+          body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; font-family: sans-serif; }
+          .no-print { margin-bottom: 20px; }
+          @media print {
+            body { background: #ffffff; padding: 0; }
+            .no-print { display: none !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print">
+          <button onclick="window.print()" style="padding: 10px 20px; background: #0284c7; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+            🖨️ Cetak Kartu / Simpan PDF
+          </button>
+        </div>
+        ${cardHtml}
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  },
+
+  async loadPesertaMobileMaterials() {
+    const container = document.getElementById('pesertaMobileMaterialsList');
+    if (!container) return;
+    if (container.dataset.loaded === 'true') return;
+
+    try {
+      const res = await API.getMaterials();
+      const materials = Array.isArray(res) ? res : (res.data || []);
+      
+      if (!materials.length) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem;">
+            <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem;"></i>
+            <p>Materi panduan sedang dalam proses kurasi panitia.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          ${materials.map(m => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div style="min-width: 0;">
+                  <strong style="font-size: 0.82rem; color: #0f172a; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${Utils.escapeHtml(m.title || 'Materi Jumbara')}
+                  </strong>
+                  <span style="font-size: 0.7rem; color: #64748b;">${Utils.escapeHtml(m.category || 'Juknis Umum')} • ${Utils.escapeHtml(m.file_size || 'PDF')}</span>
+                </div>
+              </div>
+              <a href="${m.file_url || '#'}" target="_blank" download class="btn btn-outline btn-xs" style="color: #0284c7; border-color: #7dd3fc; border-radius: 8px; font-weight: 700; font-size: 0.72rem; padding: 0.35rem 0.65rem; flex-shrink: 0;">
+                <i class="fa-solid fa-download"></i> Unduh
+              </a>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      container.dataset.loaded = 'true';
+    } catch (e) {
+      container.innerHTML = `<p style="color: #ef4444; font-size: 0.8rem; text-align: center;">Gagal memuat daftar materi: ${Utils.escapeHtml(e.message)}</p>`;
+    }
   },
 
   openMenuLainnyaBottomSheet() {
@@ -1747,16 +1868,16 @@ const App = {
             <div class="jkn-menu-section">
               <div class="jkn-grid-container">
                 <!-- ROW 1 -->
-                <!-- 1. Info Jumbara -->
-                <div class="jkn-grid-item" onclick="App.scrollToSection('materi')">
+                <!-- 1. Info Jumbara (Mobile Subtab) -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('info')">
                   <div class="jkn-icon-circle jkn-circle-teal">
                     <i class="fa-solid fa-book-open-reader"></i>
                   </div>
                   <span class="jkn-grid-label">Info Jumbara</span>
                 </div>
 
-                <!-- 2. Lokasi Buperta -->
-                <div class="jkn-grid-item" onclick="App.scrollToSection('lokasi')">
+                <!-- 2. Lokasi Buperta (Mobile Subtab) -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('lokasi')">
                   <div class="jkn-icon-circle jkn-circle-green">
                     <i class="fa-solid fa-map-location-dot"></i>
                   </div>
@@ -1780,8 +1901,8 @@ const App = {
                 </div>
 
                 <!-- ROW 2 -->
-                <!-- 5. Kartu Peserta -->
-                <div class="jkn-grid-item" onclick="App.openIDCardModal(${profile.id})">
+                <!-- 5. Kartu Peserta (Mobile Subtab - Bukan Modal) -->
+                <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('idcard')">
                   <div class="jkn-icon-circle jkn-circle-indigo">
                     <i class="fa-solid fa-id-card"></i>
                   </div>
@@ -2181,8 +2302,8 @@ const App = {
                     <button type="button" class="btn btn-primary btn-sm" onclick="App.openLargeQRCodeModal()" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
                       <i class="fa-solid fa-expand"></i> Perbesar Layar Penuh
                     </button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${profile.id})" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
-                      <i class="fa-solid fa-id-card"></i> Cetak ID Card
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.switchPesertaMobileTab('idcard')" style="font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem;">
+                      <i class="fa-solid fa-id-card"></i> Lihat ID Card
                     </button>
                   </div>
                 </div>
@@ -2216,6 +2337,226 @@ const App = {
                 </p>
                 <div id="pesertaStandingsContainer">
                   <!-- Dynamic standings loaded by loadPesertaStandingsMobile() -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 6: KARTU TANDA PESERTA DIGITAL (HALAMAN MOBILE RESMI - BUKAN MODAL) -->
+            <div id="pesertaTabIdcard" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
+              <div class="peserta-info-card">
+                <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="fa-solid fa-id-card" style="color: #4f46e5;"></i> Kartu Tanda Peserta Digital</span>
+                  <span style="background: #e0e7ff; color: #4338ca; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">E-ID Card</span>
+                </div>
+                
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.85rem;">
+                  Kartu identitas resmi peserta Jumbara PMR IX Kabupaten Pemalang tahun 2026.
+                </p>
+
+                <!-- CONTAINER ID CARD DENGAN VIEWPORT KHUSUS MOBILE -->
+                <div id="pesertaMobileIDCardContainer" style="display: flex; justify-content: center; align-items: center; margin: 0 auto 1.25rem auto; width: 100%;">
+                  <!-- Diisi otomatis oleh loadPesertaMobileIDCard() -->
+                  <div style="text-align: center; padding: 1.5rem; color: #64748b;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.75rem; color: #4f46e5; margin-bottom: 0.5rem;"></i>
+                    <p style="font-size: 0.82rem;">Memuat Kartu Peserta...</p>
+                  </div>
+                </div>
+
+                <!-- ACTION BUTTONS: CETAK, SCAN QR, UNDUH PDF -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
+                  <button type="button" class="btn btn-primary" onclick="App.printCurrentParticipantIDCard()" style="font-weight: 800; border-radius: 12px; padding: 0.7rem; justify-content: center; font-size: 0.85rem; background: #4f46e5; border-color: #4f46e5;">
+                    <i class="fa-solid fa-print"></i> Cetak / Simpan File Kartu (PDF)
+                  </button>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+                    <button type="button" class="btn btn-outline" onclick="App.switchPesertaMobileTab('presensi')" style="font-weight: 800; border-radius: 12px; padding: 0.6rem; justify-content: center; font-size: 0.78rem; border-color: #0284c7; color: #0284c7;">
+                      <i class="fa-solid fa-qrcode"></i> QR Presensi
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="App.downloadRegistrationFormPDF()" style="font-weight: 800; border-radius: 12px; padding: 0.6rem; justify-content: center; font-size: 0.78rem; border-color: #64748b; color: #475569;">
+                      <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Formulir PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 7: INFO JUMBARA & MATERI RESMI (MOBILE SUBTAB) -->
+            <div id="pesertaTabInfo" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
+              <!-- CARD 1: PANDUAN UTAMA JUMBARA -->
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-book-open-reader" style="color: #0d9488;"></i> Panduan & Petunjuk Teknis Jumbara IX
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); border: 1px solid #5eead4; border-radius: 14px; padding: 1rem; margin-bottom: 0.85rem; color: #115e59;">
+                  <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #0f766e; margin-bottom: 0.25rem;">
+                    Palang Merah Remaja PMI Kabupaten Pemalang
+                  </div>
+                  <h4 style="font-size: 1.05rem; font-weight: 900; color: #134e4a; margin: 0 0 0.4rem 0;">
+                    Tema: Jumpa, Bakti, Gembira
+                  </h4>
+                  <p style="font-size: 0.8rem; line-height: 1.45; margin: 0; color: #115e59;">
+                    Jumbara merupakan wadah pembinaan, evaluasi keterampilan, dan perjumpaan persahabatan bagi seluruh anggota PMR tingkat Mula, Madya, dan Wira se-Kabupaten Pemalang.
+                  </p>
+                </div>
+
+                <!-- 3 PILAR TRI BAKTI PMR -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center; margin-bottom: 0.85rem;">
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.6rem 0.3rem;">
+                    <i class="fa-solid fa-handshake" style="color: #0284c7; font-size: 1.25rem; margin-bottom: 0.25rem;"></i>
+                    <strong style="display: block; font-size: 0.75rem; color: #0f172a;">JUMPA</strong>
+                    <span style="font-size: 0.65rem; color: #64748b;">Evaluasi & Uji Skill</span>
+                  </div>
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.6rem 0.3rem;">
+                    <i class="fa-solid fa-seedling" style="color: #10b981; font-size: 1.25rem; margin-bottom: 0.25rem;"></i>
+                    <strong style="display: block; font-size: 0.75rem; color: #0f172a;">BAKTI</strong>
+                    <span style="font-size: 0.65rem; color: #64748b;">Aksi Lingkungan</span>
+                  </div>
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.6rem 0.3rem;">
+                    <i class="fa-solid fa-face-smile" style="color: #f59e0b; font-size: 1.25rem; margin-bottom: 0.25rem;"></i>
+                    <strong style="display: block; font-size: 0.75rem; color: #0f172a;">GEMBIRA</strong>
+                    <span style="font-size: 0.65rem; color: #64748b;">Pentas Budaya</span>
+                  </div>
+                </div>
+
+                <!-- TATA TERTIB SINGKAT -->
+                <div style="background: #f8fafc; border-left: 3px solid #0d9488; padding: 0.85rem; border-radius: 8px; font-size: 0.78rem; color: #334155; line-height: 1.5;">
+                  <strong>📋 Tata Tertib Utama Peserta:</strong><br>
+                  • Wajib mengenakan tanda pengenal (ID Card) selama berada di area Buperta.<br>
+                  • Menjaga kebersihan kapling tenda dan area bersama (Zero Waste Buperta).<br>
+                  • Jam malam perkemahan dimulai pukul 22.00 WIB.<br>
+                  • Apabila membutuhkan bantuan medis, segera hubungi Posko Kesehatan PMI.
+                </div>
+              </div>
+
+              <!-- CARD 2: DOKUMEN & MATERI DOWNLOADABLE -->
+              <div class="peserta-info-card" style="margin-top: 1rem;">
+                <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="fa-solid fa-file-arrow-down" style="color: #0284c7;"></i> Unduh Dokumen & Juknis Resmi</span>
+                  <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaMobileMaterials()" style="font-size: 0.7rem; padding: 2px 7px; border-radius: 6px;">
+                    <i class="fa-solid fa-rotate"></i>
+                  </button>
+                </div>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.85rem;">
+                  Silakan unduh dokumen petunjuk teknis pelaksanaan dan materi evaluasi Tri Bakti PMR:
+                </p>
+                <div id="pesertaMobileMaterialsList">
+                  <!-- Dynamic materials loaded by loadPesertaMobileMaterials() -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 8: LOKASI & PETA BUPERTA (MOBILE SUBTAB) -->
+            <div id="pesertaTabLokasi" style="display: none;">
+              <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Beranda Utama</span>
+              </div>
+
+              <!-- CARD 1: INFORMASI VENUE & BUPERTA -->
+              <div class="peserta-info-card">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-map-location-dot" style="color: #059669;"></i> Lokasi & Venue Bumi Perkemahan
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; margin-bottom: 0.85rem;">
+                  <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                      <i class="fa-solid fa-campground"></i>
+                    </div>
+                    <div>
+                      <h4 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                        ${Utils.escapeHtml(this.appSettings.event_location || 'Bumi Perkemahan Utama PMI Kabupaten')}
+                      </h4>
+                      <p style="font-size: 0.8rem; color: #64748b; margin: 0; line-height: 1.4;">
+                        ${Utils.escapeHtml(this.appSettings.event_location_address || this.appSettings.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem; color: #475569; border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; margin-bottom: 0.75rem;">
+                    <div><i class="fa-solid fa-calendar-days" style="color: #059669;"></i> <strong>Jadwal:</strong><br>${Utils.escapeHtml(this.appSettings.event_dates || '15 - 17 Okt 2026')}</div>
+                    <div><i class="fa-solid fa-phone" style="color: #059669;"></i> <strong>Kontak:</strong><br>${Utils.escapeHtml(this.appSettings.contact_phone || '(021) 555-PMR')}</div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.5rem;">
+                    <a href="${this.appSettings.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="font-weight: 800; border-radius: 10px; padding: 0.55rem; justify-content: center; font-size: 0.78rem; background: #059669; border-color: #059669;">
+                      <i class="fa-solid fa-diamond-turn-right"></i> Petunjuk Arah
+                    </a>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.copyLocationAddress()" style="font-weight: 700; border-radius: 10px; padding: 0.55rem; justify-content: center; font-size: 0.78rem;">
+                      <i class="fa-solid fa-copy"></i> Salin Alamat
+                    </button>
+                  </div>
+                </div>
+
+                <!-- EMBED MAPS IFRAME RESPONSIVE MOBILE -->
+                <div style="border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 0.85rem;">
+                  <iframe 
+                    src="${this.appSettings.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed'}"
+                    style="width: 100%; height: 200px; border: 0; display: block;"
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Peta Lokasi Kegiatan Jumbara">
+                  </iframe>
+                </div>
+              </div>
+
+              <!-- CARD 2: FASILITAS & TITIK PENTING BUPERTA -->
+              <div class="peserta-info-card" style="margin-top: 1rem;">
+                <div class="peserta-info-header">
+                  <i class="fa-solid fa-signs-post" style="color: #0284c7;"></i> Fasilitas Utama Area Buperta
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                      <i class="fa-solid fa-tents"></i>
+                    </div>
+                    <div>
+                      <strong style="font-size: 0.78rem; color: #0f172a; display: block;">Kavling Tenda</strong>
+                      <span style="font-size: 0.68rem; color: #64748b;">Mula, Madya, Wira</span>
+                    </div>
+                  </div>
+
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                      <i class="fa-solid fa-hospital"></i>
+                    </div>
+                    <div>
+                      <strong style="font-size: 0.78rem; color: #0f172a; display: block;">Posko Medis</strong>
+                      <span style="font-size: 0.68rem; color: #64748b;">Ambulans Siaga 24 Jam</span>
+                    </div>
+                  </div>
+
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                      <i class="fa-solid fa-restroom"></i>
+                    </div>
+                    <div>
+                      <strong style="font-size: 0.78rem; color: #0f172a; display: block;">Toilet & MCK</strong>
+                      <span style="font-size: 0.68rem; color: #64748b;">Air Bersih Sanitasi</span>
+                    </div>
+                  </div>
+
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                      <i class="fa-solid fa-utensils"></i>
+                    </div>
+                    <div>
+                      <strong style="font-size: 0.78rem; color: #0f172a; display: block;">Dapur Umum</strong>
+                      <span style="font-size: 0.68rem; color: #64748b;">Area Konsumsi Buperta</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -10522,8 +10863,8 @@ const App = {
       this.switchPesertaMobileTab('lomba');
     } else if (key === 'peserta_agenda') {
       this.switchPesertaMobileTab('agenda');
-    } else if (key === 'peserta_presensi') {
-      this.switchPesertaMobileTab('presensi');
+    } else if (key === 'peserta_presensi' || key === 'peserta_idcard') {
+      this.switchPesertaMobileTab('idcard');
     } else if (key === 'peserta_medali') {
       this.switchPesertaMobileTab('medali');
     } else if (key === 'penilai_presensi') {

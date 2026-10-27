@@ -5997,3 +5997,39 @@ body.has-mobile-portal .mobile-nav-btn.active::after {
   background: #0284c7 !important;
   box-shadow: 0 0 6px rgba(2, 132, 199, 0.6) !important;
 }
+
+/* 9. MOBILE ID CARD VIEWPORT & PRINT STYLING */
+.mobile-idcard-viewport {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0.5rem 0;
+}
+
+.mobile-idcard-viewport .idcard-wrapper {
+  padding: 0;
+  max-width: 100%;
+}
+
+.mobile-idcard-viewport .pmi-template-card {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 14px !important;
+}
+
+@media (max-width: 420px) {
+  .mobile-idcard-viewport .pmi-template-card {
+    transform: scale(0.88);
+    transform-origin: center top;
+    margin-bottom: -55px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-idcard-viewport .pmi-template-card {
+    transform: scale(0.78);
+    transform-origin: center top;
+    margin-bottom: -100px;
+  }
+}
