@@ -261,7 +261,7 @@ const App = {
 
     // Dynamic Logo Kegiatan Jumbara Update from Database
     if (s.event_logo) {
-      document.querySelectorAll('.navbar-logo-jumbara, .login-logo-jumbara').forEach(img => {
+      document.querySelectorAll('.navbar-logo-jumbara, .login-logo-jumbara, .jkn-header-logo-img').forEach(img => {
         img.src = s.event_logo;
       });
     }
@@ -1766,11 +1766,14 @@ const App = {
             <div class="jkn-top-bar">
               <div class="jkn-brand">
                 <div class="jkn-logo-emblem">
-                  <i class="fa-solid fa-square-plus"></i>
+                  <img src="${this.appSettings.event_logo || 'frontend/images/logo-jumbara-xii.png'}" 
+                       alt="Logo Kegiatan Jumbara" 
+                       class="jkn-header-logo-img navbar-logo-jumbara"
+                       onerror="this.onerror=null; this.src='${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}';">
                 </div>
                 <div class="jkn-brand-info">
-                  <span class="jkn-brand-title">JUMBARA <span class="jkn-brand-badge">PMR</span></span>
-                  <span class="jkn-brand-sub">PMI KABUPATEN PEMALANG</span>
+                  <span class="jkn-brand-title">${Utils.escapeHtml(this.appSettings.app_name || 'JUMBARA PMR')} <span class="jkn-brand-badge">PMR</span></span>
+                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN PEMALANG')}</span>
                 </div>
               </div>
 
