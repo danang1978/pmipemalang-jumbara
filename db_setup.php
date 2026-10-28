@@ -14,7 +14,7 @@ try {
             id INT AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(30) NOT NULL UNIQUE,
             name VARCHAR(150) NOT NULL,
-            level_category ENUM('Mula (SD)', 'Madya (SMP)', 'Wira (SMA)') NOT NULL,
+            level_category VARCHAR(100) NOT NULL DEFAULT 'Wira (SMA)',
             pembina_name VARCHAR(100) NOT NULL,
             phone VARCHAR(30),
             address TEXT,

@@ -205,6 +205,12 @@ const Utils = {
     if (lvl.includes('tsr')) {
       return `<span class="level-badge" style="background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5;"><i class="fa-solid fa-heart-pulse"></i> TSR</span>`;
     }
+    if (lvl.includes('ksr')) {
+      return `<span class="level-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;"><i class="fa-solid fa-hand-holding-medical"></i> KSR</span>`;
+    }
+    if (lvl.includes('pmi kab') || lvl.includes('pmi kabupaten') || lvl.includes('markas')) {
+      return `<span class="level-badge" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5;"><i class="fa-solid fa-building-flag"></i> PMI Kab</span>`;
+    }
     if (lvl.includes('panitia')) {
       return `<span class="level-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;"><i class="fa-solid fa-user-gear"></i> Panitia</span>`;
     }
@@ -221,5 +227,32 @@ const Utils = {
     if (lvl.includes('mula')) cls = 'level-mula';
     if (lvl.includes('madya')) cls = 'level-madya';
     return `<span class="level-badge ${cls}"><i class="fa-solid fa-user-tag"></i> ${Utils.escapeHtml(level)}</span>`;
+  },
+
+  // Mask Phone number to prevent scraping and privacy misuse (e.g. 0812-••••-8740)
+  maskPhone(phone) {
+    if (!phone) return '-';
+    const clean = phone.replace(/[^0-9]/g, '');
+    if (clean.length < 7) return phone;
+    const prefix = clean.substring(0, 4);
+    const suffix = clean.substring(clean.length - 4);
+    return `${prefix}-••••-${suffix}`;
+  },
+
+  // Identify unit category: 'PMR', 'KSR', 'TSR', or 'PMI Kab'
+  getUnitCategory(u) {
+    if (!u) return 'PMR';
+    const cat = (u.level_category || '').toUpperCase().trim();
+    const name = (u.name || '').toUpperCase().trim();
+    if (cat === 'KSR' || cat.includes('KSR') || name.startsWith('KSR') || name.includes(' KSR ') || name.includes('KSR-') || name.includes('KORPS SUKARELA')) {
+      return 'KSR';
+    }
+    if (cat === 'TSR' || cat.includes('TSR') || name.startsWith('TSR') || name.includes(' TSR ') || name.includes('TSR-') || name.includes('TENAGA SUKARELA')) {
+      return 'TSR';
+    }
+    if (cat === 'PMI KAB' || cat.includes('PMI KAB') || cat.includes('MARKAS') || name.includes('PMI KAB') || name.includes('MARKAS PMI') || name.includes('PMI KABUPATEN') || name.includes('PENGURUS PMI') || name.includes('STAF PMI')) {
+      return 'PMI Kab';
+    }
+    return 'PMR';
   }
 };

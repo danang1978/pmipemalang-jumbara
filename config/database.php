@@ -108,6 +108,10 @@ function getPDOConnection() {
                     $pdo->exec("ALTER TABLE users ADD COLUMN email VARCHAR(100) NULL AFTER password");
                 }
             }
+            // Ensure units.level_category supports KSR, TSR, PMI Kab without ENUM restrictions
+            try {
+                $pdo->exec("ALTER TABLE units MODIFY COLUMN level_category VARCHAR(100) NOT NULL DEFAULT 'Wira (SMA)'");
+            } catch (Exception $eUnits) {}
         } catch (Exception $eMigrate) {
             // Silently ignore if table users doesn't exist yet or permissions restricted
         }

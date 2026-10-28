@@ -710,11 +710,11 @@ const App = {
         <div class="landing-section-inner">
           <div class="sec-header-modern">
             <div class="sec-header-left">
-              <span class="sec-kicker sec-kicker-green"><i class="fa-solid fa-school"></i> KONTINGEN PMR</span>
-              <h2 class="sec-title">Daftar Unit Sekolah</h2>
+              <span class="sec-kicker sec-kicker-green"><i class="fa-solid fa-layer-group"></i> KONTINGEN JUMBARA</span>
+              <h2 class="sec-title">Daftar Kontingen & Unit</h2>
             </div>
             <div class="sec-header-right">
-              <span class="sec-meta-badge"><i class="fa-solid fa-users"></i> Mula • Madya • Wira</span>
+              <span class="sec-meta-badge"><i class="fa-solid fa-users"></i> PMR • KSR • TSR • PMI Kab</span>
             </div>
           </div>
           <div id="publicUnitsList">
@@ -1128,79 +1128,8 @@ const App = {
         }
       }
 
-      const unContainer = document.getElementById('publicUnitsList');
-      if (unContainer) {
-        const unitsDesktopTable = `
-          <div class="master-unit-desktop-table table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Kode Unit</th>
-                  <th>Nama Unit Sekolah</th>
-                  <th>Tingkat PMR</th>
-                  <th>Pembina PMR</th>
-                  <th>Kontak / WhatsApp</th>
-                  <th>Alamat Sekolah</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${units.map(u => {
-          const cleanPhone = u.phone ? u.phone.replace(/[^0-9]/g, '') : '';
-          const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone}` : null;
-          return `
-                    <tr>
-                      <td><code>${u.code}</code></td>
-                      <td>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                          <i class="fa-solid fa-school" style="color: var(--secondary);"></i>
-                          <strong>${Utils.escapeHtml(u.name)}</strong>
-                        </div>
-                      </td>
-                      <td>${Utils.getLevelBadgeHtml(u.level_category)}</td>
-                      <td><i class="fa-solid fa-user-tie" style="color: #64748b; margin-right: 0.3rem;"></i> ${Utils.escapeHtml(u.pembina_name)}</td>
-                      <td>
-                        ${waLink ? `
-                          <a href="${waLink}" target="_blank" style="color: #0d9488; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
-                            <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1rem;"></i> ${Utils.escapeHtml(u.phone)}
-                          </a>
-                        ` : '<span style="color: var(--text-muted);">-</span>'}
-                      </td>
-                      <td style="font-size: 0.85rem; color: #475569;">
-                        ${u.address ? `<i class="fa-solid fa-location-dot" style="color: #ef4444; margin-right: 0.3rem;"></i>${Utils.escapeHtml(u.address)}` : '-'}
-                      </td>
-                    </tr>
-                  `;
-        }).join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-
-        const unitsMobileCards = `
-          <div class="master-unit-mobile-cards">
-            ${units.map(u => {
-          const cleanPhone = u.phone ? u.phone.replace(/[^0-9]/g, '') : '';
-          const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone}` : null;
-          return `
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
-                    <code style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">${u.code}</code>
-                    ${Utils.getLevelBadgeHtml(u.level_category)}
-                  </div>
-                  <strong style="font-size: 0.95rem; color: #0f172a; display: block; margin-bottom: 0.3rem; word-break: break-word;">${Utils.escapeHtml(u.name)}</strong>
-                  <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.3rem;">
-                    <i class="fa-solid fa-user-tie" style="color: #64748b;"></i> Pembina: <strong>${Utils.escapeHtml(u.pembina_name)}</strong>
-                    ${waLink ? `<br><a href="${waLink}" target="_blank" style="color: #0d9488; font-weight: 600; text-decoration: none;"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> ${Utils.escapeHtml(u.phone)}</a>` : ''}
-                  </div>
-                  ${u.address ? `<div style="font-size: 0.75rem; color: #64748b;"><i class="fa-solid fa-location-dot" style="color: #ef4444;"></i> ${Utils.escapeHtml(u.address)}</div>` : ''}
-                </div>
-              `;
-        }).join('')}
-          </div>
-        `;
-
-        unContainer.innerHTML = unitsDesktopTable + unitsMobileCards;
-      }
+      this.publicUnits = units;
+      this.renderPublicUnits(this.activePublicUnitCategory || 'PMR', this.publicUnitSearchKeyword || '');
 
       // Load Materials & Documents
       await this.loadPublicMaterials();
@@ -1208,6 +1137,248 @@ const App = {
     } catch (e) {
       console.error('Error loading public data:', e);
     }
+  },
+
+  filterPublicUnits(category) {
+    this.activePublicUnitCategory = category;
+    this.renderPublicUnits(this.activePublicUnitCategory, this.publicUnitSearchKeyword || '');
+  },
+
+  handlePublicUnitSearch(keyword) {
+    this.publicUnitSearchKeyword = keyword;
+    this.renderPublicUnits(this.activePublicUnitCategory || 'PMR', this.publicUnitSearchKeyword);
+  },
+
+  renderPublicUnits(activeCategory = 'PMR', searchKeyword = '') {
+    const unContainer = document.getElementById('publicUnitsList');
+    if (!unContainer || !this.publicUnits) return;
+
+    this.activePublicUnitCategory = activeCategory;
+    this.publicUnitSearchKeyword = searchKeyword;
+
+    const units = this.publicUnits;
+    const pmrUnits = units.filter(u => Utils.getUnitCategory(u) === 'PMR');
+    const ksrUnits = units.filter(u => Utils.getUnitCategory(u) === 'KSR');
+    const tsrUnits = units.filter(u => Utils.getUnitCategory(u) === 'TSR');
+    const pmiKabUnits = units.filter(u => Utils.getUnitCategory(u) === 'PMI Kab');
+
+    // Filter based on active category tab
+    let filtered = units;
+    if (activeCategory === 'PMR') filtered = pmrUnits;
+    else if (activeCategory === 'KSR') filtered = ksrUnits;
+    else if (activeCategory === 'TSR') filtered = tsrUnits;
+    else if (activeCategory === 'PMI Kab') filtered = pmiKabUnits;
+
+    // Filter based on search term
+    const term = (searchKeyword || '').trim().toLowerCase();
+    if (term) {
+      filtered = filtered.filter(u => 
+        (u.name && u.name.toLowerCase().includes(term)) ||
+        (u.code && u.code.toLowerCase().includes(term)) ||
+        (u.pembina_name && u.pembina_name.toLowerCase().includes(term)) ||
+        (u.address && u.address.toLowerCase().includes(term)) ||
+        (u.level_category && u.level_category.toLowerCase().includes(term))
+      );
+    }
+
+    // Dynamic headers based on category
+    let categoryTitle = 'Unit Sekolah (PMR)';
+    let categoryIcon = 'fa-school';
+    let categoryDesc = 'Daftar kontingen PMR tingkat Mula (SD), Madya (SMP), dan Wira (SMA)';
+    let col2Title = 'Nama Unit Sekolah';
+    let col3Title = 'Tingkat PMR';
+    let col4Title = 'Pembina PMR';
+    let col6Title = 'Alamat Sekolah';
+
+    if (activeCategory === 'KSR') {
+      categoryTitle = 'Korps Sukarela (KSR)';
+      categoryIcon = 'fa-hand-holding-medical';
+      categoryDesc = 'Daftar unit KSR (Korps Sukarela PMI) terdaftar';
+      col2Title = 'Nama Unit KSR';
+      col3Title = 'Kategori';
+      col4Title = 'Penanggung Jawab / Pembina';
+      col6Title = 'Markas / Pangkalan';
+    } else if (activeCategory === 'TSR') {
+      categoryTitle = 'Tenaga Sukarela (TSR)';
+      categoryIcon = 'fa-heart-pulse';
+      categoryDesc = 'Daftar unit TSR (Tenaga Sukarela PMI) terdaftar';
+      col2Title = 'Nama Unit TSR';
+      col3Title = 'Kategori';
+      col4Title = 'Koordinator / Pembina';
+      col6Title = 'Lokasi / Pangkalan';
+    } else if (activeCategory === 'PMI Kab') {
+      categoryTitle = 'PMI Kabupaten / Markas';
+      categoryIcon = 'fa-building-flag';
+      categoryDesc = 'Daftar Markas dan Staf PMI Kabupaten';
+      col2Title = 'Nama Unit / Markas';
+      col3Title = 'Kategori';
+      col4Title = 'Pimpinan / Kepala Markas';
+      col6Title = 'Alamat Markas';
+    } else if (activeCategory === 'ALL') {
+      categoryTitle = 'Semua Kontingen & Unit';
+      categoryIcon = 'fa-globe';
+      categoryDesc = 'Seluruh kontingen PMR, KSR, TSR, dan PMI Kabupaten';
+      col2Title = 'Nama Unit / Kontingen';
+      col3Title = 'Kategori / Tingkat';
+      col4Title = 'Pembina / Pimpinan';
+      col6Title = 'Alamat / Pangkalan';
+    }
+
+    const tabsHtml = `
+      <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" 
+              onclick="App.filterPublicUnits('PMR')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMR' ? 'var(--primary)' : '#cbd5e1'}; background: ${activeCategory === 'PMR' ? 'var(--primary)' : '#ffffff'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'PMR' ? '0 3px 10px rgba(201,42,42,0.25)' : 'none'};">
+              <i class="fa-solid fa-school"></i> Unit Sekolah (PMR)
+              <span style="background: ${activeCategory === 'PMR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${pmrUnits.length}</span>
+            </button>
+
+            <button type="button" 
+              onclick="App.filterPublicUnits('KSR')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'KSR' ? '#dc2626' : '#cbd5e1'}; background: ${activeCategory === 'KSR' ? '#dc2626' : '#ffffff'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'KSR' ? '0 3px 10px rgba(220,38,38,0.25)' : 'none'};">
+              <i class="fa-solid fa-hand-holding-medical"></i> KSR
+              <span style="background: ${activeCategory === 'KSR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${ksrUnits.length}</span>
+            </button>
+
+            <button type="button" 
+              onclick="App.filterPublicUnits('TSR')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'TSR' ? '#ea580c' : '#cbd5e1'}; background: ${activeCategory === 'TSR' ? '#ea580c' : '#ffffff'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'TSR' ? '0 3px 10px rgba(234,88,12,0.25)' : 'none'};">
+              <i class="fa-solid fa-heart-pulse"></i> TSR
+              <span style="background: ${activeCategory === 'TSR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${tsrUnits.length}</span>
+            </button>
+
+            <button type="button" 
+              onclick="App.filterPublicUnits('PMI Kab')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#cbd5e1'}; background: ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#ffffff'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'PMI Kab' ? '0 3px 10px rgba(124,58,237,0.25)' : 'none'};">
+              <i class="fa-solid fa-building-flag"></i> PMI Kab
+              <span style="background: ${activeCategory === 'PMI Kab' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${pmiKabUnits.length}</span>
+            </button>
+
+            <button type="button" 
+              onclick="App.filterPublicUnits('ALL')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'ALL' ? '#0f172a' : '#cbd5e1'}; background: ${activeCategory === 'ALL' ? '#0f172a' : '#ffffff'}; color: ${activeCategory === 'ALL' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'ALL' ? '0 3px 10px rgba(15,23,42,0.25)' : 'none'};">
+              <i class="fa-solid fa-globe"></i> Semua (${units.length})
+            </button>
+          </div>
+
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; color: #047857; background: #ecfdf5; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid #a7f3d0; font-weight: 600;">
+            <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> Nomor WhatsApp disamarkan (Privasi Aman)
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid ${categoryIcon}" style="color: var(--primary); font-size: 1.15rem;"></i>
+            <div>
+              <strong style="color: #0f172a; font-size: 0.95rem;">${categoryTitle} (${filtered.length})</strong>
+              <div style="font-size: 0.78rem; color: #64748b;">${categoryDesc}</div>
+            </div>
+          </div>
+
+          <div style="min-width: 260px; max-width: 380px; flex: 1; position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem;"></i>
+            <input 
+              type="text" 
+              value="${Utils.escapeHtml(searchKeyword)}" 
+              oninput="App.handlePublicUnitSearch(this.value)"
+              placeholder="Cari nama, kode, pembina..." 
+              style="width: 100%; padding: 0.48rem 0.85rem 0.48rem 2.2rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;"
+            />
+          </div>
+        </div>
+      </div>
+    `;
+
+    const getRowBadge = (u) => {
+      const uCat = Utils.getUnitCategory(u);
+      if (uCat === 'KSR') {
+        return `<span class="level-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;"><i class="fa-solid fa-hand-holding-medical"></i> KSR</span>`;
+      }
+      if (uCat === 'TSR') {
+        return `<span class="level-badge" style="background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5;"><i class="fa-solid fa-heart-pulse"></i> TSR</span>`;
+      }
+      if (uCat === 'PMI Kab') {
+        return `<span class="level-badge" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5;"><i class="fa-solid fa-building-flag"></i> PMI Kab</span>`;
+      }
+      return Utils.getLevelBadgeHtml(u.level_category);
+    };
+
+    const tableRows = filtered.length ? filtered.map(u => {
+      const maskedPhone = Utils.maskPhone(u.phone);
+      const icon = Utils.getUnitCategory(u) === 'KSR' ? 'fa-hand-holding-medical' : 
+                   Utils.getUnitCategory(u) === 'TSR' ? 'fa-heart-pulse' : 
+                   Utils.getUnitCategory(u) === 'PMI Kab' ? 'fa-building-flag' : 'fa-school';
+
+      return `
+        <tr>
+          <td><code style="font-weight: 700;">${u.code}</code></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid ${icon}" style="color: var(--secondary);"></i>
+              <strong>${Utils.escapeHtml(u.name)}</strong>
+            </div>
+          </td>
+          <td>${getRowBadge(u)}</td>
+          <td><i class="fa-solid fa-user-tie" style="color: #64748b; margin-right: 0.3rem;"></i> ${Utils.escapeHtml(u.pembina_name)}</td>
+          <td>
+            ${u.phone ? `
+              <span style="color: #334155; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem; user-select: none;" title="Nomor WhatsApp disamarkan untuk privasi">
+                <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1rem;"></i> <span>${maskedPhone}</span>
+              </span>
+            ` : '<span style="color: var(--text-muted);">-</span>'}
+          </td>
+          <td style="font-size: 0.85rem; color: #475569;">
+            ${u.address ? `<i class="fa-solid fa-location-dot" style="color: #ef4444; margin-right: 0.3rem;"></i>${Utils.escapeHtml(u.address)}` : '-'}
+          </td>
+        </tr>
+      `;
+    }).join('') : `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem;"><i class="fa-solid fa-inbox" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i> Tidak ada data untuk kategori "${categoryTitle}".</td></tr>`;
+
+    const unitsDesktopTable = `
+      <div class="master-unit-desktop-table table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Kode Unit</th>
+              <th>${col2Title}</th>
+              <th>${col3Title}</th>
+              <th>${col4Title}</th>
+              <th>Kontak / WhatsApp</th>
+              <th>${col6Title}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const unitsMobileCards = `
+      <div class="master-unit-mobile-cards" style="margin-top: 1rem;">
+        ${filtered.length ? filtered.map(u => {
+          const maskedPhone = Utils.maskPhone(u.phone);
+          return `
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                <code style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">${u.code}</code>
+                ${getRowBadge(u)}
+              </div>
+              <strong style="font-size: 0.95rem; color: #0f172a; display: block; margin-bottom: 0.3rem; word-break: break-word;">${Utils.escapeHtml(u.name)}</strong>
+              <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.3rem;">
+                <i class="fa-solid fa-user-tie" style="color: #64748b;"></i> ${col4Title}: <strong>${Utils.escapeHtml(u.pembina_name)}</strong>
+                ${u.phone ? `<div style="margin-top: 0.25rem;"><span style="color: #334155; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; background: #f8fafc; padding: 0.15rem 0.5rem; border-radius: 5px; border: 1px solid #e2e8f0; user-select: none;"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> ${maskedPhone}</span></div>` : ''}
+              </div>
+              ${u.address ? `<div style="font-size: 0.75rem; color: #64748b;"><i class="fa-solid fa-location-dot" style="color: #ef4444;"></i> ${Utils.escapeHtml(u.address)}</div>` : ''}
+            </div>
+          `;
+        }).join('') : `<p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada unit pada kategori ini.</p>`}
+      </div>
+    `;
+
+    unContainer.innerHTML = tabsHtml + unitsDesktopTable + unitsMobileCards;
   },
 
   // =========================================================================
@@ -14200,8 +14371,8 @@ const App = {
             <div class="panel-card">
               <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
                 <div>
-                  <h3 class="panel-title" style="margin: 0;"><i class="fa-solid fa-school" style="color: var(--primary);"></i> Kelola Master Data Unit Sekolah Kontingen (${units.length})</h3>
-                  <small style="color: var(--text-muted);">Daftar unit sekolah/kontingen peserta yang terdaftar resmi di sistem</small>
+                  <h3 class="panel-title" style="margin: 0;"><i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Kelola Master Data Unit & Kontingen (${units.length})</h3>
+                  <small style="color: var(--text-muted);">Daftar unit sekolah PMR, KSR, TSR, dan PMI Kabupaten yang terdaftar resmi di sistem</small>
                 </div>
                 <button class="btn btn-primary btn-sm" onclick="App.openAddUnitModal()">
                   <i class="fa-solid fa-plus"></i> Tambah Unit
@@ -14213,11 +14384,11 @@ const App = {
                   <thead>
                     <tr>
                       <th>Kode Unit</th>
-                      <th>Nama Unit Sekolah</th>
-                      <th>Kategori PMR</th>
-                      <th>Pembina PMR</th>
+                      <th>Nama Unit / Kontingen</th>
+                      <th>Kategori / Tingkat</th>
+                      <th>Pembina / Penanggung Jawab</th>
                       <th>Kontak / WhatsApp</th>
-                      <th>Alamat Sekolah</th>
+                      <th>Alamat / Pangkalan</th>
                       <th style="text-align: center;">Aksi Pengelolaan</th>
                     </tr>
                   </thead>
@@ -14225,16 +14396,24 @@ const App = {
                     ${units.length ? units.map(u => {
         const cleanPhone = u.phone ? u.phone.replace(/[^0-9]/g, '') : '';
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone}` : null;
+        const uCat = Utils.getUnitCategory(u);
+        const icon = uCat === 'KSR' ? 'fa-hand-holding-medical' : 
+                     uCat === 'TSR' ? 'fa-heart-pulse' : 
+                     uCat === 'PMI Kab' ? 'fa-building-flag' : 'fa-school';
+        const badge = uCat === 'KSR' ? '<span class="level-badge" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;"><i class="fa-solid fa-hand-holding-medical"></i> KSR</span>' : 
+                      uCat === 'TSR' ? '<span class="level-badge" style="background:#fff7ed;color:#9a3412;border:1px solid #ffedd5;"><i class="fa-solid fa-heart-pulse"></i> TSR</span>' : 
+                      uCat === 'PMI Kab' ? '<span class="level-badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;"><i class="fa-solid fa-building-flag"></i> PMI Kab</span>' : 
+                      Utils.getLevelBadgeHtml(u.level_category);
         return `
                         <tr>
                           <td><code>${u.code}</code></td>
                           <td>
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                              <i class="fa-solid fa-school" style="color: var(--secondary);"></i>
+                              <i class="fa-solid ${icon}" style="color: var(--secondary);"></i>
                               <strong>${Utils.escapeHtml(u.name)}</strong>
                             </div>
                           </td>
-                          <td>${Utils.getLevelBadgeHtml(u.level_category)}</td>
+                          <td>${badge}</td>
                           <td><i class="fa-solid fa-user-tie" style="color: #64748b; margin-right: 0.3rem;"></i> ${Utils.escapeHtml(u.pembina_name)}</td>
                           <td>
                             ${waLink ? `
@@ -14248,10 +14427,10 @@ const App = {
                           </td>
                           <td style="text-align: center;">
                             <div style="display: flex; gap: 0.4rem; justify-content: center;">
-                              <button class="btn btn-outline btn-sm" onclick="App.openEditUnitModal(${u.id})" title="Edit Unit Sekolah">
+                              <button class="btn btn-outline btn-sm" onclick="App.openEditUnitModal(${u.id})" title="Edit Unit">
                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                               </button>
-                              <button class="btn btn-danger btn-sm" onclick="App.deleteUnit(${u.id}, '${Utils.escapeHtml(u.name).replace(/'/g, "\\'")}')" title="Hapus Unit Sekolah">
+                              <button class="btn btn-danger btn-sm" onclick="App.deleteUnit(${u.id}, '${Utils.escapeHtml(u.name).replace(/'/g, "\\'")}')" title="Hapus Unit">
                                 <i class="fa-solid fa-trash-can"></i> Hapus
                               </button>
                             </div>
@@ -14267,11 +14446,16 @@ const App = {
                 ${units.length ? units.map(u => {
         const cleanPhone = u.phone ? u.phone.replace(/[^0-9]/g, '') : '';
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone}` : null;
+        const uCat = Utils.getUnitCategory(u);
+        const badge = uCat === 'KSR' ? '<span class="level-badge" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;"><i class="fa-solid fa-hand-holding-medical"></i> KSR</span>' : 
+                      uCat === 'TSR' ? '<span class="level-badge" style="background:#fff7ed;color:#9a3412;border:1px solid #ffedd5;"><i class="fa-solid fa-heart-pulse"></i> TSR</span>' : 
+                      uCat === 'PMI Kab' ? '<span class="level-badge" style="background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;"><i class="fa-solid fa-building-flag"></i> PMI Kab</span>' : 
+                      Utils.getLevelBadgeHtml(u.level_category);
         return `
                     <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
                         <code style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">${u.code}</code>
-                        ${Utils.getLevelBadgeHtml(u.level_category)}
+                        ${badge}
                       </div>
                       <strong style="font-size: 0.95rem; color: #0f172a; display: block; margin-bottom: 0.3rem; word-break: break-word;">${Utils.escapeHtml(u.name)}</strong>
                       <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.3rem;">

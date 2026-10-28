@@ -652,25 +652,32 @@ $settings = getAppSettings();
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tingkat PMR *</label>
+              <label class="form-label">Kategori / Tingkat Unit *</label>
               <select id="unitLevelInput" required>
-                <option value="Wira (SMA)">Wira (SMA / SMK / MA)</option>
-                <option value="Madya (SMP)">Madya (SMP / MTs)</option>
-                <option value="Mula (SD)">Mula (SD / MI)</option>
+                <optgroup label="Unit Sekolah (PMR)">
+                  <option value="Mula (SD)">Mula (SD / MI)</option>
+                  <option value="Madya (SMP)">Madya (SMP / MTs)</option>
+                  <option value="Wira (SMA)">Wira (SMA / SMK / MA)</option>
+                </optgroup>
+                <optgroup label="Korps / Sukarela / Markas">
+                  <option value="KSR">KSR (Korps Sukarela)</option>
+                  <option value="TSR">TSR (Tenaga Sukarela)</option>
+                  <option value="PMI Kab">PMI Kab (Markas PMI Kabupaten)</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Nama Pembina PMR *</label>
-              <input type="text" id="unitPembinaInput" placeholder="Nama Pembina..." required>
+              <label class="form-label">Nama Pembina / Pimpinan *</label>
+              <input type="text" id="unitPembinaInput" placeholder="Nama Pembina / Penanggung Jawab..." required>
             </div>
           </div>
           <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label">No. Telepon / WhatsApp Pembina</label>
+            <label class="form-label">No. Telepon / WhatsApp (Disamarkan di Halaman Publik)</label>
             <input type="text" id="unitPhoneInput" placeholder="0812xxxxxxxx">
           </div>
           <div class="form-group">
-            <label class="form-label">Alamat Sekolah</label>
-            <textarea id="unitAddressInput" rows="2" placeholder="Alamat lengkap unit sekolah..."></textarea>
+            <label class="form-label">Alamat Sekolah / Pangkalan / Markas</label>
+            <textarea id="unitAddressInput" rows="2" placeholder="Alamat lengkap unit kontingen..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
