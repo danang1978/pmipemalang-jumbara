@@ -13271,6 +13271,13 @@ const App = {
     }
     if (levelSelect) {
       levelSelect.required = showUnitAndUnsur;
+      if (val === 'Pendamping') {
+        const opt = Array.from(levelSelect.options).find(o => o.value === 'Pendamping');
+        if (opt) levelSelect.value = 'Pendamping';
+      } else if (val === 'Peninjau') {
+        const opt = Array.from(levelSelect.options).find(o => o.value === 'Peninjau');
+        if (opt) levelSelect.value = 'Peninjau';
+      }
     }
 
     if (unitGroup) {
@@ -13394,7 +13401,7 @@ const App = {
             FORMULIR REGISTRASI MANDIRI JUMBARA PMR 2026
           </h3>
           <p style="font-size: 0.85rem; color: var(--text-muted);">
-            Lengkapi formulir registrasi resmi (Peserta, Panitia, Peninjau, Tamu Undangan, Media). Akun login dibuatkan otomatis oleh sistem.
+            Lengkapi formulir registrasi resmi (Peserta, Panitia, Peninjau, Pendamping, Tamu Undangan, Media). Akun login dibuatkan otomatis oleh sistem.
           </p>
         </div>
 
@@ -13408,9 +13415,9 @@ const App = {
                 <label class="form-label">Kategori Pendaftaran *</label>
                 <select id="fullRegRegistrationType" onchange="App.handleRegistrationTypeChange(this.value)" required>
                   <option value="Peserta">Peserta PMR (Mula / Madya / Wira)</option>
-                  <option value="Panitia">Panitia Pelaksana Jumbara</option>
-                  <option value="Peninjau">Peninjau Kontingen</option>
-                  <option value="Pendamping">Pendamping Kontingen</option>
+                  <option value="Panitia">Panitia Pelaksana</option>
+                  <option value="Peninjau">Peninjau</option>
+                  <option value="Pendamping">Pendamping</option>
                   <option value="Tamu Undangan">Tamu Undangan Resmi / VIP</option>
                   <option value="Media">Media / Pers / Publikasi</option>
                 </select>
@@ -14852,6 +14859,13 @@ const App = {
     try {
       const unsurs = await API.getUnsur(unitId);
       select.disabled = false;
+
+      if (!selectedValue) {
+        const currentRegType = document.getElementById('fullRegRegistrationType')?.value;
+        if (currentRegType === 'Pendamping') selectedValue = 'Pendamping';
+        else if (currentRegType === 'Peninjau') selectedValue = 'Peninjau';
+        else if (currentRegType === 'Panitia') selectedValue = 'Panitia';
+      }
 
       let html = '<option value="">-- Pilih Unsur Kontingen / Jabatan --</option>';
       unsurs.forEach(u => {

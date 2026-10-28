@@ -251,6 +251,10 @@ try {
     } catch (Exception $e) {}
 
     try {
+        $pdo->exec("INSERT IGNORE INTO unsur_categories (name, quota, description) VALUES ('Peninjau', 0, 'Unsur Peninjau Kontingen'), ('Pendamping', 0, 'Unsur Pendamping Kontingen / Pembina')");
+    } catch (Exception $e) {}
+
+    try {
         $pdo->exec("ALTER TABLE participants MODIFY COLUMN level VARCHAR(50) NOT NULL DEFAULT 'Wira'");
     } catch (Exception $e) {}
 

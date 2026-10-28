@@ -386,7 +386,7 @@ CREATE TABLE `unsur_categories` (
 
 LOCK TABLES `unsur_categories` WRITE;
 /*!40000 ALTER TABLE `unsur_categories` DISABLE KEYS */;
-INSERT INTO `unsur_categories` VALUES (1,'Kepala Sekolah',1,'Unsur Kepala Sekolah PMI (Maksimal 1 orang per kontingen)','2026-10-03 01:46:18'),(2,'Pembina PMR',2,'Unsur Pembina PMR (Maksimal 2 orang per kontingen)','2026-10-03 01:46:18'),(7,'Anggota PMR',16,'Unsur Peserta PMR Madya dan Wira  (Maksimal 16 orang per kontingen)','2026-10-03 01:46:18');
+INSERT INTO `unsur_categories` VALUES (1,'Kepala Sekolah',1,'Unsur Kepala Sekolah PMI (Maksimal 1 orang per kontingen)','2026-10-03 01:46:18'),(2,'Pembina PMR',2,'Unsur Pembina PMR (Maksimal 2 orang per kontingen)','2026-10-03 01:46:18'),(7,'Anggota PMR',16,'Unsur Peserta PMR Madya dan Wira  (Maksimal 16 orang per kontingen)','2026-10-03 01:46:18'),(8,'Peninjau',0,'Unsur Peninjau Kontingen','2026-10-28 13:36:00'),(9,'Pendamping',0,'Unsur Pendamping Kontingen / Pembina','2026-10-28 13:36:00');
 /*!40000 ALTER TABLE `unsur_categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
