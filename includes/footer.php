@@ -1092,24 +1092,27 @@ $settings = getAppSettings();
   <!-- Modal: Cetak Formulir Biodata Resmi Peserta (Standar PMI Pemalang) -->
   <div class="modal" id="biodataPrintModal">
     <div class="modal-dialog" style="max-width: 860px;">
-      <div class="modal-header no-print" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 class="modal-title" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--secondary);">
-          <i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Cetak Formulir Biodata Peserta Resmi
+      <div class="modal-header no-print" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.85rem 1.25rem;">
+        <h3 class="modal-title" id="biodataModalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Cetak Formulir Biodata Resmi (Standar PMI)
         </h3>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintBiodata()" style="font-weight: 700; background: #0284c7; border-color: #0284c7;">
+          <a id="biodataModalStLink" href="#" target="_blank" class="btn btn-outline btn-sm" style="display: none; font-weight: 700; color: #dc2626; border-color: #fca5a5; font-size: 0.8rem; padding: 0.35rem 0.65rem;">
+            <i class="fa-solid fa-file-pdf"></i> Lihat Berkas ST
+          </a>
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintBiodata()" style="font-weight: 700; background: #0284c7; border-color: #0284c7; font-size: 0.8rem; padding: 0.35rem 0.75rem;">
             <i class="fa-solid fa-print"></i> Cetak / Print Dokumen
           </button>
           <button class="modal-close" onclick="App.closeModal('biodataPrintModal')">&times;</button>
         </div>
       </div>
-      <div class="modal-body" style="padding: 1.5rem; background: #cbd5e1; max-height: calc(100vh - 180px); overflow-y: auto;">
+      <div class="modal-body" style="padding: 1.5rem; background: #e2e8f0; max-height: calc(100vh - 180px); overflow-y: auto;">
         <div id="biodataPrintContainer">
           <!-- Dokumen Biodata Dirender Oleh App.openBiodataModal -->
         </div>
       </div>
-      <div class="modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Formulir siap dicetak langsung dalam 1 lembar kertas A4 Portrait bersih.</span>
+      <div class="modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem;">
+        <span style="font-size: 0.8rem; color: #64748b;"><i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dokumen siap dicetak dalam 1 lembar kertas A4 Portrait rapi sesuai format fisik PMI.</span>
         <div style="display: flex; gap: 0.5rem;">
           <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('biodataPrintModal')">Tutup</button>
           <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintBiodata()" style="font-weight: 700; background: #0284c7; border-color: #0284c7;">

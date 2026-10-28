@@ -11434,6 +11434,27 @@ const App = {
 
       const isPendamping = (p.registration_type === 'Pendamping' || p.level === 'Pendamping');
 
+      const modalTitleEl = document.getElementById('biodataModalTitle');
+      if (modalTitleEl) {
+        modalTitleEl.innerHTML = isPendamping 
+          ? '<i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Cetak Biodata Pembina Pendamping (Standar PMI)'
+          : '<i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Cetak Biodata Peserta PMR (Standar PMI)';
+      }
+
+      const renderRow = (num, label, value, isSub = false) => {
+        const numText = num ? `${num}.` : '';
+        const labelClass = isSub ? 'col-label-sub' : 'col-label';
+        const valText = value ? Utils.escapeHtml(value) : '';
+        return `
+          <tr>
+            <td class="col-num">${numText}</td>
+            <td class="${labelClass}">${label}</td>
+            <td class="col-colon">:</td>
+            <td class="col-val">${valText}</td>
+          </tr>
+        `;
+      };
+
       let html = '';
       if (isPendamping) {
         let orgA = '', orgB = '', orgC = '', orgD = '';
@@ -11456,122 +11477,56 @@ const App = {
             <h4>${Utils.escapeHtml(organizerName)}</h4>
           </div>
 
-          <div style="position: relative; min-height: 220px;">
-            <!-- Pas Foto 3x4 Frame -->
-            <div style="position: absolute; right: 0; top: 0; width: 114px; height: 152px; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; box-sizing: border-box; text-align: center;">
-              ${p.photo_url ? `
-                <img src="${Utils.escapeHtml(p.photo_url)}" alt="Pas Foto 3x4" style="width: 100%; height: 100%; object-fit: cover;">
-              ` : `
-                <div style="font-size: 8pt; font-weight: 700; color: #475569; line-height: 1.35;">
-                  PAS FOTO<br>3 x 4
-                </div>
-              `}
-            </div>
-
-            <!-- Bagian: Data Pembina Pendamping -->
-            <table class="biodata-sheet-table" style="width: calc(100% - 130px);">
-              <tr>
-                <td class="col-num">1.</td>
-                <td class="col-label">Nama Sekolah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.unit_name || p.school_name || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">2.</td>
-                <td class="col-label">Alamat Sekolah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.school_address || p.unit_address || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num"></td>
-                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.school_phone || p.unit_phone || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">3.</td>
-                <td class="col-label" style="letter-spacing: 2px;">N a m a</td>
-                <td class="col-colon">:</td>
-                <td class="col-val" style="font-weight: 800; text-transform: uppercase;">${Utils.escapeHtml(p.full_name || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">4.</td>
-                <td class="col-label">Tempat / tgl lahir</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(ttl)}</td>
-              </tr>
-              <tr>
-                <td class="col-num">5.</td>
-                <td class="col-label">Jenis kelamin</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(genderText)}</td>
-              </tr>
-              <tr>
-                <td class="col-num">6.</td>
-                <td class="col-label">Pendidikan terakhir</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.last_education || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">7.</td>
-                <td class="col-label">Agama</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.religion || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">8.</td>
-                <td class="col-label">Alamat rumah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.address || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num"></td>
-                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP.</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.phone || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">9.</td>
-                <td class="col-label">Golongan Darah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.blood_type || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">4.</td>
-                <td class="col-label">Organisasi yang diikuti</td>
-                <td class="col-colon">:</td>
-                <td class="col-val"></td>
-              </tr>
-            </table>
-          </div>
-
-          <!-- Sub items a, b, c, d organisasi -->
-          <table class="biodata-sheet-table" style="margin-left: 20px; width: calc(100% - 20px); margin-bottom: 25px;">
+          <!-- Tabel Data Resmi Pembina Pendamping Sesuai Blangko PMI -->
+          <table class="biodata-sheet-table">
+            ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
+            ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
+            ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
+            ${renderRow('3', 'N a m a', (p.full_name || '').toUpperCase())}
+            ${renderRow('4', 'Tempat / tgl lahir', ttl)}
+            ${renderRow('5', 'Jenis kelamin', genderText)}
+            ${renderRow('6', 'Pendidikan terakhir', p.last_education)}
+            ${renderRow('7', 'Agama', p.religion)}
+            ${renderRow('8', 'Alamat rumah', p.address)}
+            ${renderRow('', 'Telp. / HP.', p.phone, true)}
+            ${renderRow('9', 'Golongan Darah', p.blood_type)}
             <tr>
-              <td style="width: 25px; vertical-align: top; font-weight: bold;">a.</td>
-              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgA || ' ')}</td>
+              <td class="col-num">4.</td>
+              <td class="col-label" colspan="2">Organisasi yang diikuti :</td>
+              <td class="col-val" style="border-bottom: none;"></td>
             </tr>
             <tr>
-              <td style="width: 25px; vertical-align: top; font-weight: bold;">b.</td>
-              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgB || ' ')}</td>
+              <td class="col-num"></td>
+              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">a.</td>
+              <td class="col-colon"></td>
+              <td class="col-val">${Utils.escapeHtml(orgA)}</td>
             </tr>
             <tr>
-              <td style="width: 25px; vertical-align: top; font-weight: bold;">c.</td>
-              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgC || ' ')}</td>
+              <td class="col-num"></td>
+              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">b.</td>
+              <td class="col-colon"></td>
+              <td class="col-val">${Utils.escapeHtml(orgB)}</td>
             </tr>
             <tr>
-              <td style="width: 25px; vertical-align: top; font-weight: bold;">d.</td>
-              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgD || ' ')}</td>
+              <td class="col-num"></td>
+              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">c.</td>
+              <td class="col-colon"></td>
+              <td class="col-val">${Utils.escapeHtml(orgC)}</td>
+            </tr>
+            <tr>
+              <td class="col-num"></td>
+              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">d.</td>
+              <td class="col-colon"></td>
+              <td class="col-val">${Utils.escapeHtml(orgD)}</td>
             </tr>
           </table>
 
-          <!-- Tanda Tangan Pembina Pendamping -->
-          <div class="biodata-sheet-signature-box" style="margin-top: 35px;">
+          <!-- Blok Tanda Tangan Pembina Pendamping Sesuai Format PMI -->
+          <div class="biodata-sheet-signature-box">
             <div class="biodata-sheet-signature">
-              <div>Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
-              <div style="margin-top: 4px; font-weight: 700;">Pembina Pendamping,</div>
-              <div style="height: 65px;"></div>
-              <div style="font-weight: 800; text-decoration: underline; text-transform: uppercase;">( ${Utils.escapeHtml(p.full_name || '...........................................')} )</div>
+              <div class="sig-date">Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
+              <div class="sig-role">Pembina Pendamping,</div>
+              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...........................................').toUpperCase())} )</div>
             </div>
           </div>
         </div>
@@ -11585,134 +11540,47 @@ const App = {
             <h4>${Utils.escapeHtml(organizerName)}</h4>
           </div>
 
-          <div style="position: relative; min-height: 220px;">
-            <!-- Pas Foto 3x4 Frame -->
-            <div style="position: absolute; right: 0; top: 0; width: 114px; height: 152px; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; box-sizing: border-box; text-align: center;">
-              ${p.photo_url ? `
-                <img src="${Utils.escapeHtml(p.photo_url)}" alt="Pas Foto 3x4" style="width: 100%; height: 100%; object-fit: cover;">
-              ` : `
-                <div style="font-size: 8pt; font-weight: 700; color: #475569; line-height: 1.35;">
-                  PAS FOTO<br>3 x 4
-                </div>
-              `}
-            </div>
-
-            <!-- Bagian 1: Data Peserta & Sekolah -->
-            <table class="biodata-sheet-table" style="width: calc(100% - 130px);">
-              <tr>
-                <td class="col-num">1.</td>
-                <td class="col-label">Nama Sekolah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.unit_name || p.school_name || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">2.</td>
-                <td class="col-label">Alamat Sekolah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.school_address || p.unit_address || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num"></td>
-                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.school_phone || p.unit_phone || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">3.</td>
-                <td class="col-label">Nama Lengkap</td>
-                <td class="col-colon">:</td>
-                <td class="col-val" style="font-weight: 800; text-transform: uppercase;">${Utils.escapeHtml(p.full_name || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">4.</td>
-                <td class="col-label">Tempat / Tgl Lahir</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(ttl)}</td>
-              </tr>
-              <tr>
-                <td class="col-num">5.</td>
-                <td class="col-label">Kelas</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.class_name || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">6.</td>
-                <td class="col-label" style="letter-spacing: 2px;">A l a m a t</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.address || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num"></td>
-                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.phone || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">7.</td>
-                <td class="col-label">Agama</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.religion || '-')}</td>
-              </tr>
-              <tr>
-                <td class="col-num">8.</td>
-                <td class="col-label">Jenis Kelamin</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(genderText)}</td>
-              </tr>
-              <tr>
-                <td class="col-num">9.</td>
-                <td class="col-label">Golongan Darah</td>
-                <td class="col-colon">:</td>
-                <td class="col-val">${Utils.escapeHtml(p.blood_type || '-')}</td>
-              </tr>
-            </table>
-          </div>
-
-          <div class="biodata-sheet-dots" style="margin: 8px 0;"></div>
-
-          <!-- Bagian 2: Orang Tua / Wali -->
+          <!-- Tabel Data Resmi Peserta Sesuai Blangko PMI -->
           <table class="biodata-sheet-table">
+            ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
+            ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
+            ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
+            ${renderRow('3', 'Nama Lengkap', (p.full_name || '').toUpperCase())}
+            ${renderRow('4', 'Tempat / Tgl Lahir', ttl)}
+            ${renderRow('5', 'Kelas', p.class_name)}
+            ${renderRow('6', 'A l a m a t', p.address)}
+            ${renderRow('', 'Telp. / HP', p.phone, true)}
+            ${renderRow('7', 'Agama', p.religion)}
+            ${renderRow('8', 'Jenis Kelamin', genderText)}
+            ${renderRow('9', 'Golongan Darah', p.blood_type)}
+            <tr>
+              <td colspan="4" style="padding: 4px 0;">
+                <div class="biodata-sheet-divider"></div>
+              </td>
+            </tr>
             <tr>
               <td class="col-num"></td>
               <td class="col-label" style="font-weight: 800; text-decoration: underline;">Orang Tua / Wali</td>
               <td class="col-colon">:</td>
-              <td class="col-val"></td>
+              <td class="col-val" style="border-bottom: none;"></td>
             </tr>
+            ${renderRow('10', 'Nama Lengkap', p.parent_name || p.emergency_contact)}
+            ${renderRow('11', 'A l a m a t', p.parent_address || p.address)}
+            ${renderRow('', 'Telp. / HP', p.parent_phone || p.phone, true)}
+            ${renderRow('12', 'Pekerjaan', p.parent_job)}
             <tr>
-              <td class="col-num">10.</td>
-              <td class="col-label">Nama Lengkap</td>
-              <td class="col-colon">:</td>
-              <td class="col-val" style="font-weight: 700;">${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</td>
-            </tr>
-            <tr>
-              <td class="col-num">11.</td>
-              <td class="col-label" style="letter-spacing: 2px;">A l a m a t</td>
-              <td class="col-colon">:</td>
-              <td class="col-val">${Utils.escapeHtml(p.parent_address || p.address || '-')}</td>
-            </tr>
-            <tr>
-              <td class="col-num"></td>
-              <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
-              <td class="col-colon">:</td>
-              <td class="col-val">${Utils.escapeHtml(p.parent_phone || p.phone || '-')}</td>
-            </tr>
-            <tr>
-              <td class="col-num">12.</td>
-              <td class="col-label">Pekerjaan</td>
-              <td class="col-colon">:</td>
-              <td class="col-val">${Utils.escapeHtml(p.parent_job || '-')}</td>
+              <td colspan="4" style="padding: 4px 0;">
+                <div class="biodata-sheet-divider"></div>
+              </td>
             </tr>
           </table>
 
-          <div class="biodata-sheet-dots" style="margin: 8px 0 25px 0;"></div>
-
-          <!-- Bagian 3: Tanda Tangan Peserta -->
+          <!-- Blok Tanda Tangan Peserta Sesuai Format PMI -->
           <div class="biodata-sheet-signature-box">
             <div class="biodata-sheet-signature">
-              <div>Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
-              <div style="margin-top: 4px; font-weight: 700;">Peserta,</div>
-              <div style="height: 65px;"></div>
-              <div style="font-weight: 800; text-decoration: underline; text-transform: uppercase;">( ${Utils.escapeHtml(p.full_name || '...........................................')} )</div>
+              <div class="sig-date">Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
+              <div class="sig-role">Peserta,</div>
+              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...........................................').toUpperCase())} )</div>
             </div>
           </div>
         </div>
@@ -13651,27 +13519,57 @@ const App = {
   },
 
   handleRegistrationTypeChange(val) {
+    const schoolGroup = document.getElementById('fullRegSchoolGroup');
+    const isPeserta = (val === 'Peserta');
+    const isPendamping = (val === 'Pendamping');
+    if (schoolGroup) schoolGroup.style.display = (isPeserta || isPendamping) ? 'block' : 'none';
+
+    const classGroup = document.getElementById('fullRegClassGroup');
+    const classInput = document.getElementById('fullRegClassName');
+    const lastEduGroup = document.getElementById('fullRegLastEducationGroup');
+    const lastEduInput = document.getElementById('fullRegLastEducation');
+    const parentGroup = document.getElementById('fullRegParentGroup');
+    const pendampingGroup = document.getElementById('fullRegPendampingGroup');
     const levelGroup = document.getElementById('fullRegLevelGroup');
     const levelSelect = document.getElementById('fullRegLevel');
+    const levelLabel = document.getElementById('fullRegLevelLabel');
     const unitGroup = document.getElementById('fullRegUnitGroup');
     const unitSelect = document.getElementById('fullRegUnitId');
     const unitLabel = document.getElementById('fullRegUnitLabel');
-    const levelLabel = document.getElementById('fullRegLevelLabel');
     const nisnLabel = document.getElementById('fullRegNisnLabel');
+    const section2Title = document.getElementById('fullRegSection2Title');
+    const section3Title = document.getElementById('fullRegSection3Title');
 
-    const schoolGroup = document.getElementById('fullRegSchoolGroup');
-    const classGroup = document.getElementById('fullRegClassGroup');
-    const classInput = document.getElementById('fullRegClassName');
-    const parentGroup = document.getElementById('fullRegParentGroup');
-
-    const isPeserta = (val === 'Peserta');
-    const isPendamping = (val === 'Pendamping');
-    if (schoolGroup) schoolGroup.style.display = (isPeserta || isPendamping) ? 'grid' : 'none';
+    // Toggle kelas vs pendidikan terakhir
     if (classGroup) classGroup.style.display = isPeserta ? 'block' : 'none';
     if (classInput) classInput.required = isPeserta;
+    if (lastEduGroup) lastEduGroup.style.display = isPendamping ? 'block' : 'none';
+    if (lastEduInput) lastEduInput.required = isPendamping;
+
+    // Toggle data ortu vs organisasi pendamping
     if (parentGroup) parentGroup.style.display = isPeserta ? 'block' : 'none';
-    const pendampingGroup = document.getElementById('fullRegPendampingGroup');
     if (pendampingGroup) pendampingGroup.style.display = isPendamping ? 'block' : 'none';
+
+    // Update Section 2 & 3 titles
+    if (section2Title) {
+      if (isPendamping) {
+        section2Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">2</span> Biodata Diri Pembina Pendamping`;
+      } else if (isPeserta) {
+        section2Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">2</span> Biodata Diri Peserta PMR`;
+      } else {
+        section2Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">2</span> Biodata Lengkap Pendaftar`;
+      }
+    }
+
+    if (section3Title) {
+      if (isPendamping) {
+        section3Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">3</span> Kontak WhatsApp, Email & Riwayat Organisasi`;
+      } else if (isPeserta) {
+        section3Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">3</span> Kontak WhatsApp, Email & Data Orang Tua / Wali`;
+      } else {
+        section3Title.innerHTML = `<span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">3</span> Kontak WhatsApp & Alamat Email`;
+      }
+    }
 
     // Tampilkan Unit & Unsur untuk Peserta, Panitia, Peninjau, dan Pendamping
     const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping');
@@ -13682,11 +13580,23 @@ const App = {
     if (levelSelect) {
       levelSelect.required = showUnitAndUnsur;
       if (val === 'Pendamping') {
-        const opt = Array.from(levelSelect.options).find(o => o.value === 'Pendamping');
-        if (opt) levelSelect.value = 'Pendamping';
+        let opt = Array.from(levelSelect.options).find(o => o.value === 'Pendamping');
+        if (!opt) {
+          opt = document.createElement('option');
+          opt.value = 'Pendamping';
+          opt.textContent = 'Pembina Pendamping';
+          levelSelect.appendChild(opt);
+        }
+        levelSelect.value = 'Pendamping';
       } else if (val === 'Peninjau') {
-        const opt = Array.from(levelSelect.options).find(o => o.value === 'Peninjau');
-        if (opt) levelSelect.value = 'Peninjau';
+        let opt = Array.from(levelSelect.options).find(o => o.value === 'Peninjau');
+        if (!opt) {
+          opt = document.createElement('option');
+          opt.value = 'Peninjau';
+          opt.textContent = 'Peninjau';
+          levelSelect.appendChild(opt);
+        }
+        levelSelect.value = 'Peninjau';
       }
     }
 
@@ -13705,7 +13615,7 @@ const App = {
       } else if (val === 'Pendamping') {
         levelLabel.textContent = 'Unsur / Jabatan Pendamping *';
       } else {
-        levelLabel.textContent = 'Unsur Kontingen *';
+        levelLabel.textContent = 'Unsur / Tingkatan Kontingen *';
       }
     }
 
@@ -13715,9 +13625,9 @@ const App = {
       } else if (val === 'Peninjau') {
         unitLabel.textContent = 'Kontingen / Unit Asal Peninjau *';
       } else if (val === 'Pendamping') {
-        unitLabel.textContent = 'Kontingen / Unit Asal Pendamping *';
+        unitLabel.textContent = 'Pangkalan Sekolah / Kontingen Pendamping *';
       } else {
-        unitLabel.textContent = 'Kontingen / Unit / Instansi *';
+        unitLabel.textContent = 'Kontingen / Pangkalan Unit Sekolah *';
       }
     }
 
@@ -13725,7 +13635,7 @@ const App = {
       if (val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping') {
         nisnLabel.textContent = 'NIK / No. Identitas KTP *';
       } else {
-        nisnLabel.textContent = 'NISN / NIK / No. Identitas';
+        nisnLabel.textContent = 'NISN / NIK / No. Induk Siswa *';
       }
     }
   },
@@ -13844,218 +13754,253 @@ const App = {
         </div>
 
         <form onsubmit="App.handleFullRegisterSubmit(event)">
-          <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
-            <h4 style="color: var(--primary); margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-users"></i> 1. Kategori Pendaftaran & Kontingen / Instansi
-            </h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Kategori Pendaftaran *</label>
-                <select id="fullRegRegistrationType" onchange="App.handleRegistrationTypeChange(this.value)" required>
+          <!-- BAGIAN 1: KATEGORI & KONTINGEN ASAL -->
+          <div style="background: #ffffff; padding: 1.5rem; border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color); margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+              <h4 style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">1</span>
+                Kategori Pendaftaran & Pangkalan Kontingen
+              </h4>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Kategori Pendaftaran *</label>
+                <select id="fullRegRegistrationType" onchange="App.handleRegistrationTypeChange(this.value)" required style="font-weight: 600;">
                   <option value="Peserta">Peserta PMR (Mula / Madya / Wira)</option>
+                  <option value="Pendamping">Pembina Pendamping (Madya & Wira)</option>
                   <option value="Panitia">Panitia Pelaksana</option>
                   <option value="Peninjau">Peninjau</option>
-                  <option value="Pendamping">Pendamping</option>
                   <option value="Tamu Undangan">Tamu Undangan Resmi / VIP</option>
                   <option value="Media">Media / Pers / Publikasi</option>
                 </select>
               </div>
-              <div class="form-group" id="fullRegUnitGroup">
-                <label class="form-label" id="fullRegUnitLabel">Kontingen / Unit / Instansi *</label>
-                <select id="fullRegUnitId" required onchange="App.handleUnitChangeInRegistration(this.value)">
-                  <option value="">-- Pilih Kontingen / Instansi --</option>
+              <div class="form-group" id="fullRegUnitGroup" style="margin-bottom: 0;">
+                <label class="form-label" id="fullRegUnitLabel" style="font-weight: 700;">Pangkalan Sekolah / Kontingen *</label>
+                <select id="fullRegUnitId" required onchange="App.handleUnitChangeInRegistration(this.value)" style="font-weight: 600;">
+                  <option value="">-- Pilih Kontingen / Sekolah --</option>
                   ${unitOptionsHtml}
                 </select>
               </div>
-              <div class="form-group" id="fullRegLevelGroup">
-                <label class="form-label" id="fullRegLevelLabel">Unsur Kontingen *</label>
-                <select id="fullRegLevel" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" id="fullRegLevelGroup" style="margin-bottom: 0;">
+                <label class="form-label" id="fullRegLevelLabel" style="font-weight: 700;">Unsur / Tingkatan *</label>
+                <select id="fullRegLevel" required style="font-weight: 600;">
                   <option value="">-- Pilih Unsur Kontingen --</option>
                   ${levelOptionsHtml}
                 </select>
               </div>
-            </div>
-
-            <!-- Alamat & Telp Sekolah / Pangkalan Unit -->
-            <div id="fullRegSchoolGroup" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color);">
-              <div class="form-group">
-                <label class="form-label">Alamat Sekolah / Pangkalan Kontingen</label>
-                <input type="text" id="fullRegSchoolAddress" placeholder="Alamat lengkap sekolah...">
-                <small style="color: var(--text-muted); font-size: 0.75rem;">Otomatis terisi dari master unit, dapat disesuaikan jika perlu.</small>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Telp. / HP Sekolah</label>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Telp. / HP Sekolah</label>
                 <input type="text" id="fullRegSchoolPhone" placeholder="Contoh: (0284) 321xxx / 08xxx">
               </div>
             </div>
+
+            <div class="form-group" id="fullRegSchoolGroup" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 700;">Alamat Sekolah / Pangkalan Kontingen</label>
+              <input type="text" id="fullRegSchoolAddress" placeholder="Alamat lengkap sekolah / kontingen...">
+              <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.25rem;">* Otomatis terisi saat memilih kontingen/sekolah asal, dapat disesuaikan jika perlu.</small>
+            </div>
           </div>
 
-          <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
-            <h4 style="color: var(--primary); margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-id-card"></i> 2. Biodata Lengkap Pendaftar
-            </h4>
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <label class="form-label">Nama Lengkap (Sesuai Ijazah/Akta/KTP) *</label>
-              <input type="text" id="fullRegFullName" placeholder="Masukkan nama lengkap..." required>
+          <!-- BAGIAN 2: BIODATA LENGKAP PENDAFTAR -->
+          <div style="background: #ffffff; padding: 1.5rem; border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color); margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+              <h4 id="fullRegSection2Title" style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">2</span>
+                Biodata Lengkap Pendaftar
+              </h4>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-              <div class="form-group">
-                <label class="form-label" id="fullRegNisnLabel">NISN / NIK / No. Identitas</label>
-                <input type="text" id="fullRegNisn" placeholder="Nomor NISN/NIK...">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label class="form-label" style="font-weight: 700;">Nama Lengkap (Sesuai Ijazah / KTP / Akta) *</label>
+              <input type="text" id="fullRegFullName" placeholder="Masukkan nama lengkap pendaftar..." required style="font-size: 0.95rem; font-weight: 600;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" id="fullRegNisnLabel" style="font-weight: 700;">NISN / NIK / No. Induk Siswa *</label>
+                <input type="text" id="fullRegNisn" placeholder="Nomor NISN (siswa) atau NIK (KTP)..." required>
               </div>
-              <div class="form-group">
-                <label class="form-label">Agama *</label>
-                <select id="fullRegReligion" required>
-                  ${religionOptionsHtml}
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Jenis Kelamin *</label>
-                <select id="fullRegGender" required>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Jenis Kelamin *</label>
+                <select id="fullRegGender" required style="font-weight: 600;">
                   ${genderOptionsHtml}
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">Golongan Darah *</label>
-                <select id="fullRegBloodType" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Tempat Lahir *</label>
+                <input type="text" id="fullRegBirthPlace" placeholder="Kota / Kabupaten tempat lahir..." required>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Tanggal Lahir *</label>
+                <input type="date" id="fullRegBirthDate" required>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Agama *</label>
+                <select id="fullRegReligion" required style="font-weight: 600;">
+                  ${religionOptionsHtml}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Golongan Darah *</label>
+                <select id="fullRegBloodType" required style="font-weight: 600;">
                   ${bloodTypeOptionsHtml}
                 </select>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Tempat Lahir</label>
-                <input type="text" id="fullRegBirthPlace" placeholder="Kota lahir...">
+            <!-- Row 5: Kelas (untuk Peserta) ATAU Pendidikan Terakhir (untuk Pendamping) berpasangan dengan Disabilitas -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div>
+                <div class="form-group" id="fullRegClassGroup" style="margin-bottom: 0;">
+                  <label class="form-label" id="fullRegClassLabel" style="font-weight: 700;">Kelas di Sekolah *</label>
+                  <input type="text" id="fullRegClassName" placeholder="Contoh: VII A, VIII B, X-1, XI MIPA 2" required>
+                </div>
+                <div class="form-group" id="fullRegLastEducationGroup" style="display: none; margin-bottom: 0;">
+                  <label class="form-label" style="font-weight: 700;">Pendidikan Terakhir *</label>
+                  <input type="text" id="fullRegLastEducation" placeholder="Contoh: SMA / SMK / D3 / S1 Pendidikan / S2">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Tanggal Lahir</label>
-                <input type="date" id="fullRegBirthDate">
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-              <div class="form-group" id="fullRegClassGroup">
-                <label class="form-label" id="fullRegClassLabel">Kelas (Khusus Peserta PMR) *</label>
-                <input type="text" id="fullRegClassName" placeholder="Contoh: VII A, VIII B, X-1, XI MIPA 2" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Status Disabilitas (Penyandang Disabilitas?) *</label>
-                <select id="fullRegIsDisabled" onchange="App.toggleDisabilityTypeField(this.value)" required>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Status Disabilitas *</label>
+                <select id="fullRegIsDisabled" onchange="App.toggleDisabilityTypeField(this.value)" required style="font-weight: 600;">
                   ${disabilityStatusOptionsHtml}
                 </select>
               </div>
             </div>
 
             <div class="form-group" id="fullRegDisabilityTypeGroup" style="display: none; margin-bottom: 1rem;">
-              <label class="form-label">Jenis Disabilitas *</label>
+              <label class="form-label" style="font-weight: 700;">Jenis Disabilitas *</label>
               <select id="fullRegDisabilityType">
                 ${disabilityTypeOptionsHtml}
               </select>
             </div>
 
-            <div class="form-group" style="margin-bottom: 0.5rem;">
-              <label class="form-label">Alamat Tempat Tinggal *</label>
-              <textarea id="fullRegAddress" rows="2" placeholder="Masukkan alamat lengkap tempat tinggal (Jalan, RT/RW, Kelurahan, Kecamatan, Kabupaten)..." required></textarea>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-weight: 700;">Alamat Lengkap Tempat Tinggal (Domisili) *</label>
+              <textarea id="fullRegAddress" rows="2" placeholder="Nama Jalan, RT/RW, Dusun/Desa/Kelurahan, Kecamatan, Kabupaten..." required></textarea>
             </div>
-
           </div>
 
-          <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
-            <h4 style="color: var(--primary); margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-envelope-open-text"></i> 3. Kontak WhatsApp, Email & Data Orang Tua / Wali
-            </h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Nomor WhatsApp Aktif (Notifikasi WA) *</label>
+          <!-- BAGIAN 3: KONTAK & DATA PENDUKUNG -->
+          <div style="background: #ffffff; padding: 1.5rem; border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color); margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+              <h4 id="fullRegSection3Title" style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">3</span>
+                Kontak WhatsApp, Email & Data Orang Tua / Wali
+              </h4>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Nomor WhatsApp Aktif *</label>
                 <input type="text" id="fullRegPhone" placeholder="Contoh: 08123456789" required>
-                <small style="color: var(--text-muted); font-size: 0.75rem;">Notifikasi bukti & akun login dikirim otomatis dari sistem ke WA ini.</small>
+                <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.25rem;">* Notifikasi pendaftaran & akses akun otomatis dikirim ke nomor ini.</small>
               </div>
-              <div class="form-group">
-                <label class="form-label">Alamat Email Pendaftar *</label>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">Alamat Email Aktif *</label>
                 <input type="email" id="fullRegEmail" placeholder="contoh@email.com" required>
-                <small style="color: var(--text-muted); font-size: 0.75rem;">Informasi pendaftaran, user & password dikirim otomatis ke email ini.</small>
+                <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.25rem;">* Informasi pendaftaran & kredensial login dikirim ke email ini.</small>
               </div>
             </div>
 
-            <!-- Orang Tua / Wali (Khusus Peserta PMR) -->
-            <div id="fullRegParentGroup" style="background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 0.5rem;">
-              <h5 style="color: #0f172a; margin-bottom: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem;">
-                <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali (Wajib untuk Peserta PMR)
+            <!-- Khusus Peserta: Data Orang Tua / Wali -->
+            <div id="fullRegParentGroup" style="background: #f8fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1rem;">
+              <h5 style="color: #0f172a; margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;">
+                <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali (Khusus Peserta PMR)
               </h5>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
-                <div class="form-group">
-                  <label class="form-label">Nama Lengkap Orang Tua / Wali *</label>
-                  <input type="text" id="fullRegParentName" placeholder="Nama ayah / ibu / wali...">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-weight: 700;">Nama Lengkap Orang Tua / Wali *</label>
+                  <input type="text" id="fullRegParentName" placeholder="Nama lengkap ayah / ibu / wali...">
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Pekerjaan Orang Tua / Wali</label>
-                  <input type="text" id="fullRegParentJob" placeholder="PNS, Wiraswasta, Petani, dll...">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-weight: 700;">Pekerjaan Orang Tua / Wali</label>
+                  <input type="text" id="fullRegParentJob" placeholder="PNS, Wiraswasta, Petani, Guru, dll...">
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Telp. / HP Orang Tua / Wali *</label>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-weight: 700;">Telp. / HP Orang Tua / Wali *</label>
                   <input type="text" id="fullRegParentPhone" placeholder="Contoh: 08123456789">
                 </div>
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                  <label class="form-label" style="margin-bottom: 0;">Alamat Tempat Tinggal Orang Tua / Wali *</label>
-                  <label style="font-size: 0.78rem; color: var(--primary); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;">
-                    <input type="checkbox" onchange="App.handleCopyAddressToParent(this.checked)"> Sama dengan alamat peserta
-                  </label>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label class="form-label" style="margin-bottom: 0; font-weight: 700;">Alamat Tempat Tinggal Orang Tua / Wali *</label>
+                    <label style="font-size: 0.78rem; color: var(--primary); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;">
+                      <input type="checkbox" onchange="App.handleCopyAddressToParent(this.checked)"> Sama dengan alamat peserta
+                    </label>
+                  </div>
+                  <input type="text" id="fullRegParentAddress" placeholder="Alamat lengkap orang tua / wali...">
                 </div>
-                <textarea id="fullRegParentAddress" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
               </div>
             </div>
 
-            <!-- Khusus Pembina Pendamping -->
-            <div id="fullRegPendampingGroup" style="display: none; background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #bfdbfe; margin-top: 0.5rem;">
-              <h5 style="color: #1e40af; margin-bottom: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem;">
-                <i class="fa-solid fa-user-tie" style="color: #2563eb;"></i> Data Khusus Pembina Pendamping
-              </h5>
-              <div class="form-group" style="margin-bottom: 0.75rem;">
-                <label class="form-label">Pendidikan Terakhir *</label>
-                <input type="text" id="fullRegLastEducation" placeholder="Contoh: SMA / SMK / D3 / S1 Pendidikan / S2">
+            <!-- Khusus Pembina Pendamping: Organisasi yang Diikuti -->
+            <div id="fullRegPendampingGroup" style="display: none; background: #f8fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 1rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <h5 style="color: #0f172a; margin: 0; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-sitemap" style="color: var(--primary);"></i> Organisasi yang Diikuti (Sesuai Blangko Resmi PMI)
+                </h5>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Maksimal 4 organisasi</span>
               </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label">Organisasi yang Diikuti (Sesuai Blangko PMI: a, b, c, d)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">a.</span>
-                    <input type="text" id="fullRegOrgA" placeholder="Nama organisasi 1 (misal: PMI)">
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">b.</span>
-                    <input type="text" id="fullRegOrgB" placeholder="Nama organisasi 2 (misal: PGRI)">
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">c.</span>
-                    <input type="text" id="fullRegOrgC" placeholder="Nama organisasi 3 (misal: Pramuka)">
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">d.</span>
-                    <input type="text" id="fullRegOrgD" placeholder="Nama organisasi 4">
-                  </div>
+              <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1rem 0;">
+                Tuliskan nama organisasi kepalangmerahan, pendidikan, kepemudaan, atau kemasyarakatan yang pernah / sedang diikuti:
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #334155;">a. Organisasi Pertama (Utama)</label>
+                  <input type="text" id="fullRegOrgA" placeholder="Contoh: Palang Merah Indonesia (PMI)">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #334155;">b. Organisasi Kedua</label>
+                  <input type="text" id="fullRegOrgB" placeholder="Contoh: PGRI / Organisasi Guru / Profesi">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #334155;">c. Organisasi Ketiga</label>
+                  <input type="text" id="fullRegOrgC" placeholder="Contoh: Gerakan Pramuka">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 0.82rem; font-weight: 700; color: #334155;">d. Organisasi Keempat (Opsional)</label>
+                  <input type="text" id="fullRegOrgD" placeholder="Nama organisasi lainnya">
                 </div>
               </div>
             </div>
           </div>
 
-          <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
-            <h4 style="color: var(--primary); margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-cloud-arrow-up"></i> 4. Unggah Dokumen Berkas (Pas Foto & Surat Tugas / Mandat / Press)
-            </h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Upload Pas Foto (3x4 / Berwarna) *</label>
-                <input type="file" id="fullRegPhotoFile" accept="image/*" class="form-control" style="padding: 0.4rem; background: #fff;" required>
-                <small style="color: var(--text-muted); font-size: 0.75rem;">Format: JPG, PNG, WEBP. Maksimum 2MB.</small>
+          <!-- BAGIAN 4: UNGGAH DOKUMEN BERKAS PERSYARATAN -->
+          <div style="background: #ffffff; padding: 1.5rem; border-radius: var(--radius-lg, 12px); border: 1px solid var(--border-color); margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+              <h4 style="color: var(--primary); margin: 0; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="background: #e0f2fe; color: #0284c7; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800;">4</span>
+                Unggah Dokumen Berkas Persyaratan (Pas Foto & Surat Tugas)
+              </h4>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+              <div class="form-group" style="margin-bottom: 0; background: #f8fafc; padding: 1.1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label class="form-label" style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-camera" style="color: #0284c7;"></i> Pas Foto Resmi (3x4 Berwarna) *
+                </label>
+                <input type="file" id="fullRegPhotoFile" accept="image/*" class="form-control" style="padding: 0.45rem; background: #fff; margin-bottom: 0.4rem;" required>
+                <small style="color: var(--text-muted); font-size: 0.75rem; display: block;">Format: JPG, PNG, WEBP. Maksimum 2MB. Background merah / biru rapi.</small>
               </div>
-              <div class="form-group">
-                <label class="form-label">Upload Surat Tugas / Mandat / Kartu Pers *</label>
-                <input type="file" id="fullRegAssignmentFile" accept="image/*,application/pdf" class="form-control" style="padding: 0.4rem; background: #fff;" required>
-                <small style="color: var(--text-muted); font-size: 0.75rem;">Format: PDF atau Gambar (JPG/PNG). Maksimum 5MB.</small>
+
+              <div class="form-group" style="margin-bottom: 0; background: #f8fafc; padding: 1.1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label class="form-label" style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.4rem;">
+                  <i class="fa-solid fa-file-contract" style="color: #dc2626;"></i> Surat Tugas / Mandat Kontingen *
+                </label>
+                <input type="file" id="fullRegAssignmentFile" accept=".pdf,image/*" class="form-control" style="padding: 0.45rem; background: #fff; margin-bottom: 0.4rem;" required>
+                <small style="color: var(--text-muted); font-size: 0.75rem; display: block;">Format: PDF atau Foto/Scan (JPG/PNG). Ditandatangani Kepala Sekolah / Pembina.</small>
               </div>
             </div>
           </div>
