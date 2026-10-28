@@ -192,7 +192,7 @@ if ($method === 'POST' && $action === 'scan') {
 }
 
 if ($method === 'GET' && $action === 'my_attendance') {
-    $user = requireUser(['peserta', 'unit', 'kabupaten', 'panitia', 'peninjau', 'tamu', 'media']);
+    $user = requireUser(['peserta', 'unit', 'kabupaten', 'panitia', 'peninjau', 'pendamping', 'tamu', 'media']);
     
     $stmtP = $pdo->prepare("SELECT id, code, full_name FROM participants WHERE user_id = ? OR email = ? OR code = ? ORDER BY id DESC LIMIT 1");
     $stmtP->execute([$user['id'], $user['email'] ?? '', $user['username'] ?? '']);

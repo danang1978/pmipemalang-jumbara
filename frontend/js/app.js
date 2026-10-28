@@ -315,6 +315,9 @@ const App = {
         } else if (role === 'peninjau') {
           roleTagClass = 'role-peninjau';
           roleText = 'Peninjau';
+        } else if (role === 'pendamping') {
+          roleTagClass = 'role-pendamping';
+          roleText = 'Pendamping';
         } else if (role === 'tamu') {
           roleTagClass = 'role-tamu';
           roleText = 'Tamu Undangan';
@@ -388,8 +391,8 @@ const App = {
       // PENILAI / DEWAN JURI -> TAMPILAN DASHBOARD MOBILE PENILAI (GAYA JKN)
       document.body.classList.add('has-mobile-portal');
       await this.renderPenilaiPortal(main);
-    } else if (role === 'peninjau') {
-      // PENINJAU RESMI JUMBARA -> TAMPILAN DASHBOARD MOBILE PENINJAU (GAYA JKN)
+    } else if (role === 'peninjau' || role === 'pendamping') {
+      // PENINJAU / PENDAMPING RESMI JUMBARA -> TAMPILAN DASHBOARD MOBILE PENINJAU & PENDAMPING (GAYA JKN)
       document.body.classList.add('has-mobile-portal');
       await this.renderPeninjauPortal(main);
     } else {
@@ -2885,9 +2888,15 @@ const App = {
       const content = document.getElementById('peninjauProfileContent');
       if (!content) return;
 
-      const userName = profile.full_name || (this.currentUser ? this.currentUser.username : 'Peninjau Jumbara');
-      const unitName = profile.unit_name || 'Peninjau Resmi PMI Kabupaten';
-      const pnjCode = profile.code || 'PNJ-2026';
+      const isPendamping = (this.currentUser && this.currentUser.role === 'pendamping') || (profile.registration_type === 'Pendamping');
+      const defaultRoleName = isPendamping ? 'Pendamping Jumbara' : 'Peninjau Jumbara';
+      const defaultUnitName = isPendamping ? 'Pendamping Kontingen' : 'Peninjau Resmi PMI Kabupaten';
+      const userName = profile.full_name || (this.currentUser ? this.currentUser.username : defaultRoleName);
+      const unitName = profile.unit_name || defaultUnitName;
+      const pnjCode = profile.code || (isPendamping ? 'PDP-2026' : 'PNJ-2026');
+      const portalHeaderTitle = isPendamping ? 'PORTAL PENDAMPING' : 'PORTAL PENINJAU';
+      const roleBadgeLabel = isPendamping ? 'Pendamping Resmi' : 'Peninjau Resmi';
+      const roleBadgeIcon = isPendamping ? 'fa-user-shield' : 'fa-eye';
 
       content.innerHTML = `
         <div class="peserta-mobile-card jkn-theme">
@@ -2913,7 +2922,7 @@ const App = {
                        onerror="this.onerror=null; this.src='${this.appSettings.app_logo || 'frontend/images/logo-pmi.svg'}';">
                 </div>
                 <div class="jkn-brand-info">
-                  <span class="jkn-brand-title">PORTAL PENINJAU <span class="jkn-brand-badge" style="background: rgba(16,185,129,0.3); color: #a7f3d0; border-color: #34d399;">RESMI</span></span>
+                  <span class="jkn-brand-title">${portalHeaderTitle} <span class="jkn-brand-badge" style="background: rgba(16,185,129,0.3); color: #a7f3d0; border-color: #34d399;">RESMI</span></span>
                   <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN')}</span>
                 </div>
               </div>
@@ -2953,7 +2962,7 @@ const App = {
                       <i class="fa-solid fa-id-badge"></i> ${pnjCode}
                     </span>
                     <span class="badge" style="background: #065f46; color: #ecfdf5; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
-                      <i class="fa-solid fa-eye"></i> Peninjau Resmi
+                      <i class="fa-solid ${roleBadgeIcon}"></i> ${roleBadgeLabel}
                     </span>
                   </div>
 
@@ -4886,6 +4895,7 @@ const App = {
               <option value="Peserta">Peserta PMR</option>
               <option value="Panitia">Panitia</option>
               <option value="Peninjau">Peninjau</option>
+              <option value="Pendamping">Pendamping</option>
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
@@ -5714,6 +5724,7 @@ const App = {
               <option value="Peserta">Peserta PMR</option>
               <option value="Panitia">Panitia</option>
               <option value="Peninjau">Peninjau</option>
+              <option value="Pendamping">Pendamping</option>
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
@@ -9659,6 +9670,7 @@ const App = {
               <option value="peserta">Peserta PMR</option>
               <option value="panitia">Panitia Pelaksana</option>
               <option value="peninjau">Peninjau</option>
+              <option value="pendamping">Pendamping</option>
               <option value="tamu">Tamu Undangan</option>
               <option value="media">Media / Pers</option>
             </select>
@@ -9702,6 +9714,7 @@ const App = {
         if (r === 'unit') return '<span class="user-role-tag role-unit"><i class="fa-solid fa-school"></i> Admin Unit</span>';
         if (r === 'panitia') return '<span class="user-role-tag role-panitia"><i class="fa-solid fa-clipboard-user"></i> Panitia</span>';
         if (r === 'peninjau') return '<span class="user-role-tag role-peninjau">Peninjau</span>';
+        if (r === 'pendamping') return '<span class="user-role-tag role-pendamping"><i class="fa-solid fa-user-shield"></i> Pendamping</span>';
         if (r === 'tamu') return '<span class="user-role-tag role-tamu">Tamu</span>';
         if (r === 'media') return '<span class="user-role-tag role-media">Media</span>';
         return '<span class="user-role-tag role-peserta">Peserta</span>';
@@ -9871,6 +9884,7 @@ const App = {
                   <option value="panitia">Panitia Pelaksana</option>
                   <option value="peserta">Peserta PMR</option>
                   <option value="peninjau">Peninjau</option>
+                  <option value="pendamping">Pendamping</option>
                   <option value="tamu">Tamu Undangan</option>
                   <option value="media">Media / Pers</option>
                 </select>
@@ -9959,6 +9973,7 @@ const App = {
                   <option value="panitia" ${user.role === 'panitia' ? 'selected' : ''}>Panitia Pelaksana</option>
                   <option value="peserta" ${user.role === 'peserta' ? 'selected' : ''}>Peserta PMR</option>
                   <option value="peninjau" ${user.role === 'peninjau' ? 'selected' : ''}>Peninjau</option>
+                  <option value="pendamping" ${user.role === 'pendamping' ? 'selected' : ''}>Pendamping</option>
                   <option value="tamu" ${user.role === 'tamu' ? 'selected' : ''}>Tamu Undangan</option>
                   <option value="media" ${user.role === 'media' ? 'selected' : ''}>Media / Pers</option>
                 </select>
@@ -11390,6 +11405,9 @@ const App = {
       catTextColor = '#ffffff';
     } else if (categoryTitle.toUpperCase().includes('PENINJAU')) {
       catBg = '#059669';
+      catTextColor = '#ffffff';
+    } else if (categoryTitle.toUpperCase().includes('PENDAMPING')) {
+      catBg = '#166534';
       catTextColor = '#ffffff';
     } else if (categoryTitle.toUpperCase().includes('TAMU')) {
       catBg = '#7e22ce';
@@ -13060,8 +13078,8 @@ const App = {
           <span>Klasemen</span>
         </button>
       `;
-    } else if (role === 'peninjau') {
-      // PENINJAU RESMI BOTTOM NAV DOCK
+    } else if (role === 'peninjau' || role === 'pendamping') {
+      // PENINJAU & PENDAMPING RESMI BOTTOM NAV DOCK
       nav.style.display = 'flex';
       nav.innerHTML = `
         <button class="mobile-nav-btn active" id="mbNavPeninjauHome" onclick="App.handleMobileNav('peninjau_home')">
@@ -13174,9 +13192,10 @@ const App = {
             <li><a href="javascript:void(0)" onclick="App.switchPenilaiSubTab('agenda')"><i class="fa-solid fa-calendar-days"></i> Rundown Lomba</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout</a></li>
           `;
-        } else if (role === 'peninjau') {
+        } else if (role === 'peninjau' || role === 'pendamping') {
+          const isPdp = (role === 'pendamping');
           list.innerHTML = `
-            <li><a href="javascript:void(0)" onclick="App.switchPeninjauMobileTab('home')"><i class="fa-solid fa-house"></i> Beranda Peninjau</a></li>
+            <li><a href="javascript:void(0)" onclick="App.switchPeninjauMobileTab('home')"><i class="fa-solid fa-house"></i> ${isPdp ? 'Beranda Pendamping' : 'Beranda Peninjau'}</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPeninjauMobileTab('idcard')"><i class="fa-solid fa-id-card"></i> Cetak ID Card</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPeninjauMobileTab('qrakses')"><i class="fa-solid fa-qrcode"></i> E-Pass QR Akses</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPeninjauMobileTab('agenda')"><i class="fa-solid fa-calendar-days"></i> Rundown Acara</a></li>
@@ -13244,8 +13263,8 @@ const App = {
     const levelLabel = document.getElementById('fullRegLevelLabel');
     const nisnLabel = document.getElementById('fullRegNisnLabel');
 
-    // Tampilkan Unit & Unsur untuk Peserta, Panitia, dan Peninjau
-    const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau');
+    // Tampilkan Unit & Unsur untuk Peserta, Panitia, Peninjau, dan Pendamping
+    const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping');
 
     if (levelGroup) {
       levelGroup.style.display = showUnitAndUnsur ? 'block' : 'none';
@@ -13266,6 +13285,8 @@ const App = {
         levelLabel.textContent = 'Unsur / Jabatan Panitia *';
       } else if (val === 'Peninjau') {
         levelLabel.textContent = 'Unsur / Jabatan Peninjau *';
+      } else if (val === 'Pendamping') {
+        levelLabel.textContent = 'Unsur / Jabatan Pendamping *';
       } else {
         levelLabel.textContent = 'Unsur Kontingen *';
       }
@@ -13276,13 +13297,15 @@ const App = {
         unitLabel.textContent = 'Kontingen / Unit / Instansi Panitia *';
       } else if (val === 'Peninjau') {
         unitLabel.textContent = 'Kontingen / Unit Asal Peninjau *';
+      } else if (val === 'Pendamping') {
+        unitLabel.textContent = 'Kontingen / Unit Asal Pendamping *';
       } else {
         unitLabel.textContent = 'Kontingen / Unit / Instansi *';
       }
     }
 
     if (nisnLabel) {
-      if (val === 'Panitia' || val === 'Peninjau') {
+      if (val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping') {
         nisnLabel.textContent = 'NIK / No. Identitas KTP *';
       } else {
         nisnLabel.textContent = 'NISN / NIK / No. Identitas';
@@ -13386,7 +13409,8 @@ const App = {
                 <select id="fullRegRegistrationType" onchange="App.handleRegistrationTypeChange(this.value)" required>
                   <option value="Peserta">Peserta PMR (Mula / Madya / Wira)</option>
                   <option value="Panitia">Panitia Pelaksana Jumbara</option>
-                  <option value="Peninjau">Peninjau Kontingen / Pendamping</option>
+                  <option value="Peninjau">Peninjau Kontingen</option>
+                  <option value="Pendamping">Pendamping Kontingen</option>
                   <option value="Tamu Undangan">Tamu Undangan Resmi / VIP</option>
                   <option value="Media">Media / Pers / Publikasi</option>
                 </select>
@@ -13581,7 +13605,7 @@ const App = {
       const unitSelect = document.getElementById('fullRegUnitId');
       const unitVal = unitSelect ? unitSelect.value : '';
 
-      if (regType === 'Peserta' || regType === 'Panitia' || regType === 'Peninjau') {
+      if (regType === 'Peserta' || regType === 'Panitia' || regType === 'Peninjau' || regType === 'Pendamping') {
         if (!unitVal) {
           if (submitBtn) {
             submitBtn.disabled = false;

@@ -877,6 +877,7 @@ $settings = getAppSettings();
                 <option value="Peserta">Peserta PMR</option>
                 <option value="Panitia">Panitia</option>
                 <option value="Peninjau">Peninjau</option>
+                <option value="Pendamping">Pendamping</option>
                 <option value="Tamu Undangan">Tamu Undangan</option>
                 <option value="Media">Media / Pers</option>
               </select>
@@ -889,6 +890,7 @@ $settings = getAppSettings();
                 <option value="Wira">Wira (SMA/SMK)</option>
                 <option value="Kepala Sekolah">Kepala Sekolah</option>
                 <option value="Pembina PMR">Pembina PMR</option>
+                <option value="Pendamping">Pendamping</option>
                 <option value="Anggota PMR">Anggota PMR</option>
                 <option value="Pengurus">Pengurus</option>
                 <option value="Pegawai">Pegawai</option>

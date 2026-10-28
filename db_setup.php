@@ -247,7 +247,7 @@ try {
     } catch (Exception $e) {}
 
     try {
-        $pdo->exec("ALTER TABLE participants ADD COLUMN registration_type ENUM('Peserta', 'Panitia', 'Peninjau', 'Tamu Undangan', 'Media') DEFAULT 'Peserta'");
+        $pdo->exec("ALTER TABLE participants ADD COLUMN registration_type ENUM('Peserta', 'Panitia', 'Peninjau', 'Pendamping', 'Tamu Undangan', 'Media') DEFAULT 'Peserta'");
     } catch (Exception $e) {}
 
     try {

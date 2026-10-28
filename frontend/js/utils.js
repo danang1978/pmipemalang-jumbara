@@ -229,6 +229,9 @@ const Utils = {
     if (lvl.includes('peninjau')) {
       return `<span class="level-badge" style="background: #ecfdf5; color: #047857; border: 1px solid #6ee7b7;"><i class="fa-solid fa-eye"></i> Peninjau</span>`;
     }
+    if (lvl.includes('pendamping')) {
+      return `<span class="level-badge" style="background: #f0fdf4; color: #166534; border: 1px solid #86efac;"><i class="fa-solid fa-user-shield"></i> Pendamping</span>`;
+    }
     if (lvl.includes('tamu')) {
       return `<span class="level-badge" style="background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe;"><i class="fa-solid fa-crown"></i> Tamu Undangan</span>`;
     }

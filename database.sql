@@ -203,7 +203,7 @@ CREATE TABLE `participants` (
   `disability_type` varchar(150) DEFAULT 'Tidak Ada',
   `address` text,
   `assignment_letter_url` varchar(255) DEFAULT NULL,
-  `registration_type` enum('Peserta','Panitia','Peninjau','Tamu Undangan','Media') DEFAULT 'Peserta',
+  `registration_type` enum('Peserta','Panitia','Peninjau','Pendamping','Tamu Undangan','Media') DEFAULT 'Peserta',
   `email` varchar(100) DEFAULT NULL,
   `certificate_number` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),

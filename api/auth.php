@@ -228,6 +228,7 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'Peserta' => 'peserta',
         'Panitia' => 'panitia',
         'Peninjau' => 'peninjau',
+        'Pendamping' => 'pendamping',
         'Tamu Undangan' => 'tamu',
         'Media' => 'media'
     ];
@@ -238,6 +239,7 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'Peserta' => 'pmr_',
         'Panitia' => 'pnt_',
         'Peninjau' => 'pnj_',
+        'Pendamping' => 'pdp_',
         'Tamu Undangan' => 'tmu_',
         'Media' => 'mda_'
     ];
@@ -347,6 +349,7 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'Peserta' => 'JMB-2026-',
             'Panitia' => 'PNT-2026-',
             'Peninjau' => 'PNJ-2026-',
+            'Pendamping' => 'PDP-2026-',
             'Tamu Undangan' => 'TMU-2026-',
             'Media' => 'MDA-2026-'
         ];

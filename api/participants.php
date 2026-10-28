@@ -12,7 +12,7 @@ $id = (int)($_GET['id'] ?? 0);
 
 // GET /api/participants.php?action=me
 if ($method === 'GET' && $action === 'me') {
-    $user = requireUser(['peserta', 'panitia', 'peninjau', 'tamu', 'media']);
+    $user = requireUser(['peserta', 'panitia', 'peninjau', 'pendamping', 'tamu', 'media']);
     $stmt = $pdo->prepare("
         SELECT p.*, un.name AS unit_name, un.code AS unit_code 
         FROM participants p 
@@ -22,7 +22,7 @@ if ($method === 'GET' && $action === 'me') {
     $stmt->execute([$user['id']]);
     $part = $stmt->fetch();
     if (!$part) {
-        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'panitia') ? 'PNT-2026-' : 'JMB-2026-');
+        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'pendamping') ? 'PDP-2026-' : (($user['role'] === 'panitia') ? 'PNT-2026-' : 'JMB-2026-'));
         $code = $prefix . str_pad($user['id'], 4, '0', STR_PAD_LEFT);
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($code);
         jsonResponse([
@@ -32,10 +32,10 @@ if ($method === 'GET' && $action === 'me') {
             'full_name' => $user['full_name'] ?? $user['username'],
             'registration_type' => ucfirst($user['role']),
             'registration_code' => $code,
-            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : 'Umum'),
+            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : 'Umum')),
             'status' => 'verified_kabupaten',
             'sub_categories' => [],
-            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : 'Kontingen PMI'),
+            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : 'Kontingen PMI')),
             'qr_code_base64' => $qrUrl,
             'photo_url' => null
         ]);
@@ -52,9 +52,9 @@ if ($method === 'GET' && $action === 'me') {
 
 // GET /api/participants.php?action=idcard&id=123 (Protected with Role & Ownership Authorization)
 if ($method === 'GET' && $action === 'idcard') {
-    $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri', 'peninjau']);
+    $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri', 'peninjau', 'pendamping']);
     if (!$id) {
-        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : 'JMB-2026-';
+        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'pendamping') ? 'PDP-2026-' : 'JMB-2026-');
         $code = $prefix . str_pad($user['id'], 4, '0', STR_PAD_LEFT);
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($code);
         jsonResponse([
@@ -63,8 +63,8 @@ if ($method === 'GET' && $action === 'idcard') {
             'user_id' => $user['id'],
             'full_name' => $user['full_name'] ?? $user['username'],
             'registration_type' => ucfirst($user['role']),
-            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : 'Umum'),
-            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : 'Kontingen PMI'),
+            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : 'Umum')),
+            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : 'Kontingen PMI')),
             'status' => 'verified_kabupaten',
             'qr_code_base64' => $qrUrl,
             'photo_url' => null
@@ -82,8 +82,8 @@ if ($method === 'GET' && $action === 'idcard') {
     if (!$part) jsonResponse(['error' => 'Data peserta tidak ditemukan.'], 404);
 
     // Multi-tenant & Role-based Authorization:
-    // Peserta & Peninjau can only view their own ID card
-    if (in_array($user['role'], ['peserta', 'peninjau']) && (int)($part['user_id'] ?? 0) !== (int)$user['id']) {
+    // Peserta, Peninjau & Pendamping can only view their own ID card
+    if (in_array($user['role'], ['peserta', 'peninjau', 'pendamping']) && (int)($part['user_id'] ?? 0) !== (int)$user['id']) {
         jsonResponse(['error' => 'Akses ditolak. Anda hanya dapat melihat ID Card Anda sendiri.'], 403);
     }
     // Unit admin can only view ID cards of participants belonging to their unit
@@ -338,7 +338,7 @@ if (($method === 'POST' || $method === 'PATCH') && $action === 'status') {
 
 // POST /api/participants.php?action=update-me (Peserta update data & berkas untuk revisi)
 if (($method === 'POST' || $method === 'PUT') && $action === 'update-me') {
-    $user = requireUser(['peserta', 'panitia', 'peninjau', 'tamu', 'media']);
+    $user = requireUser(['peserta', 'panitia', 'peninjau', 'pendamping', 'tamu', 'media']);
     $input = getJsonInput();
 
     $stmtP = $pdo->prepare("SELECT * FROM participants WHERE user_id = ?");
