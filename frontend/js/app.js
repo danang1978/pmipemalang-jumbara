@@ -1262,10 +1262,6 @@ const App = {
               <i class="fa-solid fa-globe"></i> Semua (${units.length})
             </button>
           </div>
-
-          <div style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; color: #047857; background: #ecfdf5; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid #a7f3d0; font-weight: 600;">
-            <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> Nomor WhatsApp disamarkan (Privasi Aman)
-          </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem;">
@@ -1324,7 +1320,7 @@ const App = {
           <td><i class="fa-solid fa-user-tie" style="color: #64748b; margin-right: 0.3rem;"></i> ${Utils.escapeHtml(u.pembina_name)}</td>
           <td>
             ${u.phone ? `
-              <span style="color: #334155; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem; user-select: none;" title="Nomor WhatsApp disamarkan untuk privasi">
+              <span style="color: #334155; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem; user-select: none;" title="WhatsApp">
                 <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1rem;"></i> <span>${maskedPhone}</span>
               </span>
             ` : '<span style="color: var(--text-muted);">-</span>'}

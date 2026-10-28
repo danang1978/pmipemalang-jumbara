@@ -672,7 +672,7 @@ $settings = getAppSettings();
             </div>
           </div>
           <div class="form-group" style="margin-bottom: 1rem;">
-            <label class="form-label">No. Telepon / WhatsApp (Disamarkan di Halaman Publik)</label>
+            <label class="form-label">No. Telepon / WhatsApp</label>
             <input type="text" id="unitPhoneInput" placeholder="0812xxxxxxxx">
           </div>
           <div class="form-group">
