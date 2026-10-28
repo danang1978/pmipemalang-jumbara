@@ -10915,7 +10915,24 @@ const App = {
       const regEl = document.getElementById('adminEditRegistrationType');
       if (regEl) regEl.value = p.registration_type || 'Peserta';
       const lvlEl = document.getElementById('adminEditLevel');
-      if (lvlEl) lvlEl.value = p.level || 'Wira';
+      if (lvlEl) {
+        if (p.level) {
+          let hasOption = false;
+          for (let i = 0; i < lvlEl.options.length; i++) {
+            if (lvlEl.options[i].value === p.level) {
+              hasOption = true;
+              break;
+            }
+          }
+          if (!hasOption) {
+            const opt = document.createElement('option');
+            opt.value = p.level;
+            opt.textContent = p.level;
+            lvlEl.appendChild(opt);
+          }
+        }
+        lvlEl.value = p.level || 'Wira';
+      }
       
       const statusEl = document.getElementById('adminEditStatus');
       if (statusEl) {
@@ -13220,8 +13237,56 @@ const App = {
 
   handleRegistrationTypeChange(val) {
     const levelGroup = document.getElementById('fullRegLevelGroup');
+    const levelSelect = document.getElementById('fullRegLevel');
+    const unitGroup = document.getElementById('fullRegUnitGroup');
+    const unitSelect = document.getElementById('fullRegUnitId');
+    const unitLabel = document.getElementById('fullRegUnitLabel');
+    const levelLabel = document.getElementById('fullRegLevelLabel');
+    const nisnLabel = document.getElementById('fullRegNisnLabel');
+
+    // Tampilkan Unit & Unsur untuk Peserta, Panitia, dan Peninjau
+    const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau');
+
     if (levelGroup) {
-      levelGroup.style.display = val === 'Peserta' ? 'block' : 'none';
+      levelGroup.style.display = showUnitAndUnsur ? 'block' : 'none';
+    }
+    if (levelSelect) {
+      levelSelect.required = showUnitAndUnsur;
+    }
+
+    if (unitGroup) {
+      unitGroup.style.display = 'block';
+    }
+    if (unitSelect) {
+      unitSelect.required = showUnitAndUnsur;
+    }
+
+    if (levelLabel) {
+      if (val === 'Panitia') {
+        levelLabel.textContent = 'Unsur / Jabatan Panitia *';
+      } else if (val === 'Peninjau') {
+        levelLabel.textContent = 'Unsur / Jabatan Peninjau *';
+      } else {
+        levelLabel.textContent = 'Unsur Kontingen *';
+      }
+    }
+
+    if (unitLabel) {
+      if (val === 'Panitia') {
+        unitLabel.textContent = 'Kontingen / Unit / Instansi Panitia *';
+      } else if (val === 'Peninjau') {
+        unitLabel.textContent = 'Kontingen / Unit Asal Peninjau *';
+      } else {
+        unitLabel.textContent = 'Kontingen / Unit / Instansi *';
+      }
+    }
+
+    if (nisnLabel) {
+      if (val === 'Panitia' || val === 'Peninjau') {
+        nisnLabel.textContent = 'NIK / No. Identitas KTP *';
+      } else {
+        nisnLabel.textContent = 'NISN / NIK / No. Identitas';
+      }
     }
   },
 
@@ -13325,16 +13390,17 @@ const App = {
                   <option value="Media">Media / Pers / Publikasi</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">Kontingen / Unit / Instansi *</label>
+              <div class="form-group" id="fullRegUnitGroup">
+                <label class="form-label" id="fullRegUnitLabel">Kontingen / Unit / Instansi *</label>
                 <select id="fullRegUnitId" required onchange="App.updateUnsurOptionsByUnit(this.value, 'fullRegLevel')">
                   <option value="">-- Pilih Kontingen / Instansi --</option>
                   ${unitOptionsHtml}
                 </select>
               </div>
               <div class="form-group" id="fullRegLevelGroup">
-                <label class="form-label">Unsur Kontingen *</label>
-                <select id="fullRegLevel">
+                <label class="form-label" id="fullRegLevelLabel">Unsur Kontingen *</label>
+                <select id="fullRegLevel" required>
+                  <option value="">-- Pilih Unsur Kontingen --</option>
                   ${levelOptionsHtml}
                 </select>
               </div>
@@ -13352,7 +13418,7 @@ const App = {
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
               <div class="form-group">
-                <label class="form-label">NISN / NIK / No. Identitas</label>
+                <label class="form-label" id="fullRegNisnLabel">NISN / NIK / No. Identitas</label>
                 <input type="text" id="fullRegNisn" placeholder="Nomor NISN/NIK...">
               </div>
               <div class="form-group">
@@ -13463,6 +13529,14 @@ const App = {
       </div>
     `;
 
+    if (this.currentUser && this.currentUser.unit_id) {
+      const unitEl = document.getElementById('fullRegUnitId');
+      if (unitEl) {
+        unitEl.value = String(this.currentUser.unit_id);
+        this.updateUnsurOptionsByUnit(this.currentUser.unit_id, 'fullRegLevel');
+      }
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
@@ -13499,7 +13573,33 @@ const App = {
       ]);
 
       const regType = document.getElementById('fullRegRegistrationType').value;
-      const levelVal = regType === 'Peserta' ? document.getElementById('fullRegLevel').value : regType;
+      const levelSelect = document.getElementById('fullRegLevel');
+      let levelVal = (levelSelect && levelSelect.value) ? levelSelect.value : regType;
+      if (!levelVal) levelVal = regType;
+
+      const unitSelect = document.getElementById('fullRegUnitId');
+      const unitVal = unitSelect ? unitSelect.value : '';
+
+      if (regType === 'Peserta' || regType === 'Panitia' || regType === 'Peninjau') {
+        if (!unitVal) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Pendaftaran Resmi';
+          }
+          Utils.showToast('Harap pilih Kontingen / Unit / Instansi terlebih dahulu.', 'warning');
+          unitSelect?.focus();
+          return;
+        }
+        if (!levelSelect?.value) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Pendaftaran Resmi';
+          }
+          Utils.showToast('Harap pilih Unsur / Jabatan terlebih dahulu.', 'warning');
+          levelSelect?.focus();
+          return;
+        }
+      }
 
       const isDisabled = document.getElementById('fullRegIsDisabled').value;
       const disabilityType = isDisabled === 'Ya' ? document.getElementById('fullRegDisabilityType').value : 'Tidak Ada';
@@ -13532,7 +13632,6 @@ const App = {
       Utils.showToast(res.message || 'Pendaftaran berhasil!', 'success');
 
       // Store participant data for printing PDF
-      const unitSelect = document.getElementById('fullRegUnitId');
       const selectedUnitText = unitSelect && unitSelect.options[unitSelect.selectedIndex] ? unitSelect.options[unitSelect.selectedIndex].text : '-';
 
       const participantData = res.participant_data || {
@@ -14717,7 +14816,7 @@ const App = {
     if (!select) return;
 
     if (!unitId) {
-      select.innerHTML = '<option value="">-- Pilih Unit Sekolah Terlebih Dahulu --</option>';
+      select.innerHTML = '<option value="">-- Pilih Kontingen / Unit Terlebih Dahulu --</option>';
       select.disabled = true;
       return;
     }
@@ -14729,7 +14828,7 @@ const App = {
       const unsurs = await API.getUnsur(unitId);
       select.disabled = false;
 
-      let html = '<option value="">-- Pilih Unsur Kontingen --</option>';
+      let html = '<option value="">-- Pilih Unsur Kontingen / Jabatan --</option>';
       unsurs.forEach(u => {
         const isFull = u.is_full;
         const used = u.used_quota || 0;

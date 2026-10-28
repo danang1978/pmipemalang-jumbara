@@ -169,13 +169,13 @@ $settings = getAppSettings();
           </h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
-              <label class="form-label">Unit Sekolah PMR *</label>
+              <label class="form-label">Kontingen / Unit *</label>
               <select id="regUnitId" required>
-                <option value="">-- Pilih Unit Sekolah --</option>
+                <option value="">-- Pilih Kontingen / Unit --</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Tingkat PMR *</label>
+              <label class="form-label">Unsur / Tingkat *</label>
               <select id="regLevel" required>
                 <option value="Wira">Wira (SMA / SMK / MA)</option>
                 <option value="Madya">Madya (SMP / MTs)</option>
@@ -886,6 +886,12 @@ $settings = getAppSettings();
                 <option value="Mula">Mula (SD)</option>
                 <option value="Madya">Madya (SMP)</option>
                 <option value="Wira">Wira (SMA/SMK)</option>
+                <option value="Kepala Sekolah">Kepala Sekolah</option>
+                <option value="Pembina PMR">Pembina PMR</option>
+                <option value="Anggota PMR">Anggota PMR</option>
+                <option value="Pengurus">Pengurus</option>
+                <option value="Pegawai">Pegawai</option>
+                <option value="Relawan">Relawan</option>
                 <option value="Panitia">Panitia</option>
                 <option value="Peninjau">Peninjau</option>
                 <option value="Tamu Undangan">Tamu Undangan</option>

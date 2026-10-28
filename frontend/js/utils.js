@@ -199,6 +199,18 @@ const Utils = {
     if (lvl.includes('forel')) {
       return `<span class="level-badge" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;"><i class="fa-solid fa-hands-holding-child"></i> Koordinator Forel</span>`;
     }
+    if (lvl.includes('pengurus')) {
+      return `<span class="level-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;"><i class="fa-solid fa-user-tie"></i> Pengurus</span>`;
+    }
+    if (lvl.includes('relawan')) {
+      return `<span class="level-badge" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;"><i class="fa-solid fa-hand-holding-heart"></i> Relawan</span>`;
+    }
+    if (lvl.includes('pembina')) {
+      return `<span class="level-badge" style="background: #fefce8; color: #a16207; border: 1px solid #fef08a;"><i class="fa-solid fa-chalkboard-user"></i> Pembina PMR</span>`;
+    }
+    if (lvl.includes('kepala sekolah')) {
+      return `<span class="level-badge" style="background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8;"><i class="fa-solid fa-graduation-cap"></i> Kepala Sekolah</span>`;
+    }
     if (lvl.includes('pegawai')) {
       return `<span class="level-badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;"><i class="fa-solid fa-id-card-clip"></i> Pegawai</span>`;
     }
