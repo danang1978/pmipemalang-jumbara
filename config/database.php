@@ -28,7 +28,7 @@ if (!defined('DB_NAME')) {
         define('DB_PORT', getenv('DB_PORT') ?: '3306');
         define('DB_NAME', getenv('DB_NAME') ?: 'sql_jumbara_pmipemalang_or_id');
         define('DB_USER', getenv('DB_USER') ?: 'sql_jumbara_pmipemalang_or_id');
-        define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
+        define('DB_PASS', getenv('DB_PASS') ?: 'e827ebce734fa');
     } else {
         // --- KONFIGURASI LOCAL DEVELOPMENT (MAMP / XAMPP) ---
         $isMamp = file_exists('/Applications/MAMP');
@@ -62,7 +62,16 @@ function getPDOConnection() {
             $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
             $pdo = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
-            // Fallback 1: Jika di lokal MAMP port 8889 gagal, coba port standar 3306
+            // Fallback 1: Jika di hosting atau lokal host 127.0.0.1 gagal, coba localhost
+            if ($host === '127.0.0.1') {
+                try {
+                    $dsnFallback = "mysql:host=localhost;port={$port};dbname={$dbname};charset=utf8mb4";
+                    $pdo = new PDO($dsnFallback, $user, $pass, $options);
+                    return $pdo;
+                } catch (PDOException $eHost) {}
+            }
+
+            // Fallback 2: Jika di lokal MAMP port 8889 gagal, coba port standar 3306
             if ($port === '8889') {
                 try {
                     $dsnFallback = "mysql:host={$host};port=3306;dbname={$dbname};charset=utf8mb4";
@@ -71,13 +80,16 @@ function getPDOConnection() {
                 } catch (PDOException $e2) {}
             }
 
-            // Fallback 2: Coba koneksi via socket UNIX lokal jika TCP dibatasi oleh server
-            if ($host === '127.0.0.1' || $host === 'localhost') {
-                try {
-                    $dsnSocket = "mysql:host=localhost;dbname={$dbname};charset=utf8mb4";
-                    $pdo = new PDO($dsnSocket, $user, $pass, $options);
-                    return $pdo;
-                } catch (PDOException $eSocket) {}
+            // Fallback 3: Coba koneksi via socket UNIX lokal jika TCP dibatasi oleh server
+            $socketPaths = ['/tmp/mysql.sock', '/var/run/mysqld/mysqld.sock', '/Applications/MAMP/tmp/mysql/mysql.sock'];
+            foreach ($socketPaths as $sock) {
+                if (file_exists($sock)) {
+                    try {
+                        $dsnSocket = "mysql:unix_socket={$sock};dbname={$dbname};charset=utf8mb4";
+                        $pdo = new PDO($dsnSocket, $user, $pass, $options);
+                        return $pdo;
+                    } catch (PDOException $eSocket) {}
+                }
             }
 
             error_log('[JUMBARA DB ERROR] ' . $e->getMessage());
