@@ -277,8 +277,10 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $disabilityType = trim($input['disability_type'] ?? 'Tidak Ada');
     $address = trim($input['address'] ?? '');
 
-    // Form Biodata Peserta Resmi (Kelas, Sekolah, Orang Tua/Wali)
+    // Form Biodata Peserta & Pendamping Resmi
     $className = trim($input['class_name'] ?? '');
+    $lastEducation = trim($input['last_education'] ?? '');
+    $organizations = trim($input['organizations'] ?? '');
     $schoolAddress = trim($input['school_address'] ?? '');
     $schoolPhone = trim($input['school_phone'] ?? '');
     $parentName = trim($input['parent_name'] ?? '');
@@ -379,12 +381,13 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmtPart = $pdo->prepare("
             INSERT INTO participants 
-            (code, user_id, unit_id, school_address, school_phone, full_name, nisn, level, class_name, registration_type, religion, is_disabled, disability_type, address, birth_place, birth_date, gender, blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone, parent_job, photo_url, assignment_letter_url, sub_categories, status, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_unit', ?)
+            (code, user_id, unit_id, school_address, school_phone, full_name, nisn, level, class_name, last_education, organizations, registration_type, religion, is_disabled, disability_type, address, birth_place, birth_date, gender, blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone, parent_job, photo_url, assignment_letter_url, sub_categories, status, email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_unit', ?)
         ");
         $stmtPart->execute([
             $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName,
-            $input['nisn'] ?? null, $level, $className ?: null, $registrationType, $religion, $isDisabled, $disabilityType,
+            $input['nisn'] ?? null, $level, $className ?: null, $lastEducation ?: null, $organizations ?: null,
+            $registrationType, $religion, $isDisabled, $disabilityType,
             $address ?: null, $input['birth_place'] ?? null,
             $input['birth_date'] ?? null, $input['gender'] ?? 'L',
             $input['blood_type'] ?? 'O', $input['phone'] ?? null,
@@ -453,6 +456,8 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'wa_url' => $waUrl,
                 'birth_place' => $input['birth_place'] ?? '-',
                 'birth_date' => $input['birth_date'] ?? '-',
+                'last_education' => $lastEducation ?: '-',
+                'organizations' => $organizations ?: '-',
                 'photo_url' => $photoUrl,
                 'created_at' => date('d M Y, H:i') . ' WIB'
             ]

@@ -10822,15 +10822,20 @@ const App = {
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted); width: 35%;">Unit PMR Sekolah:</td><td style="font-weight: 700;">${Utils.escapeHtml(p.unit_name)}</td></tr>
                 ${p.school_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat & Telp Sekolah:</td><td>${Utils.escapeHtml(p.school_address)} ${p.school_phone ? `(Telp: ${Utils.escapeHtml(p.school_phone)})` : ''}</td></tr>` : ''}
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Kategori Registrasi:</td><td>${Utils.getLevelBadgeHtml(p.registration_type || 'Peserta')}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Tingkat / Kelas:</td><td>${Utils.getLevelBadgeHtml(p.level)} ${p.class_name ? `• Kelas <strong>${Utils.escapeHtml(p.class_name)}</strong>` : ''}</td></tr>
+                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Tingkat / Kelas:</td><td>${(p.registration_type === 'Pendamping' || p.level === 'Pendamping') ? Utils.getLevelBadgeHtml('Pembina Pendamping') : `${Utils.getLevelBadgeHtml(p.level)} ${p.class_name ? `• Kelas <strong>${Utils.escapeHtml(p.class_name)}</strong>` : ''}`}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">NISN / NIK:</td><td>${p.nisn || '-'}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">TTL / Jenis Kelamin:</td><td>${p.birth_place || '-'}, ${Utils.formatDate(p.birth_date)} (${p.gender === 'L' ? 'Laki-laki' : 'Perempuan'})</td></tr>
+                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">TTL / Jenis Kelamin:</td><td>${p.birth_place || '-'}, ${Utils.formatDate(p.birth_date)} (${p.gender === 'P' ? 'Perempuan' : 'Laki-laki'})</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Agama / Gol. Darah:</td><td>${Utils.escapeHtml(p.religion || 'Islam')} / <strong style="color: var(--primary);">${p.blood_type || '-'}</strong></td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Status Disabilitas:</td><td>${p.is_disabled === 'Ya' ? `<strong style="color: #d97706;"><i class="fa-solid fa-wheelchair"></i> Penyandang Disabilitas (${Utils.escapeHtml(p.disability_type)})</strong>` : 'Non-Disabilitas'}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Tempat Tinggal:</td><td>${Utils.escapeHtml(p.address || '-')}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">No. WhatsApp Peserta:</td><td><strong style="color: #25d366;"><i class="fa-brands fa-whatsapp"></i> ${p.phone || '-'}</strong></td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Orang Tua / Wali:</td><td><strong>${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</strong> ${p.parent_job ? `(${Utils.escapeHtml(p.parent_job)})` : ''} ${p.parent_phone ? `• Telp: ${Utils.escapeHtml(p.parent_phone)}` : ''}</td></tr>
-                ${p.parent_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Ortu / Wali:</td><td>${Utils.escapeHtml(p.parent_address)}</td></tr>` : ''}
+                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">No. WhatsApp:</td><td><strong style="color: #25d366;"><i class="fa-brands fa-whatsapp"></i> ${p.phone || '-'}</strong></td></tr>
+                ${(p.registration_type === 'Pendamping' || p.level === 'Pendamping') ? `
+                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Pendidikan Terakhir:</td><td><strong style="color: #1e40af;">${Utils.escapeHtml(p.last_education || '-')}</strong></td></tr>
+                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted); vertical-align: top;">Organisasi Diikuti:</td><td style="white-space: pre-line;">${Utils.escapeHtml(p.organizations || '-')}</td></tr>
+                ` : `
+                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Orang Tua / Wali:</td><td><strong>${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</strong> ${p.parent_job ? `(${Utils.escapeHtml(p.parent_job)})` : ''} ${p.parent_phone ? `• Telp: ${Utils.escapeHtml(p.parent_phone)}` : ''}</td></tr>
+                  ${p.parent_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Ortu / Wali:</td><td>${Utils.escapeHtml(p.parent_address)}</td></tr>` : ''}
+                `}
               </table>
             </div>
 
@@ -11016,6 +11021,25 @@ const App = {
       const spEl = document.getElementById('adminEditSchoolPhone');
       if (spEl) spEl.value = p.school_phone || p.unit_phone || '';
 
+      const leEl = document.getElementById('adminEditLastEducation');
+      if (leEl) leEl.value = p.last_education || '';
+      const orgEl = document.getElementById('adminEditOrganizations');
+      if (orgEl) orgEl.value = p.organizations || '';
+
+      const togglePendampingAdminEdit = (val) => {
+        const isP = (val === 'Pendamping');
+        const pGrp = document.getElementById('adminEditPendampingGroup');
+        if (pGrp) pGrp.style.display = isP ? 'block' : 'none';
+        const prGrp = document.getElementById('adminEditParentGroup');
+        if (prGrp) prGrp.style.display = isP ? 'none' : 'block';
+        const clGrp = document.getElementById('adminEditClassGroup');
+        if (clGrp) clGrp.style.display = isP ? 'none' : 'block';
+      };
+      togglePendampingAdminEdit(p.registration_type || 'Peserta');
+      if (regEl) {
+        regEl.onchange = (e) => togglePendampingAdminEdit(e.target.value);
+      }
+
       // Set photo preview
       const photoPrev = document.getElementById('adminEditPhotoPreview');
       const photoStatus = document.getElementById('adminEditPhotoStatus');
@@ -11094,6 +11118,8 @@ const App = {
         parent_address: document.getElementById('adminEditParentAddress')?.value.trim(),
         school_address: document.getElementById('adminEditSchoolAddress')?.value.trim(),
         school_phone: document.getElementById('adminEditSchoolPhone')?.value.trim(),
+        last_education: document.getElementById('adminEditLastEducation')?.value.trim(),
+        organizations: document.getElementById('adminEditOrganizations')?.value.trim(),
         registration_type: document.getElementById('adminEditRegistrationType')?.value,
         level: document.getElementById('adminEditLevel')?.value,
         status: document.getElementById('adminEditStatus')?.value,
@@ -11406,7 +11432,152 @@ const App = {
       const ttl = [p.birth_place, formattedBirthDate].filter(Boolean).join(', ') || '-';
       const genderText = p.gender === 'L' ? 'Laki-laki' : (p.gender === 'P' ? 'Perempuan' : (p.gender || '-'));
 
-      const html = `
+      const isPendamping = (p.registration_type === 'Pendamping' || p.level === 'Pendamping');
+
+      let html = '';
+      if (isPendamping) {
+        let orgA = '', orgB = '', orgC = '', orgD = '';
+        if (p.organizations) {
+          const lines = p.organizations.split('\n').map(l => l.trim()).filter(Boolean);
+          lines.forEach((line, idx) => {
+            const cleaned = line.replace(/^[a-d]\.\s*/i, '').trim();
+            if (idx === 0) orgA = cleaned;
+            else if (idx === 1) orgB = cleaned;
+            else if (idx === 2) orgC = cleaned;
+            else if (idx === 3) orgD = cleaned;
+          });
+        }
+
+        html = `
+        <div class="biodata-sheet">
+          <div class="biodata-sheet-header-box">
+            <h2>BIODATA PEMBINA PENDAMPING</h2>
+            <h3>PESERTA JUMBARA PMR MADYA DAN WIRA TAHUN ${eventYear}</h3>
+            <h4>${Utils.escapeHtml(organizerName)}</h4>
+          </div>
+
+          <div style="position: relative; min-height: 220px;">
+            <!-- Pas Foto 3x4 Frame -->
+            <div style="position: absolute; right: 0; top: 0; width: 114px; height: 152px; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; box-sizing: border-box; text-align: center;">
+              ${p.photo_url ? `
+                <img src="${Utils.escapeHtml(p.photo_url)}" alt="Pas Foto 3x4" style="width: 100%; height: 100%; object-fit: cover;">
+              ` : `
+                <div style="font-size: 8pt; font-weight: 700; color: #475569; line-height: 1.35;">
+                  PAS FOTO<br>3 x 4
+                </div>
+              `}
+            </div>
+
+            <!-- Bagian: Data Pembina Pendamping -->
+            <table class="biodata-sheet-table" style="width: calc(100% - 130px);">
+              <tr>
+                <td class="col-num">1.</td>
+                <td class="col-label">Nama Sekolah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.unit_name || p.school_name || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.</td>
+                <td class="col-label">Alamat Sekolah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.school_address || p.unit_address || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num"></td>
+                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.school_phone || p.unit_phone || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">3.</td>
+                <td class="col-label" style="letter-spacing: 2px;">N a m a</td>
+                <td class="col-colon">:</td>
+                <td class="col-val" style="font-weight: 800; text-transform: uppercase;">${Utils.escapeHtml(p.full_name || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.</td>
+                <td class="col-label">Tempat / tgl lahir</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(ttl)}</td>
+              </tr>
+              <tr>
+                <td class="col-num">5.</td>
+                <td class="col-label">Jenis kelamin</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(genderText)}</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.</td>
+                <td class="col-label">Pendidikan terakhir</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.last_education || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">7.</td>
+                <td class="col-label">Agama</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.religion || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">8.</td>
+                <td class="col-label">Alamat rumah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.address || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num"></td>
+                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP.</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.phone || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">9.</td>
+                <td class="col-label">Golongan Darah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.blood_type || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.</td>
+                <td class="col-label">Organisasi yang diikuti</td>
+                <td class="col-colon">:</td>
+                <td class="col-val"></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Sub items a, b, c, d organisasi -->
+          <table class="biodata-sheet-table" style="margin-left: 20px; width: calc(100% - 20px); margin-bottom: 25px;">
+            <tr>
+              <td style="width: 25px; vertical-align: top; font-weight: bold;">a.</td>
+              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgA || ' ')}</td>
+            </tr>
+            <tr>
+              <td style="width: 25px; vertical-align: top; font-weight: bold;">b.</td>
+              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgB || ' ')}</td>
+            </tr>
+            <tr>
+              <td style="width: 25px; vertical-align: top; font-weight: bold;">c.</td>
+              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgC || ' ')}</td>
+            </tr>
+            <tr>
+              <td style="width: 25px; vertical-align: top; font-weight: bold;">d.</td>
+              <td class="col-val" style="border-bottom: 1px dotted #64748b; padding-bottom: 2px;">${Utils.escapeHtml(orgD || ' ')}</td>
+            </tr>
+          </table>
+
+          <!-- Tanda Tangan Pembina Pendamping -->
+          <div class="biodata-sheet-signature-box" style="margin-top: 35px;">
+            <div class="biodata-sheet-signature">
+              <div>Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
+              <div style="margin-top: 4px; font-weight: 700;">Pembina Pendamping,</div>
+              <div style="height: 65px;"></div>
+              <div style="font-weight: 800; text-decoration: underline; text-transform: uppercase;">( ${Utils.escapeHtml(p.full_name || '...........................................')} )</div>
+            </div>
+          </div>
+        </div>
+        `;
+      } else {
+        html = `
         <div class="biodata-sheet">
           <div class="biodata-sheet-header-box">
             <h2>BIODATA PESERTA</h2>
@@ -11545,7 +11716,8 @@ const App = {
             </div>
           </div>
         </div>
-      `;
+        `;
+      }
 
       container.innerHTML = html;
     } catch (err) {
@@ -13493,10 +13665,13 @@ const App = {
     const parentGroup = document.getElementById('fullRegParentGroup');
 
     const isPeserta = (val === 'Peserta');
-    if (schoolGroup) schoolGroup.style.display = isPeserta ? 'grid' : 'none';
+    const isPendamping = (val === 'Pendamping');
+    if (schoolGroup) schoolGroup.style.display = (isPeserta || isPendamping) ? 'grid' : 'none';
     if (classGroup) classGroup.style.display = isPeserta ? 'block' : 'none';
     if (classInput) classInput.required = isPeserta;
     if (parentGroup) parentGroup.style.display = isPeserta ? 'block' : 'none';
+    const pendampingGroup = document.getElementById('fullRegPendampingGroup');
+    if (pendampingGroup) pendampingGroup.style.display = isPendamping ? 'block' : 'none';
 
     // Tampilkan Unit & Unsur untuk Peserta, Panitia, Peninjau, dan Pendamping
     const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping');
@@ -13833,6 +14008,38 @@ const App = {
                 <textarea id="fullRegParentAddress" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
               </div>
             </div>
+
+            <!-- Khusus Pembina Pendamping -->
+            <div id="fullRegPendampingGroup" style="display: none; background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #bfdbfe; margin-top: 0.5rem;">
+              <h5 style="color: #1e40af; margin-bottom: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem;">
+                <i class="fa-solid fa-user-tie" style="color: #2563eb;"></i> Data Khusus Pembina Pendamping
+              </h5>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label">Pendidikan Terakhir *</label>
+                <input type="text" id="fullRegLastEducation" placeholder="Contoh: SMA / SMK / D3 / S1 Pendidikan / S2">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Organisasi yang Diikuti (Sesuai Blangko PMI: a, b, c, d)</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">a.</span>
+                    <input type="text" id="fullRegOrgA" placeholder="Nama organisasi 1 (misal: PMI)">
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">b.</span>
+                    <input type="text" id="fullRegOrgB" placeholder="Nama organisasi 2 (misal: PGRI)">
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">c.</span>
+                    <input type="text" id="fullRegOrgC" placeholder="Nama organisasi 3 (misal: Pramuka)">
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">d.</span>
+                    <input type="text" id="fullRegOrgD" placeholder="Nama organisasi 4">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
@@ -13954,6 +14161,21 @@ const App = {
       const parentPhoneVal = document.getElementById('fullRegParentPhone')?.value.trim() || '';
       const parentJobVal = document.getElementById('fullRegParentJob')?.value.trim() || '';
 
+      const lastEducationVal = document.getElementById('fullRegLastEducation')?.value.trim() || '';
+      const orgA = document.getElementById('fullRegOrgA')?.value.trim() || '';
+      const orgB = document.getElementById('fullRegOrgB')?.value.trim() || '';
+      const orgC = document.getElementById('fullRegOrgC')?.value.trim() || '';
+      const orgD = document.getElementById('fullRegOrgD')?.value.trim() || '';
+      let organizationsVal = '';
+      if (orgA || orgB || orgC || orgD) {
+        const orgParts = [];
+        if (orgA) orgParts.push(`a. ${orgA}`);
+        if (orgB) orgParts.push(`b. ${orgB}`);
+        if (orgC) orgParts.push(`c. ${orgC}`);
+        if (orgD) orgParts.push(`d. ${orgD}`);
+        organizationsVal = orgParts.join('\n');
+      }
+
       const data = {
         registration_type: regType,
         unit_id: document.getElementById('fullRegUnitId').value,
@@ -13978,6 +14200,8 @@ const App = {
         parent_address: parentAddressVal,
         parent_phone: parentPhoneVal,
         parent_job: parentJobVal,
+        last_education: lastEducationVal,
+        organizations: organizationsVal,
         photo_data: photoData,
         assignment_letter_data: assignmentData
       };
@@ -14015,6 +14239,8 @@ const App = {
         parent_address: data.parent_address,
         parent_phone: data.parent_phone,
         parent_job: data.parent_job,
+        last_education: data.last_education,
+        organizations: data.organizations,
         photo_url: photoData,
         status: 'pending_unit'
       };
@@ -14178,10 +14404,21 @@ const App = {
                       <th style="background: #f8fafc; font-size: 0.85rem; color: #475569;">WhatsApp & Email</th>
                       <td style="font-size: 0.88rem;">📱 ${Utils.escapeHtml(participantData.phone || '-')} | ✉️ ${Utils.escapeHtml(participantData.email || '-')}</td>
                     </tr>
+                    ${(participantData.registration_type === 'Pendamping') ? `
                     <tr>
-                      <th style="background: #f8fafc; font-size: 0.85rem; color: #475569;">Kontak Darurat</th>
-                      <td style="font-size: 0.88rem;">${Utils.escapeHtml(participantData.emergency_contact || '-')}</td>
+                      <th style="background: #f8fafc; font-size: 0.85rem; color: #475569;">Pendidikan Terakhir</th>
+                      <td style="font-size: 0.88rem; font-weight: 700; color: #1e40af;">${Utils.escapeHtml(participantData.last_education || '-')}</td>
                     </tr>
+                    <tr>
+                      <th style="background: #f8fafc; font-size: 0.85rem; color: #475569; vertical-align: top;">Organisasi yang Diikuti</th>
+                      <td style="font-size: 0.88rem; white-space: pre-line;">${Utils.escapeHtml(participantData.organizations || '-')}</td>
+                    </tr>
+                    ` : `
+                    <tr>
+                      <th style="background: #f8fafc; font-size: 0.85rem; color: #475569;">Kontak Darurat / Ortu</th>
+                      <td style="font-size: 0.88rem;">${Utils.escapeHtml(participantData.emergency_contact || participantData.parent_name || '-')}</td>
+                    </tr>
+                    `}
                   </tbody>
                 </table>
               </div>
@@ -14407,10 +14644,21 @@ const App = {
               <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Email Pendaftar</th>
               <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.email || '-')}</td>
             </tr>
+            ${(participantData.registration_type === 'Pendamping') ? `
+            <tr>
+              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Pendidikan Terakhir</th>
+              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;"><strong>${Utils.escapeHtml(participantData.last_education || '-')}</strong></td>
+            </tr>
+            <tr>
+              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Organisasi Diikuti</th>
+              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt; white-space: pre-line;">${Utils.escapeHtml(participantData.organizations || '-')}</td>
+            </tr>
+            ` : `
             <tr>
               <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Orang Tua / Wali</th>
               <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.parent_name || participantData.emergency_contact || '-')} ${participantData.parent_job ? `(${Utils.escapeHtml(participantData.parent_job)})` : ''} ${participantData.parent_phone ? `• Telp: ${Utils.escapeHtml(participantData.parent_phone)}` : ''} ${participantData.parent_address ? `<br><small style="color: #64748b;">Alamat Ortu: ${Utils.escapeHtml(participantData.parent_address)}</small>` : ''}</td>
             </tr>
+            `}
           </tbody>
         </table>
 
@@ -14425,6 +14673,15 @@ const App = {
           </div>
         ` : ''}
 
+        ${(participantData.registration_type === 'Pendamping') ? `
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+          <div style="width: 48%; text-align: center;">
+            <p style="margin: 0; font-size: 8pt;">Pemalang, ${todayStr}<br><strong>Pembina Pendamping,</strong></p>
+            <div style="height: 50px;"></div>
+            <p style="margin: 0; font-size: 8.5pt;">( <strong>${Utils.escapeHtml(participantData.full_name || 'Pembina')}</strong> )</p>
+          </div>
+        </div>
+        ` : `
         <div style="margin-top: 20px; display: flex; justify-content: space-between;">
           <div style="width: 48%; text-align: center;">
             <p style="margin: 0; font-size: 8pt;">Mengetahui,<br><strong>Pembina PMR / Penanggung Jawab Unit</strong></p>
@@ -14437,6 +14694,7 @@ const App = {
             <p style="margin: 0; font-size: 8.5pt;">( <strong>${Utils.escapeHtml(participantData.full_name || 'Peserta')}</strong> )</p>
           </div>
         </div>
+        `}
       </div>
     `;
 
@@ -14684,10 +14942,21 @@ const App = {
               <th>Email Pendaftar</th>
               <td>${Utils.escapeHtml(participantData.email || '-')}</td>
             </tr>
+            ${(participantData.registration_type === 'Pendamping') ? `
+            <tr>
+              <th>Pendidikan Terakhir</th>
+              <td><strong>${Utils.escapeHtml(participantData.last_education || '-')}</strong></td>
+            </tr>
+            <tr>
+              <th>Organisasi Diikuti</th>
+              <td style="white-space: pre-line;">${Utils.escapeHtml(participantData.organizations || '-')}</td>
+            </tr>
+            ` : `
             <tr>
               <th>Orang Tua / Wali</th>
               <td>${Utils.escapeHtml(participantData.parent_name || participantData.emergency_contact || '-')} ${participantData.parent_job ? `(${Utils.escapeHtml(participantData.parent_job)})` : ''} ${participantData.parent_phone ? `• Telp: ${Utils.escapeHtml(participantData.parent_phone)}` : ''} ${participantData.parent_address ? `<br><small style="color: #64748b;">Alamat Ortu: ${Utils.escapeHtml(participantData.parent_address)}</small>` : ''}</td>
             </tr>
+            `}
           </table>
 
           ${(participantData.username && participantData.password) ? `
@@ -14701,6 +14970,15 @@ const App = {
             </div>
           ` : ''}
 
+          ${(participantData.registration_type === 'Pendamping') ? `
+          <div class="signatures" style="text-align: right;">
+            <div class="sig-cell" style="width: 50%; float: right; margin-left: 50%;">
+              <p style="margin: 0; font-size: 8.5pt;">Pemalang, ${todayStr}<br><strong>Pembina Pendamping,</strong></p>
+              <div class="sig-space"></div>
+              <p style="margin: 0; font-size: 9pt;">( <strong>${Utils.escapeHtml(participantData.full_name || 'Pembina')}</strong> )</p>
+            </div>
+          </div>
+          ` : `
           <div class="signatures">
             <div class="sig-cell">
               <p style="margin: 0; font-size: 8.5pt;">Mengetahui,<br><strong>Pembina PMR / Penanggung Jawab Unit</strong></p>
@@ -14713,6 +14991,7 @@ const App = {
               <p style="margin: 0; font-size: 9pt;">( <strong>${Utils.escapeHtml(participantData.full_name || 'Peserta')}</strong> )</p>
             </div>
           </div>
+          `}
         </div>
 
         <script>

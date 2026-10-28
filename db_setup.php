@@ -281,6 +281,8 @@ try {
     try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_address TEXT NULL DEFAULT NULL AFTER parent_name"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_phone VARCHAR(50) NULL DEFAULT NULL AFTER parent_address"); } catch (Exception $e) {}
     try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_job VARCHAR(150) NULL DEFAULT NULL AFTER parent_phone"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN last_education VARCHAR(100) NULL DEFAULT NULL AFTER class_name"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN organizations TEXT NULL DEFAULT NULL AFTER last_education"); } catch (Exception $e) {}
 
     try {
         $pdo->exec("ALTER TABLE users ADD COLUMN full_name VARCHAR(150) NULL AFTER unit_id");

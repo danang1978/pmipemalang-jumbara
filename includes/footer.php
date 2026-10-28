@@ -974,7 +974,7 @@ $settings = getAppSettings();
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
+            <div id="adminEditClassGroup">
               <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Kelas Peserta</label>
               <input type="text" id="adminEditClassName" placeholder="Contoh: VII A, VIII C, X MIPA 1..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
             </div>
@@ -984,8 +984,8 @@ $settings = getAppSettings();
             </div>
           </div>
 
-          <!-- Section: Data Orang Tua / Wali -->
-          <div style="background: #f1f5f9; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
+          <!-- Section: Data Orang Tua / Wali (Khusus Peserta) -->
+          <div id="adminEditParentGroup" style="background: #f1f5f9; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
             <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: var(--secondary);">
               <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali
             </h5>
@@ -1008,6 +1008,21 @@ $settings = getAppSettings();
                 <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Alamat Ortu / Wali</label>
                 <input type="text" id="adminEditParentAddress" placeholder="Alamat lengkap orang tua/wali" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
               </div>
+            </div>
+          </div>
+
+          <!-- Section: Khusus Pembina Pendamping -->
+          <div id="adminEditPendampingGroup" style="display: none; background: #eff6ff; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #bfdbfe;">
+            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: #1e40af;">
+              <i class="fa-solid fa-user-tie" style="color: #2563eb;"></i> Khusus Pembina Pendamping
+            </h5>
+            <div style="margin-bottom: 0.5rem;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #1e3a8a;">Pendidikan Terakhir</label>
+              <input type="text" id="adminEditLastEducation" placeholder="Contoh: SMA/SMK, D3, S1 Pendidikan, S2, dll" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #93c5fd; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+            <div>
+              <label style="font-weight: 700; font-size: 0.8rem; color: #1e3a8a;">Organisasi yang Diikuti (Tulis per baris atau a, b, c, d)</label>
+              <textarea id="adminEditOrganizations" rows="3" placeholder="a. PMI Kab. Pemalang&#10;b. PGRI&#10;c. Pramuka&#10;d. ..." style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #93c5fd; border-radius: 4px; font-size: 0.85rem; resize: vertical;"></textarea>
             </div>
           </div>
 

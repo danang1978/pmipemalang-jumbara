@@ -190,6 +190,8 @@ CREATE TABLE `participants` (
   `nisn` varchar(50) DEFAULT NULL,
   `level` varchar(50) NOT NULL DEFAULT 'Wira',
   `class_name` varchar(50) DEFAULT NULL,
+  `last_education` varchar(100) DEFAULT NULL,
+  `organizations` text,
   `birth_place` varchar(100) DEFAULT NULL,
   `birth_date` varchar(50) DEFAULT NULL,
   `gender` char(1) DEFAULT NULL,

@@ -208,6 +208,7 @@ if ($method === 'GET') {
 
     $columns = "
         p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, p.class_name,
+        p.last_education, p.organizations,
         p.birth_place, p.birth_date, p.religion, p.address,
         p.school_address, p.school_phone,
         p.parent_name, p.parent_address, p.parent_phone, p.parent_job,
@@ -360,6 +361,8 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'update-me') {
     $address = trim($input['address'] ?? $part['address']);
     $phone = trim($input['phone'] ?? $part['phone']);
     $emergencyContact = trim($input['emergency_contact'] ?? $part['emergency_contact']);
+    $lastEducation = trim($input['last_education'] ?? $part['last_education'] ?? '');
+    $organizations = trim($input['organizations'] ?? $part['organizations'] ?? '');
 
     $photoUrl = $part['photo_url'];
     if (!empty($input['photo_data'])) {
@@ -380,12 +383,14 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'update-me') {
         UPDATE participants SET 
             full_name = ?, nisn = ?, religion = ?, gender = ?, blood_type = ?,
             is_disabled = ?, disability_type = ?, address = ?, phone = ?, emergency_contact = ?,
+            last_education = ?, organizations = ?,
             photo_url = ?, assignment_letter_url = ?, status = ?
         WHERE id = ?
     ");
     $stmtUpdate->execute([
         $fullName, $nisn, $religion, $gender, $bloodType,
         $isDisabled, $disabilityType, $address, $phone, $emergencyContact,
+        $lastEducation ?: null, $organizations ?: null,
         $photoUrl, $assignmentLetterUrl, $newStatus, $part['id']
     ]);
 
@@ -446,6 +451,9 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
     $parentPhone = trim($input['parent_phone'] ?? $part['parent_phone'] ?? '');
     $parentJob = trim($input['parent_job'] ?? $part['parent_job'] ?? '');
 
+    $lastEducation = trim($input['last_education'] ?? $part['last_education'] ?? '');
+    $organizations = trim($input['organizations'] ?? $part['organizations'] ?? '');
+
     $subCategories = $part['sub_categories'];
     if (isset($input['sub_categories'])) {
         $subCategories = is_array($input['sub_categories']) ? json_encode($input['sub_categories']) : $input['sub_categories'];
@@ -470,6 +478,7 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
             birth_place = ?, birth_date = ?, religion = ?, is_disabled = ?, disability_type = ?,
             address = ?, email = ?, school_address = ?, school_phone = ?,
             parent_name = ?, parent_address = ?, parent_phone = ?, parent_job = ?,
+            last_education = ?, organizations = ?,
             sub_categories = ?
         WHERE id = ?
     ");
@@ -479,6 +488,7 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
         $birthPlace, $birthDate, $religion, $isDisabled, $disabilityType,
         $address, $email, $schoolAddress ?: null, $schoolPhone ?: null,
         $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null, $parentJob ?: null,
+        $lastEducation ?: null, $organizations ?: null,
         $subCategories, $id
     ]);
 
