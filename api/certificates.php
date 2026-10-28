@@ -9,14 +9,6 @@ $pdo = getPDOConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
-// Auto-ensure certificate_number column exists in participants table
-try {
-    $colCheck = $pdo->query("SHOW COLUMNS FROM participants LIKE 'certificate_number'");
-    if (!$colCheck || !$colCheck->fetch()) {
-        $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
-    }
-} catch (\Throwable $e) {}
-
 // --------------------------------------------------------------------------
 // 1. GET /api/certificates.php?action=config
 // --------------------------------------------------------------------------
@@ -146,6 +138,7 @@ if ($method === 'POST' && $action === 'generate_numbers') {
         $counter = $startNo;
         $updatedCount = 0;
 
+        $pdo->beginTransaction();
         $stmtUp = $pdo->prepare("UPDATE participants SET certificate_number = ? WHERE id = ?");
 
         foreach ($participants as $p) {
@@ -157,6 +150,7 @@ if ($method === 'POST' && $action === 'generate_numbers') {
                 $counter++;
             }
         }
+        $pdo->commit();
 
         jsonResponse([
             'message' => "Berhasil memicu pembuatan nomor piagam secara masal!",
@@ -164,9 +158,11 @@ if ($method === 'POST' && $action === 'generate_numbers') {
             'total_updated' => $updatedCount
         ]);
     } catch (\PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         jsonResponse([
-            'error' => 'Gagal memproses nomor piagam: ' . $e->getMessage(),
-            'hint' => 'Pastikan kolom certificate_number sudah ada pada tabel participants di database.'
+            'error' => 'Gagal memproses nomor piagam: ' . $e->getMessage()
         ], 500);
     }
 }
@@ -179,6 +175,10 @@ if ($method === 'GET' && $action === 'participants') {
     $unitId = (int)($_GET['unit_id'] ?? 0);
     $search = trim($_GET['search'] ?? '');
     $roleFilter = trim($_GET['role'] ?? '');
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $all = isset($_GET['all']) && $_GET['all'] === 'true';
+    $limit = $all ? 1000 : max(1, min(200, (int)($_GET['limit'] ?? 100)));
+    $offset = ($page - 1) * $limit;
 
     $whereSql = "WHERE p.status = 'verified_kabupaten'";
     $params = [];
@@ -192,33 +192,12 @@ if ($method === 'GET' && $action === 'participants') {
         $params[] = $unitId;
     }
 
-    // Check if certificate_number exists
-    $hasCertCol = false;
-    try {
-        $checkCol = $pdo->query("SHOW COLUMNS FROM participants LIKE 'certificate_number'");
-        if ($checkCol && $checkCol->fetch()) {
-            $hasCertCol = true;
-        } else {
-            $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
-            $hasCertCol = true;
-        }
-    } catch (\Throwable $e) {
-        $hasCertCol = false;
-    }
-
     if ($search) {
-        if ($hasCertCol) {
-            $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ? OR p.certificate_number LIKE ?)";
-            $s = "%$search%";
-            $params[] = $s;
-            $params[] = $s;
-            $params[] = $s;
-        } else {
-            $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ?)";
-            $s = "%$search%";
-            $params[] = $s;
-            $params[] = $s;
-        }
+        $whereSql .= " AND (p.full_name LIKE ? OR p.code LIKE ? OR p.certificate_number LIKE ?)";
+        $s = "%$search%";
+        $params[] = $s;
+        $params[] = $s;
+        $params[] = $s;
     }
 
     if ($roleFilter) {
@@ -227,40 +206,35 @@ if ($method === 'GET' && $action === 'participants') {
         $params[] = "%$roleFilter%";
     }
 
-    $certColSql = $hasCertCol ? "p.certificate_number" : "NULL AS certificate_number";
-    $rows = [];
-
     try {
+        $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM participants p $whereSql");
+        $stmtCount->execute($params);
+        $totalRecords = (int)$stmtCount->fetchColumn();
+
         $stmt = $pdo->prepare("
-            SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, $certColSql, p.photo_url, un.name AS unit_name 
+            SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, p.certificate_number, p.photo_url, un.name AS unit_name 
             FROM participants p 
             LEFT JOIN units un ON p.unit_id = un.id 
             $whereSql 
             ORDER BY un.name ASC, p.full_name ASC
+            LIMIT $limit OFFSET $offset
         ");
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (\PDOException $e) {
-        if ($e->getCode() === '42S22' || strpos($e->getMessage(), 'certificate_number') !== false) {
-            $fallbackWhereSql = str_replace("OR p.certificate_number LIKE ?", "OR 1=0", $whereSql);
-            $stmt = $pdo->prepare("
-                SELECT p.id, p.code, p.full_name, p.level, p.sub_categories, NULL AS certificate_number, p.photo_url, un.name AS unit_name 
-                FROM participants p 
-                LEFT JOIN units un ON p.unit_id = un.id 
-                $fallbackWhereSql 
-                ORDER BY un.name ASC, p.full_name ASC
-            ");
-            $stmt->execute($params);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } else {
-            throw $e;
-        }
-    }
 
-    jsonResponse([
-        'total' => count($rows),
-        'participants' => $rows
-    ]);
+        jsonResponse([
+            'total' => $totalRecords,
+            'participants' => $rows,
+            'pagination' => [
+                'total' => $totalRecords,
+                'page' => $page,
+                'limit' => $limit,
+                'total_pages' => (int)ceil($totalRecords / $limit) ?: 1
+            ]
+        ]);
+    } catch (\PDOException $e) {
+        jsonResponse(['error' => 'Gagal memuat peserta piagam: ' . $e->getMessage()], 500);
+    }
 }
 
 jsonResponse(['error' => 'Action tidak ditemukan.'], 404);

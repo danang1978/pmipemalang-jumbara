@@ -3,6 +3,19 @@
 // AUTOMATIC DATABASE INSTALLER & SEEDER FOR STRUCTURED NATIVE PHP
 // ==========================================================================
 
+// Security Lock Guard: Prevent unauthorized execution once installed
+$lockFile = __DIR__ . '/config/installed.lock';
+$isCli = (php_sapi_name() === 'cli');
+if (file_exists($lockFile) && !$isCli) {
+    http_response_code(403);
+    die('<div style="font-family:sans-serif;padding:2rem;color:#b91c1c;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;max-width:620px;margin:3rem auto;">'
+        . '<h2 style="margin-top:0;">🔒 Akses Ditolak: Database Sudah Terpasang</h2>'
+        . '<p>Demi keamanan sistem, skrip <code>db_setup.php</code> dikunci secara otomatis setelah instalasi.</p>'
+        . '<p>Jika Anda adalah Administrator yang ingin melakukan reset / instalasi ulang, hapus berkas <code>config/installed.lock</code> atau jalankan via terminal: <code>php db_setup.php</code>.</p>'
+        . '<p><a href="index.php" style="display:inline-block;background:#b91c1c;color:#fff;padding:0.5rem 1rem;border-radius:6px;text-decoration:none;font-weight:bold;">&larr; Kembali ke Aplikasi</a></p>'
+        . '</div>');
+}
+
 require_once __DIR__ . '/config/database.php';
 
 try {
@@ -340,6 +353,24 @@ try {
                 KEY idx_fb_created (created_at),
                 KEY idx_fb_cat (category)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                username VARCHAR(100) NULL,
+                role VARCHAR(50) NULL,
+                action VARCHAR(100) NOT NULL,
+                module VARCHAR(50) NOT NULL,
+                description TEXT NOT NULL,
+                details LONGTEXT NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent VARCHAR(255) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_activity_created_at (created_at),
+                INDEX idx_activity_user (user_id),
+                INDEX idx_activity_action (action),
+                INDEX idx_activity_module (module)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     } catch (Exception $e) {}
 
@@ -374,6 +405,9 @@ try {
         ('option_disability_types', '[\"Tidak Ada\", \"Disabilitas Fisik / Daksa\", \"Disabilitas Netra\", \"Disabilitas Rungu / Wicara\", \"Disabilitas Intelektual / Grahita\", \"Disabilitas Mental\", \"Lainnya\"]');
     ");
 
+    // Create installation lock file
+    @file_put_contents($lockFile, 'Installed on ' . date('c'));
+
     if (php_sapi_name() !== 'cli') {
         echo "<div style='font-family: sans-serif; padding: 2rem; background: #e0f2fe; color: #0369a1; border-radius: 8px;'>";
         echo "<h2>✅ Instalasi & Seeding Database MySQL Berhasil!</h2>";
@@ -382,6 +416,9 @@ try {
         echo "</div>";
     }
 } catch (Exception $e) {
+    // Create installation lock file
+    @file_put_contents($lockFile, 'Installed on ' . date('c'));
+
     if (php_sapi_name() !== 'cli') {
         echo "<div style='font-family: sans-serif; padding: 2rem; background: #fee2e2; color: #b91c1c; border-radius: 8px;'>";
         echo "<h2>❌ Error Instalasi Database:</h2>";

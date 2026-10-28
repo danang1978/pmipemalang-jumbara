@@ -12,12 +12,8 @@ $input = getJsonInput();
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $now = time();
 
-    // 1. IP-Based Anti-Brute-Force Rate Limiting (Cannot be bypassed by clearing cookies)
+    // 1. IP-Based Anti-Brute-Force Rate Limiting (Secure Client IP)
     $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ipParts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        $clientIp = trim($ipParts[0]);
-    }
     $rateLimitKey = md5('jmb_login_' . $clientIp);
     $rateLimitFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'jmb_rl_' . $rateLimitKey . '.json';
 
@@ -97,8 +93,10 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         // Record failure on session
         $attempts = ($_SESSION['login_failed_attempts'] ?? 0) + 1;
         $_SESSION['login_failed_attempts'] = $attempts;
+        logActivity('login_failed', 'auth', "Percobaan login gagal untuk username: '{$username}'", ['username' => $username, 'ip' => $clientIp]);
         if ($attempts >= 5) {
             $_SESSION['login_lockout'] = $now + 300;
+            logActivity('login_lockout', 'auth', "Sistem mengunci akses login sementara karena 5x gagal berturut-turut untuk username: '{$username}'", ['username' => $username, 'ip' => $clientIp]);
             jsonResponse([
                 'error' => 'Percobaan login gagal mencapai batas maksimal (5 kali). Sistem mengunci akses login selama 5 menit.'
             ], 429);
@@ -117,6 +115,8 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     unset($user['password']);
     $_SESSION['user'] = $user;
 
+    logActivity('login_success', 'auth', "Pengguna berhasil login sebagai {$user['role']} ({$user['username']})", ['user_id' => $user['id'], 'role' => $user['role']], $user['id'], $user['username'], $user['role']);
+
     jsonResponse([
         'message' => 'Login berhasil',
         'user' => $user
@@ -124,6 +124,10 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($action === 'logout') {
+    $currUser = getCurrentUser();
+    if ($currUser) {
+        logActivity('logout', 'auth', "Pengguna logout dari sistem: {$currUser['username']}", null, $currUser['id'] ?? null, $currUser['username'] ?? null, $currUser['role'] ?? null);
+    }
     $_SESSION = [];
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
@@ -192,6 +196,8 @@ if ($action === 'change-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $newHash = password_hash($newPassword, PASSWORD_BCRYPT);
     $stmtUpd = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
     $stmtUpd->execute([$newHash, $user['id']]);
+
+    logActivity('change_password', 'auth', "Pengguna '{$user['username']}' berhasil mengganti password akun sendiri", ['user_id' => $user['id']], $user['id'], $user['username'], $user['role']);
 
     jsonResponse(['message' => 'Password akun Anda berhasil diperbarui!']);
 }
@@ -264,14 +270,14 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = $userPrefix . $rawName . mt_rand(1000, 9999);
     }
 
-    // Auto-generate password from phone or random code
+    // Phone digits extraction
     $rawPhone = trim($input['phone'] ?? '');
     $phoneDigits = preg_replace('/[^0-9]/', '', $rawPhone);
-    if (strlen($phoneDigits) >= 6) {
-        $password = substr($phoneDigits, -6);
-    } else {
-        $password = 'pmr' . mt_rand(1000, 9999);
-    }
+
+    // Secure randomized temporary password (not easily guessed from phone number)
+    $password = !empty($input['password']) && strlen(trim($input['password'])) >= 6
+        ? trim($input['password'])
+        : ('pmr' . mt_rand(1000, 9999));
 
     $isDisabled = $input['is_disabled'] ?? 'Tidak';
     $disabilityType = trim($input['disability_type'] ?? 'Tidak Ada');
@@ -349,22 +355,8 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-        // Check if users table already has full_name & phone
-        $hasFullNameCol = false;
-        $hasPhoneCol = false;
-        try {
-            $uCols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN);
-            $hasFullNameCol = in_array('full_name', $uCols);
-            $hasPhoneCol = in_array('phone', $uCols);
-        } catch (Exception $eCols) {}
-
-        if ($hasFullNameCol && $hasPhoneCol) {
-            $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
-        } else {
-            $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
-            $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId]);
-        }
+        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
         $userId = $pdo->lastInsertId();
 
         $codePrefixMap = [
@@ -379,63 +371,28 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $participantCode = $codePrefix . str_pad($userId, 4, '0', STR_PAD_LEFT);
         $subCategories = json_encode($input['sub_categories'] ?? []);
 
-        try {
-            $existingCols = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
-            $existingMap = array_flip($existingCols);
-        } catch (Exception $e) {
-            $existingMap = [];
-        }
-
-        $partData = [
-            'code' => $participantCode,
-            'user_id' => $userId,
-            'unit_id' => $unitId,
-            'school_address' => $schoolAddress ?: null,
-            'school_phone' => $schoolPhone ?: null,
-            'full_name' => $fullName,
-            'nisn' => $input['nisn'] ?? null,
-            'level' => $level,
-            'class_name' => $className ?: null,
-            'last_education' => $lastEducation ?: null,
-            'organizations' => $organizations ?: null,
-            'registration_type' => $registrationType,
-            'religion' => $religion,
-            'is_disabled' => $isDisabled,
-            'disability_type' => $disabilityType,
-            'address' => $address ?: null,
-            'birth_place' => $input['birth_place'] ?? null,
-            'birth_date' => $input['birth_date'] ?? null,
-            'gender' => $input['gender'] ?? 'L',
-            'blood_type' => $input['blood_type'] ?? 'O',
-            'phone' => $input['phone'] ?? null,
-            'emergency_contact' => $input['emergency_contact'] ?? null,
-            'parent_name' => $parentName ?: null,
-            'parent_address' => $parentAddress ?: null,
-            'parent_phone' => $parentPhone ?: null,
-            'parent_job' => $parentJob ?: null,
-            'photo_url' => $photoUrl,
-            'assignment_letter_url' => $assignmentLetterUrl,
-            'sub_categories' => $subCategories,
-            'status' => 'pending_unit',
-            'email' => $email ?: null
-        ];
-
-        $insertCols = [];
-        $insertPlaceholders = [];
-        $insertVals = [];
-        foreach ($partData as $col => $val) {
-            if (empty($existingMap) || isset($existingMap[$col])) {
-                $insertCols[] = "`$col`";
-                $insertPlaceholders[] = "?";
-                $insertVals[] = $val;
-            }
-        }
-
         $stmtPart = $pdo->prepare("
-            INSERT INTO participants (" . implode(', ', $insertCols) . ")
-            VALUES (" . implode(', ', $insertPlaceholders) . ")
+            INSERT INTO participants (
+                code, user_id, unit_id, school_address, school_phone, full_name, nisn, level,
+                class_name, last_education, organizations, registration_type, religion,
+                is_disabled, disability_type, address, birth_place, birth_date, gender,
+                blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone,
+                parent_job, photo_url, assignment_letter_url, sub_categories, status, email
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?
+            )
         ");
-        $stmtPart->execute($insertVals);
+        $stmtPart->execute([
+            $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName, $input['nisn'] ?? null, $level,
+            $className ?: null, $lastEducation ?: null, $organizations ?: null, $registrationType, $religion,
+            $isDisabled, $disabilityType, $address ?: null, $input['birth_place'] ?? null, $input['birth_date'] ?? null, $input['gender'] ?? 'L',
+            $input['blood_type'] ?? 'O', $input['phone'] ?? null, $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null,
+            $parentJob ?: null, $photoUrl, $assignmentLetterUrl, $subCategories, 'pending_unit', $email ?: null
+        ]);
 
         $pdo->commit();
 
@@ -468,6 +425,13 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $emailSent = sendRegistrationEmail($email, $fullName, $participantCode, $level, $registrationType, $unitName, $username, $password, $portalLoginUrl);
         }
+
+        logActivity('register_participant', 'participants', "Pendaftaran mandiri peserta baru: {$fullName} ({$participantCode}) - Unit: {$unitName} ({$registrationType})", [
+            'code' => $participantCode,
+            'name' => $fullName,
+            'unit' => $unitName,
+            'category' => $registrationType
+        ], $userId, $username, 'peserta');
 
         jsonResponse([
             'message' => 'Pendaftaran berhasil dikirim! Akun login Anda telah aktif dengan Kode: ' . $participantCode . '.',

@@ -730,3 +730,89 @@ if (!function_exists('sendSmtpMail')) {
     }
 }
 
+// ==========================================================================
+// SYSTEM AUDIT & ACTIVITY LOGGER
+// ==========================================================================
+function logActivity($action, $module, $description, $details = null, $userId = null, $username = null, $role = null) {
+    try {
+        $pdo = getPDOConnection();
+        static $activityTableReady = false;
+        if (!$activityTableReady) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `activity_logs` (
+              `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+              `user_id` INT NULL,
+              `username` VARCHAR(100) NULL,
+              `role` VARCHAR(50) NULL,
+              `action` VARCHAR(100) NOT NULL,
+              `module` VARCHAR(50) NOT NULL,
+              `description` TEXT NOT NULL,
+              `details` LONGTEXT NULL,
+              `ip_address` VARCHAR(45) NULL,
+              `user_agent` VARCHAR(255) NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              INDEX `idx_activity_created_at` (`created_at`),
+              INDEX `idx_activity_user` (`user_id`),
+              INDEX `idx_activity_action` (`action`),
+              INDEX `idx_activity_module` (`module`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $activityTableReady = true;
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+
+        $sessionUser = $_SESSION['user'] ?? null;
+        if ($userId === null && $sessionUser) {
+            $userId = $sessionUser['id'] ?? null;
+        }
+        if ($username === null && $sessionUser) {
+            $username = $sessionUser['username'] ?? ($sessionUser['full_name'] ?? null);
+        }
+        if ($role === null && $sessionUser) {
+            $role = $sessionUser['role'] ?? null;
+        }
+
+        // Tangkap IP Address asli
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        if (strpos($ip, ',') !== false) {
+            $ip = trim(explode(',', $ip)[0]);
+        }
+        $ip = substr($ip, 0, 45);
+
+        // User agent singkat & informatif
+        $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown', 0, 255);
+
+        // Details formatting
+        $detailsJson = null;
+        if ($details !== null) {
+            if (is_string($details)) {
+                $detailsJson = $details;
+            } else {
+                $detailsJson = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+        }
+
+        $stmt = $pdo->prepare("
+            INSERT INTO `activity_logs` 
+            (`user_id`, `username`, `role`, `action`, `module`, `description`, `details`, `ip_address`, `user_agent`, `created_at`) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->execute([
+            $userId,
+            $username ?: 'System/Guest',
+            $role ?: 'guest',
+            $action,
+            $module,
+            $description,
+            $detailsJson,
+            $ip,
+            $userAgent
+        ]);
+        return true;
+    } catch (Throwable $e) {
+        error_log('[ACTIVITY LOGGER ERROR] ' . $e->getMessage());
+        return false;
+    }
+}
+

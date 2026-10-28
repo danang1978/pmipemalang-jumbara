@@ -118,7 +118,7 @@ if ($method === 'POST' && $action === 'save_unit_event_registrations') {
     $input = getJsonInput();
 
     $eventId = (int)($input['event_id'] ?? 0);
-    $unitId = (int)($input['unit_id'] ?? $user['unit_id'] ?? 0);
+    $unitId = ($user['role'] === 'unit') ? (int)$user['unit_id'] : (int)($input['unit_id'] ?? $user['unit_id'] ?? 0);
     $participantIds = is_array($input['participant_ids'] ?? null) ? array_filter(array_map('intval', $input['participant_ids'])) : [];
 
     if (!$eventId || !$unitId) {
@@ -166,7 +166,7 @@ if ($method === 'POST' && $action === 'save_unit_event_registrations') {
 }
 
 if ($method === 'POST') {
-    requireUser(['kabupaten', 'unit', 'panitia']);
+    requireUser(['kabupaten', 'panitia']);
     $input = getJsonInput();
 
     $id = (int)($input['id'] ?? 0);

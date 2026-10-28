@@ -29,7 +29,7 @@ if ($method === 'GET' && $action === 'event_aspects') {
 // 2. POST: Simpan / Edit Aspek Penilaian per Kegiatan
 // --------------------------------------------------------------------------
 if ($method === 'POST' && $action === 'save_event_aspects') {
-    requireUser(['kabupaten', 'admin', 'panitia', 'unit', 'penilai', 'juri']);
+    requireUser(['kabupaten', 'admin', 'penilai', 'juri']);
     $input = getJsonInput();
 
     $eventId = (int)($input['event_id'] ?? 0);
@@ -200,11 +200,15 @@ if ($method === 'POST' && $action === 'delete') {
 }
 
 // --------------------------------------------------------------------------
-// 8. GET: Daftar Semua Skor
+// 8. GET: Daftar Skor
 // --------------------------------------------------------------------------
 if ($method === 'GET') {
     $unitId = (int)($_GET['unit_id'] ?? 0);
     $category = $_GET['category'] ?? '';
+    $all = isset($_GET['all']) && $_GET['all'] === 'true';
+    $limit = $all ? 1000 : max(1, min(200, (int)($_GET['limit'] ?? 100)));
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $offset = ($page - 1) * $limit;
 
     $where = [];
     $params = [];
@@ -228,27 +232,33 @@ if ($method === 'GET') {
         LEFT JOIN users u_eval ON s.evaluator_user_id = u_eval.id
         $whereSql 
         ORDER BY s.id DESC
+        LIMIT $limit OFFSET $offset
     ");
     $stmt->execute($params);
     $scores = $stmt->fetchAll();
 
     if (!empty($scores)) {
         $scoreIds = array_column($scores, 'id');
-        $placeholders = implode(',', array_fill(0, count($scoreIds), '?'));
-        $stmtAspects = $pdo->prepare("
-            SELECT sad.score_id, sad.score_val, ea.aspect_name, ea.max_score 
-            FROM score_aspect_details sad
-            JOIN event_aspects ea ON sad.aspect_id = ea.id
-            WHERE sad.score_id IN ($placeholders)
-        ");
-        $stmtAspects->execute($scoreIds);
         $aspectMap = [];
-        while ($row = $stmtAspects->fetch()) {
-            $aspectMap[$row['score_id']][] = [
-                'score_val' => $row['score_val'],
-                'aspect_name' => $row['aspect_name'],
-                'max_score' => $row['max_score']
-            ];
+        
+        // Batch query in chunks of 200 to safely avoid SQL placeholder limits
+        $chunks = array_chunk($scoreIds, 200);
+        foreach ($chunks as $chunk) {
+            $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+            $stmtAspects = $pdo->prepare("
+                SELECT sad.score_id, sad.score_val, ea.aspect_name, ea.max_score 
+                FROM score_aspect_details sad
+                JOIN event_aspects ea ON sad.aspect_id = ea.id
+                WHERE sad.score_id IN ($placeholders)
+            ");
+            $stmtAspects->execute($chunk);
+            while ($row = $stmtAspects->fetch()) {
+                $aspectMap[$row['score_id']][] = [
+                    'score_val' => $row['score_val'],
+                    'aspect_name' => $row['aspect_name'],
+                    'max_score' => $row['max_score']
+                ];
+            }
         }
         foreach ($scores as &$score) {
             $score['aspect_details'] = $aspectMap[$score['id']] ?? [];
@@ -263,7 +273,7 @@ if ($method === 'GET') {
 // 9. POST: Submit / Edit Penilaian (Banyak Penilai & Proteksi Kunci Admin Kab)
 // --------------------------------------------------------------------------
 if ($method === 'POST') {
-    $user = requireUser(['kabupaten', 'penilai', 'juri', 'panitia', 'admin', 'unit']);
+    $user = requireUser(['kabupaten', 'penilai', 'juri', 'admin']);
     $input = getJsonInput();
 
     $scoreId = !empty($input['id']) ? (int)$input['id'] : (!empty($input['score_id']) ? (int)$input['score_id'] : 0);

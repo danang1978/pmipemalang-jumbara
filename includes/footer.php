@@ -331,15 +331,15 @@ $settings = getAppSettings();
 
   <!-- Modal Audit & Verifikasi Berkas Peserta (Pengecekan Data, Foto & Surat Tugas) -->
   <div class="modal" id="auditModal">
-    <div class="modal-dialog" style="max-width: 900px;">
-      <div class="modal-header" style="background: #ffffff; border-bottom: 1px solid var(--border-color);">
-        <h3 class="modal-title" style="color: var(--secondary); display: flex; align-items: center; gap: 0.5rem;">
-          <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i> Pengecekan Audit Data, Pas Foto & Surat Tugas
+    <div class="modal-dialog modal-audit-dialog">
+      <div class="modal-header" style="background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="modal-title" style="color: var(--secondary); display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.15rem; margin: 0;">
+          <i class="fa-solid fa-clipboard-check" style="color: var(--primary);"></i> Audit & Verifikasi Berkas Lengkap Peserta
         </h3>
-        <button class="modal-close" onclick="App.closeModal('auditModal')">&times;</button>
+        <button type="button" class="modal-close" onclick="App.closeModal('auditModal')" aria-label="Tutup Modal">&times;</button>
       </div>
-      <div class="modal-body" id="auditModalBody" style="padding: 1.25rem;">
-        <p style="text-align: center; color: var(--text-muted);">Memuat data audit peserta...</p>
+      <div class="modal-body" id="auditModalBody" style="padding: 1.25rem 1.5rem;">
+        <p style="text-align: center; color: var(--text-muted); padding: 3rem 0;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Memuat data audit peserta...</p>
       </div>
     </div>
   </div>
@@ -876,238 +876,273 @@ $settings = getAppSettings();
   </div>
   <!-- Modal 10: Admin Edit Data & Berkas Peserta -->
   <div class="modal" id="adminEditParticipantModal">
-    <div class="modal-dialog" style="max-width: 680px;">
+    <div class="modal-dialog modal-edit-dialog">
       <div class="modal-header">
-        <h3 class="modal-title" id="adminEditModalTitle"><i class="fa-solid fa-user-pen"></i> Edit Data & Berkas Peserta (Admin)</h3>
-        <button class="modal-close" onclick="App.closeModal('adminEditParticipantModal')">&times;</button>
+        <div>
+          <h3 class="modal-title" id="adminEditModalTitle" style="display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.15rem; margin: 0; color: var(--secondary);">
+            <i class="fa-solid fa-user-pen" style="color: var(--primary);"></i> Edit Data Lengkap & Berkas Peserta
+          </h3>
+          <p style="margin: 0.25rem 0 0 0; font-size: 0.78rem; color: #64748b;">Perbarui informasi biodata, status verifikasi, data sekolah, dan unggah ulang berkas resmi.</p>
+        </div>
+        <button class="modal-close" onclick="App.closeModal('adminEditParticipantModal')" aria-label="Tutup Modal">&times;</button>
       </div>
       <form onsubmit="App.handleSaveAdminParticipantEdit(event)">
         <input type="hidden" id="adminEditParticipantId" value="">
-        <div class="modal-body" style="padding: 1.25rem;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Nama Lengkap *</label>
-              <input type="text" id="adminEditFullName" required style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+        <div class="modal-body">
+          
+          <!-- SECTION 1: Kategori & Status Verifikasi -->
+          <div class="edit-section-card" style="border-top: 3.5px solid var(--primary);">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-sliders"></i> Kategori & Status Verifikasi
             </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">NISN / NIK Identitas</label>
-              <input type="text" id="adminEditNisn" placeholder="Nomor NISN atau NIK" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Kategori Registrasi</label>
-              <select id="adminEditRegistrationType" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="Peserta">Peserta PMR</option>
-                <option value="Panitia">Panitia</option>
-                <option value="Peninjau">Peninjau</option>
-                <option value="Pendamping">Pendamping</option>
-                <option value="Tamu Undangan">Tamu Undangan</option>
-                <option value="Media">Media / Pers</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Tingkat PMR / Jabatan</label>
-              <select id="adminEditLevel" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="Mula">Mula (SD)</option>
-                <option value="Madya">Madya (SMP)</option>
-                <option value="Wira">Wira (SMA/SMK)</option>
-                <option value="Kepala Sekolah">Kepala Sekolah</option>
-                <option value="Pembina PMR">Pembina PMR</option>
-                <option value="Pendamping">Pendamping</option>
-                <option value="Anggota PMR">Anggota PMR</option>
-                <option value="Pengurus">Pengurus</option>
-                <option value="Pegawai">Pegawai</option>
-                <option value="Relawan">Relawan</option>
-                <option value="Panitia">Panitia</option>
-                <option value="Peninjau">Peninjau</option>
-                <option value="Tamu Undangan">Tamu Undangan</option>
-                <option value="Media">Media</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Status Verifikasi</label>
-              <select id="adminEditStatus" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="pending_unit">Pending Unit</option>
-                <option value="verified_unit">Disetujui Unit (Pending Kab)</option>
-                <option value="verified_kabupaten">🟢 Verified Kabupaten</option>
-                <option value="revision">🟡 Minta Perbaikan / Revisi</option>
-                <option value="rejected">🔴 Ditolak</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Jenis Kelamin</label>
-              <select id="adminEditGender" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="L">Laki-Laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Gol. Darah</label>
-              <select id="adminEditBloodType" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="AB">AB</option>
-                <option value="O">O</option>
-                <option value="-">-</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Agama</label>
-              <select id="adminEditReligion" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="Islam">Islam</option>
-                <option value="Kristen Protestan">Kristen Protestan</option>
-                <option value="Katolik">Katolik</option>
-                <option value="Hindu">Hindu</option>
-                <option value="Buddha">Buddha</option>
-                <option value="Konghucu">Konghucu</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Penyandang Disabilitas</label>
-              <select id="adminEditIsDisabled" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-                <option value="Tidak">Tidak</option>
-                <option value="Ya">Ya (Disabilitas)</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Tempat Lahir</label>
-              <input type="text" id="adminEditBirthPlace" placeholder="Kota / Kabupaten Lahir" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Tanggal Lahir</label>
-              <input type="date" id="adminEditBirthDate" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">No. WhatsApp HP *</label>
-              <input type="text" id="adminEditPhone" placeholder="08xxxxxxxxxx" required style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Nama & Kontak Pembina / Ortu</label>
-              <input type="text" id="adminEditEmergencyContact" placeholder="Nama & No HP Pembina/Ortu" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-            <div id="adminEditClassGroup">
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Kelas Peserta</label>
-              <input type="text" id="adminEditClassName" placeholder="Contoh: VII A, VIII C, X MIPA 1..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Email Pendaftar</label>
-              <input type="email" id="adminEditEmail" placeholder="contoh@email.com" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
-            </div>
-          </div>
-
-          <!-- Section: Data Orang Tua / Wali (Khusus Peserta) -->
-          <div id="adminEditParentGroup" style="background: #f1f5f9; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
-            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: var(--secondary);">
-              <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali
-            </h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.5rem;">
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Nama Lengkap Ortu / Wali</label>
-                <input type="text" id="adminEditParentName" placeholder="Nama Orang Tua/Wali" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+            <div class="edit-grid-3">
+              <div class="edit-form-field">
+                <label class="edit-form-label"><i class="fa-solid fa-users-viewfinder"></i> Kategori Registrasi</label>
+                <select id="adminEditRegistrationType" class="edit-form-select">
+                  <option value="Peserta">Peserta PMR</option>
+                  <option value="Pendamping">Pembina / Pendamping</option>
+                  <option value="Panitia">Panitia</option>
+                  <option value="Peninjau">Peninjau</option>
+                  <option value="Tamu Undangan">Tamu Undangan</option>
+                  <option value="Media">Media / Pers</option>
+                </select>
               </div>
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Pekerjaan Ortu / Wali</label>
-                <input type="text" id="adminEditParentJob" placeholder="PNS, Wiraswasta, Buruh, Petani, dll" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label"><i class="fa-solid fa-layer-group"></i> Tingkat PMR / Jabatan</label>
+                <select id="adminEditLevel" class="edit-form-select">
+                  <option value="Mula">Mula (SD / MI)</option>
+                  <option value="Madya">Madya (SMP / MTs)</option>
+                  <option value="Wira">Wira (SMA / SMK / MA)</option>
+                  <option value="Kepala Sekolah">Kepala Sekolah</option>
+                  <option value="Pembina PMR">Pembina PMR</option>
+                  <option value="Pendamping">Pendamping</option>
+                  <option value="Anggota PMR">Anggota PMR</option>
+                  <option value="Pengurus">Pengurus</option>
+                  <option value="Pegawai">Pegawai</option>
+                  <option value="Relawan">Relawan</option>
+                  <option value="Panitia">Panitia</option>
+                  <option value="Peninjau">Peninjau</option>
+                  <option value="Tamu Undangan">Tamu Undangan</option>
+                  <option value="Media">Media</option>
+                </select>
               </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.75rem;">
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Telp / HP Ortu</label>
-                <input type="text" id="adminEditParentPhone" placeholder="08xxxxxxxxxx" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
-              </div>
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Alamat Ortu / Wali</label>
-                <input type="text" id="adminEditParentAddress" placeholder="Alamat lengkap orang tua/wali" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label"><i class="fa-solid fa-certificate"></i> Status Verifikasi</label>
+                <select id="adminEditStatus" class="edit-form-select" style="font-weight: 700;">
+                  <option value="pending_unit">Pending Unit (Menunggu)</option>
+                  <option value="verified_unit">Disetujui Unit (Pending Kab)</option>
+                  <option value="verified_kabupaten">🟢 Verified Kabupaten</option>
+                  <option value="revision">🟡 Minta Perbaikan / Revisi</option>
+                  <option value="rejected">🔴 Ditolak</option>
+                </select>
               </div>
             </div>
           </div>
 
-          <!-- Section: Khusus Pembina Pendamping -->
-          <div id="adminEditPendampingGroup" style="display: none; background: #eff6ff; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #bfdbfe;">
-            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: #1e40af;">
-              <i class="fa-solid fa-user-tie" style="color: #2563eb;"></i> Khusus Pembina Pendamping
-            </h5>
-            <div style="margin-bottom: 0.5rem;">
-              <label style="font-weight: 700; font-size: 0.8rem; color: #1e3a8a;">Pendidikan Terakhir</label>
-              <input type="text" id="adminEditLastEducation" placeholder="Contoh: SMA/SMK, D3, S1 Pendidikan, S2, dll" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #93c5fd; border-radius: 4px; font-size: 0.85rem;">
+          <!-- SECTION 2: Biodata & Identitas Utama -->
+          <div class="edit-section-card">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-id-card"></i> Identitas Pokok & Biodata Peserta
             </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.8rem; color: #1e3a8a;">Organisasi yang Diikuti (Tulis per baris atau a, b, c, d)</label>
-              <textarea id="adminEditOrganizations" rows="3" placeholder="a. PMI Kab. Pemalang&#10;b. PGRI&#10;c. Pramuka&#10;d. ..." style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #93c5fd; border-radius: 4px; font-size: 0.85rem; resize: vertical;"></textarea>
+            <div class="edit-grid-2" style="margin-bottom: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Nama Lengkap Peserta <span class="req">*</span></label>
+                <input type="text" id="adminEditFullName" required class="edit-form-input" placeholder="Nama lengkap sesuai akta / kartu pelajar">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">NISN / NIK Identitas</label>
+                <input type="text" id="adminEditNisn" class="edit-form-input" placeholder="Nomor NISN atau NIK KTP/KIA">
+              </div>
+            </div>
+
+            <div class="edit-grid-4" style="margin-bottom: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Tempat Lahir</label>
+                <input type="text" id="adminEditBirthPlace" class="edit-form-input" placeholder="Kota / Kabupaten">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Tanggal Lahir</label>
+                <input type="date" id="adminEditBirthDate" class="edit-form-input">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Jenis Kelamin</label>
+                <select id="adminEditGender" class="edit-form-select">
+                  <option value="L">Laki-Laki (L)</option>
+                  <option value="P">Perempuan (P)</option>
+                </select>
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Gol. Darah</label>
+                <select id="adminEditBloodType" class="edit-form-select" style="font-weight: 700;">
+                  <option value="A">Gol. A</option>
+                  <option value="B">Gol. B</option>
+                  <option value="AB">Gol. AB</option>
+                  <option value="O">Gol. O</option>
+                  <option value="-">- (Belum Tahu)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="edit-grid-3">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Agama</label>
+                <select id="adminEditReligion" class="edit-form-select">
+                  <option value="Islam">Islam</option>
+                  <option value="Kristen Protestan">Kristen Protestan</option>
+                  <option value="Katolik">Katolik</option>
+                  <option value="Hindu">Hindu</option>
+                  <option value="Buddha">Buddha</option>
+                  <option value="Konghucu">Konghucu</option>
+                </select>
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Status Disabilitas</label>
+                <select id="adminEditIsDisabled" class="edit-form-select">
+                  <option value="Tidak">Tidak (Non-Disabilitas)</option>
+                  <option value="Ya">Ya (Penyandang Disabilitas)</option>
+                </select>
+              </div>
+              <div class="edit-form-field" id="adminEditClassGroup">
+                <label class="edit-form-label">Kelas Peserta</label>
+                <input type="text" id="adminEditClassName" class="edit-form-input" placeholder="Contoh: VII A, X MIPA 1, dsb">
+              </div>
             </div>
           </div>
 
-          <!-- Section: Data Sekolah / Unit -->
-          <div style="background: #f8fafc; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
-            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: var(--secondary);">
-              <i class="fa-solid fa-school" style="color: var(--primary);"></i> Data Sekolah / Unit Kontingen
-            </h5>
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Alamat Sekolah</label>
-                <input type="text" id="adminEditSchoolAddress" placeholder="Alamat lengkap sekolah" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+          <!-- SECTION 3: Kontak & Domisili -->
+          <div class="edit-section-card">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-address-book"></i> Kontak Komunikasi & Domisili
+            </div>
+            <div class="edit-grid-3" style="margin-bottom: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label">No. WhatsApp HP <span class="req">*</span></label>
+                <input type="text" id="adminEditPhone" required class="edit-form-input" placeholder="08xxxxxxxxxx">
               </div>
-              <div>
-                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Telp Sekolah</label>
-                <input type="text" id="adminEditSchoolPhone" placeholder="(0284) xxxxxx" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Email Aktif</label>
+                <input type="email" id="adminEditEmail" class="edit-form-input" placeholder="peserta@email.com">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Kontak Darurat / Pembina</label>
+                <input type="text" id="adminEditEmergencyContact" class="edit-form-input" placeholder="Nama & No HP Darurat">
+              </div>
+            </div>
+            <div class="edit-form-field">
+              <label class="edit-form-label">Alamat Lengkap Domisili / Tempat Tinggal</label>
+              <textarea id="adminEditAddress" rows="2" class="edit-form-textarea" placeholder="Jalan, Dusun, RT/RW, Desa/Kelurahan, Kecamatan, Kabupaten..."></textarea>
+            </div>
+          </div>
+
+          <!-- SECTION 4: Data Sekolah / Unit Kontingen -->
+          <div class="edit-section-card">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-school"></i> Data Sekolah / Pangkalan Unit
+            </div>
+            <div class="edit-grid-2">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Alamat Sekolah / Pangkalan</label>
+                <input type="text" id="adminEditSchoolAddress" class="edit-form-input" placeholder="Alamat lengkap sekolah pangkalan">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Telp / Kontak Sekolah</label>
+                <input type="text" id="adminEditSchoolPhone" class="edit-form-input" placeholder="(0284) xxxxxx / No Telp Sekolah">
               </div>
             </div>
           </div>
 
-          <div style="margin-bottom: 0.85rem;">
-            <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Alamat Lengkap Domisili Peserta</label>
-            <textarea id="adminEditAddress" rows="2" placeholder="Nama jalan, RT/RW, Desa/Kelurahan, Kecamatan..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px; resize: vertical;"></textarea>
+          <!-- SECTION 5: Data Orang Tua / Wali (Khusus Peserta) -->
+          <div id="adminEditParentGroup" class="edit-section-card">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-user-group"></i> Data Orang Tua / Wali Peserta
+            </div>
+            <div class="edit-grid-2" style="margin-bottom: 0.85rem;">
+              <div class="edit-form-field">
+                <label class="edit-form-label">Nama Lengkap Orang Tua / Wali</label>
+                <input type="text" id="adminEditParentName" class="edit-form-input" placeholder="Nama ayah / ibu / wali">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Pekerjaan Orang Tua / Wali</label>
+                <input type="text" id="adminEditParentJob" class="edit-form-input" placeholder="PNS, Wiraswasta, Karyawan, Petani, dll">
+              </div>
+            </div>
+            <div class="edit-grid-2">
+              <div class="edit-form-field">
+                <label class="edit-form-label">No. Telp / HP Orang Tua</label>
+                <input type="text" id="adminEditParentPhone" class="edit-form-input" placeholder="08xxxxxxxxxx">
+              </div>
+              <div class="edit-form-field">
+                <label class="edit-form-label">Alamat Lengkap Orang Tua / Wali</label>
+                <input type="text" id="adminEditParentAddress" class="edit-form-input" placeholder="Alamat rumah orang tua / wali">
+              </div>
+            </div>
           </div>
 
-          <!-- Pratinjau & Upload Berkas Foto & Surat Tugas -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color); background: #f8fafc; padding: 0.85rem; border-radius: 8px;">
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary); display: block; margin-bottom: 0.35rem;">
-                <i class="fa-solid fa-image" style="color: #0284c7;"></i> Pas Foto 3x4 Peserta
-              </label>
-              <div id="adminEditCurrentPhotoBox" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                <img id="adminEditPhotoPreview" src="frontend/images/default-avatar.svg" style="width: 60px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: white;">
-                <span id="adminEditPhotoStatus" style="font-size: 0.75rem; color: #64748b;">Pas foto terdaftar</span>
-              </div>
-              <input type="file" id="adminEditPhotoFile" accept="image/*" style="width: 100%; font-size: 0.8rem;">
-              <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.2rem;">Pilih foto baru jika ingin mengganti pas foto (Maks. 5MB).</small>
+          <!-- SECTION 6: Khusus Pembina Pendamping -->
+          <div id="adminEditPendampingGroup" class="edit-section-card" style="display: none; background: #f0fdf4; border-color: #bbf7d0;">
+            <div class="edit-section-header" style="color: #166534; border-color: #dcfce7;">
+              <i class="fa-solid fa-user-tie" style="color: #15803d;"></i> Riwayat Khusus Pembina Pendamping
             </div>
-            <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary); display: block; margin-bottom: 0.35rem;">
-                <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Surat Tugas Sekolah
-              </label>
-              <div id="adminEditCurrentLetterBox" style="margin-bottom: 0.5rem; font-size: 0.8rem;">
-                <a id="adminEditLetterLink" href="#" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem;">
-                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Surat Tugas Saat Ini
-                </a>
-              </div>
-              <input type="file" id="adminEditAssignmentFile" accept=".pdf,image/*" style="width: 100%; font-size: 0.8rem;">
-              <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.2rem;">Pilih berkas baru (PDF / Gambar) jika ingin mengganti.</small>
+            <div class="edit-form-field" style="margin-bottom: 0.85rem;">
+              <label class="edit-form-label">Pendidikan Terakhir</label>
+              <input type="text" id="adminEditLastEducation" class="edit-form-input" placeholder="Contoh: SMA/SMK, D3, S1 Pendidikan, S2, dll">
+            </div>
+            <div class="edit-form-field">
+              <label class="edit-form-label">Organisasi yang Pernah / Sedang Diikuti (Tulis a, b, c, d atau per baris)</label>
+              <textarea id="adminEditOrganizations" rows="3" class="edit-form-textarea" placeholder="a. PMI Kab. Pemalang&#10;b. PGRI&#10;c. Pramuka&#10;d. ..."></textarea>
             </div>
           </div>
+
+          <!-- SECTION 7: Berkas Resmi & Dokumen (Pas Foto & Surat Tugas) -->
+          <div class="edit-section-card">
+            <div class="edit-section-header">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Unggah / Perbarui Berkas Dokumen Resmi
+            </div>
+            <div class="edit-grid-2">
+              <!-- Box Pas Foto -->
+              <div class="edit-file-card">
+                <label class="edit-form-label"><i class="fa-solid fa-image" style="color: #0284c7;"></i> Pas Foto Resmi (3x4)</label>
+                <div style="display: flex; align-items: center; gap: 0.85rem; background: #ffffff; padding: 0.65rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                  <img id="adminEditPhotoPreview" src="frontend/images/default-avatar.svg" style="width: 65px; height: 85px; object-fit: cover; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #ffffff;" alt="Pratinjau Foto">
+                  <div>
+                    <div id="adminEditPhotoStatus" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem;">Pas foto terdaftar</div>
+                    <small style="color: #64748b; font-size: 0.72rem; display: block;">Format JPG/PNG (Maks. 5MB). Pilih berkas baru di bawah jika ingin mengganti.</small>
+                  </div>
+                </div>
+                <input type="file" id="adminEditPhotoFile" accept="image/*" class="edit-form-input" style="padding: 0.4rem 0.6rem; font-size: 0.78rem;">
+              </div>
+
+              <!-- Box Surat Tugas -->
+              <div class="edit-file-card">
+                <label class="edit-form-label"><i class="fa-solid fa-file-contract" style="color: #dc2626;"></i> Surat Tugas Sekolah (PDF / Gambar)</label>
+                <div style="background: #ffffff; padding: 0.65rem; border-radius: 8px; border: 1px solid #e2e8f0; min-height: 85px; display: flex; flex-direction: column; justify-content: center;">
+                  <div id="adminEditCurrentLetterBox" style="margin-bottom: 0.35rem;">
+                    <a id="adminEditLetterLink" href="#" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.35rem 0.65rem; display: inline-flex; align-items: center; gap: 0.4rem; color: #dc2626; border-color: #fca5a5; background: #fff5f5; font-weight: 700;">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Surat Tugas Terdaftar
+                    </a>
+                  </div>
+                  <small style="color: #64748b; font-size: 0.72rem; display: block;">Berkas PDF resmi dengan tanda tangan & cap basah pangkalan.</small>
+                </div>
+                <input type="file" id="adminEditAssignmentFile" accept=".pdf,image/*" class="edit-form-input" style="padding: 0.4rem 0.6rem; font-size: 0.78rem;">
+              </div>
+            </div>
+          </div>
+
         </div>
-        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div style="display: flex; gap: 0.4rem;">
-            <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.preventDefault(); event.stopPropagation(); App.handleDeleteFromEditModal(event)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
-            <button type="button" class="btn btn-outline btn-sm" style="color: #0284c7; border-color: #bae6fd; font-weight: 700;" onclick="App.openBiodataModal(document.getElementById('adminEditParticipantId').value)"><i class="fa-solid fa-print"></i> Cetak Formulir</button>
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700; padding: 0.45rem 0.85rem;" onclick="event.preventDefault(); event.stopPropagation(); App.handleDeleteFromEditModal(event)">
+              <i class="fa-solid fa-trash-can"></i> Hapus Peserta
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" style="color: #0284c7; border-color: #bae6fd; font-weight: 700; padding: 0.45rem 0.85rem;" onclick="App.openBiodataModal(document.getElementById('adminEditParticipantId').value)">
+              <i class="fa-solid fa-print"></i> Cetak Formulir Biodata
+            </button>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
             <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('adminEditParticipantModal')">Batal</button>
-            <button type="submit" id="adminEditSubmitBtn" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Data</button>
+            <button type="submit" id="adminEditSubmitBtn" class="btn btn-primary btn-sm" style="font-weight: 800; padding: 0.5rem 1.25rem; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
+              <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Data
+            </button>
           </div>
         </div>
       </form>
@@ -1131,7 +1166,7 @@ $settings = getAppSettings();
           <button class="modal-close" onclick="App.closeModal('biodataPrintModal')">&times;</button>
         </div>
       </div>
-      <div class="modal-body" style="padding: 1.5rem; background: #e2e8f0; max-height: calc(100vh - 180px); overflow-y: auto;">
+      <div class="modal-body" style="padding: 2rem 1.5rem; background: #475569; max-height: calc(100vh - 160px); overflow-y: auto;">
         <div id="biodataPrintContainer">
           <!-- Dokumen Biodata Dirender Oleh App.openBiodataModal -->
         </div>
@@ -1172,8 +1207,9 @@ $settings = getAppSettings();
     </div>
   </div>
 
-  <!-- Floating Quick Button: Kotak Saran -->
-  <button type="button" class="floating-feedback-btn" id="floatingFeedbackBtn" onclick="App.openFeedbackModal()" aria-label="Buka Kotak Saran Jumbara" title="Kirim Saran & Aspirasi untuk Jumbara PMI">
+  <!-- Floating Quick Button: Kotak Saran (Hanya Tampil di Frontend Publik) -->
+  <?php $hideFloatingFeedback = !empty(getCurrentUser()); ?>
+  <button type="button" class="floating-feedback-btn" id="floatingFeedbackBtn" onclick="App.openFeedbackModal()" aria-label="Buka Kotak Saran Jumbara" title="Kirim Saran & Aspirasi untuk Jumbara PMI"<?php if ($hideFloatingFeedback): ?> style="display: none;"<?php endif; ?>>
     <span class="feedback-dot-pulse"></span>
     <i class="fa-solid fa-comment-dots"></i>
     <span>Kotak Saran</span>
@@ -1263,11 +1299,13 @@ $settings = getAppSettings();
   <!-- JavaScript Scripts -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
   <?php
+    $jsQrVer = file_exists(__DIR__ . '/../frontend/js/qrcode.min.js') ? filemtime(__DIR__ . '/../frontend/js/qrcode.min.js') : '2.0.0';
     $jsIconsVer = file_exists(__DIR__ . '/../frontend/js/icons.js') ? filemtime(__DIR__ . '/../frontend/js/icons.js') : '2.0.0';
     $jsApiVer = file_exists(__DIR__ . '/../frontend/js/api.js') ? filemtime(__DIR__ . '/../frontend/js/api.js') : '2.0.0';
     $jsUtilsVer = file_exists(__DIR__ . '/../frontend/js/utils.js') ? filemtime(__DIR__ . '/../frontend/js/utils.js') : '2.0.0';
     $jsAppVer = file_exists(__DIR__ . '/../frontend/js/app.js') ? filemtime(__DIR__ . '/../frontend/js/app.js') : '2.0.0';
   ?>
+  <script src="<?php echo $baseUrl; ?>frontend/js/qrcode.min.js?v=<?php echo $jsQrVer; ?>"></script>
   <script src="<?php echo $baseUrl; ?>frontend/js/icons.js?v=<?php echo $jsIconsVer; ?>"></script>
   <script src="<?php echo $baseUrl; ?>frontend/js/api.js?v=<?php echo $jsApiVer; ?>"></script>
   <script src="<?php echo $baseUrl; ?>frontend/js/utils.js?v=<?php echo $jsUtilsVer; ?>"></script>

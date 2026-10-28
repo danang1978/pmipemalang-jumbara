@@ -112,6 +112,11 @@ if ($method === 'POST') {
         $stmtUpd = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
         $stmtUpd->execute([$newHash, $userId]);
 
+        logActivity('reset_password', 'users', "Admin me-reset password akun user: '{$targetUser['username']}' (ID: {$userId})", [
+            'target_user_id' => $userId,
+            'target_username' => $targetUser['username']
+        ]);
+
         jsonResponse([
             'message' => "Password user '{$targetUser['username']}' berhasil di-reset!"
         ]);
@@ -148,9 +153,17 @@ if ($method === 'POST') {
             $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId]);
         }
 
+        $newUserId = $pdo->lastInsertId();
+        logActivity('create_user', 'users', "Membuat akun pengguna baru: '{$username}' dengan peran '{$role}'", [
+            'user_id' => $newUserId,
+            'username' => $username,
+            'role' => $role,
+            'unit_id' => $unitId
+        ]);
+
         jsonResponse([
             'message' => "User baru '{$username}' dengan peran '{$role}' berhasil dibuat!",
-            'id' => $pdo->lastInsertId()
+            'id' => $newUserId
         ]);
     }
 
@@ -178,6 +191,12 @@ if ($method === 'POST') {
         $stmtPartUpd = $pdo->prepare("UPDATE participants SET full_name = ?, phone = ?, email = ? WHERE user_id = ?");
         $stmtPartUpd->execute([$fullName ?: null, $phone ?: null, $email ?: null, $userId]);
 
+        logActivity('update_user', 'users', "Memperbarui data akun pengguna ID {$userId} (Role: {$role})", [
+            'user_id' => $userId,
+            'role' => $role,
+            'unit_id' => $unitId
+        ]);
+
         jsonResponse(['message' => 'Data user dan peserta berhasil diperbarui!']);
     }
 }
@@ -191,8 +210,18 @@ if ($method === 'DELETE') {
         jsonResponse(['error' => 'Anda tidak dapat menghapus akun Anda sendiri yang sedang terhubung.'], 400);
     }
 
+    $stmtCheck = $pdo->prepare("SELECT username, role FROM users WHERE id = ?");
+    $stmtCheck->execute([$userId]);
+    $uData = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
     $stmtDel = $pdo->prepare("DELETE FROM users WHERE id = ?");
     $stmtDel->execute([$userId]);
+
+    logActivity('delete_user', 'users', "Menghapus akun pengguna: " . ($uData['username'] ?? "ID: {$userId}"), [
+        'user_id' => $userId,
+        'username' => $uData['username'] ?? null,
+        'role' => $uData['role'] ?? null
+    ]);
 
     jsonResponse(['message' => 'User berhasil dihapus dari sistem.']);
 }

@@ -315,6 +315,8 @@ if ($method === 'POST') {
         }
     }
 
+    logActivity('update_settings', 'settings', "Admin memperbarui konfigurasi sistem & pengaturan database", array_keys($input));
+
     jsonResponse(['message' => 'Pengaturan Jumbara, Fonnte WA & SMTP Gateway berhasil diperbarui ke MySQL!']);
 }
 

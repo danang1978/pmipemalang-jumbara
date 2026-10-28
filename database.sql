@@ -64,6 +64,8 @@ CREATE TABLE `attendance` (
   KEY `idx_event` (`event_id`),
   KEY `idx_event_part` (`event_id`,`participant_id`),
   KEY `idx_event_status` (`event_id`,`status`),
+  KEY `idx_event_scanned` (`event_id`,`scanned_at`),
+  KEY `idx_part_event` (`participant_id`,`event_id`,`id`),
   CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
   CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`participant_id`) REFERENCES `participants` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4;
@@ -301,6 +303,7 @@ CREATE TABLE `scores` (
   KEY `idx_evaluator` (`evaluator_user_id`),
   KEY `idx_status` (`status`),
   KEY `idx_unit_cat` (`unit_id`,`category_type`),
+  KEY `idx_unit_grade` (`unit_id`,`grade`),
   CONSTRAINT `scores_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON DELETE CASCADE,
   CONSTRAINT `scores_ibfk_2` FOREIGN KEY (`participant_id`) REFERENCES `participants` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
@@ -485,6 +488,33 @@ CREATE TABLE `feedback` (
   KEY `idx_fb_created` (`created_at`),
   KEY `idx_fb_cat` (`category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `activity_logs`
+--
+
+DROP TABLE IF EXISTS `activity_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `activity_logs` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `username` varchar(100) DEFAULT NULL,
+  `role` varchar(50) DEFAULT NULL,
+  `action` varchar(100) NOT NULL,
+  `module` varchar(50) NOT NULL,
+  `description` text NOT NULL,
+  `details` longtext DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_activity_created_at` (`created_at`),
+  KEY `idx_activity_user` (`user_id`),
+  KEY `idx_activity_action` (`action`),
+  KEY `idx_activity_module` (`module`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

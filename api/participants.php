@@ -11,83 +11,7 @@ $action = $_GET['action'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
 
 function getParticipantSelectColumns(PDO $pdo): string {
-    static $columnsSql = null;
-    if ($columnsSql !== null) {
-        return $columnsSql;
-    }
-
-    $baseCols = [
-        'id' => 'p.id',
-        'code' => 'p.code',
-        'user_id' => 'p.user_id',
-        'unit_id' => 'p.unit_id',
-        'full_name' => 'p.full_name',
-        'nisn' => 'p.nisn',
-        'level' => 'p.level',
-        'gender' => 'p.gender',
-        'blood_type' => 'p.blood_type',
-        'phone' => 'p.phone',
-        'photo_url' => 'p.photo_url',
-        'status' => 'p.status',
-        'created_at' => 'p.created_at'
-    ];
-
-    $checkCols = [
-        'class_name',
-        'last_education',
-        'organizations',
-        'birth_place',
-        'birth_date',
-        'religion',
-        'address',
-        'school_address',
-        'school_phone',
-        'parent_name',
-        'parent_address',
-        'parent_phone',
-        'parent_job',
-        'is_disabled',
-        'disability_type',
-        'emergency_contact',
-        'assignment_letter_url',
-        'registration_type',
-        'reject_reason',
-        'email',
-        'certificate_number',
-        'sub_categories'
-    ];
-
-    try {
-        $existing = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
-        $existingMap = array_flip($existing);
-    } catch (Exception $e) {
-        $existingMap = [];
-    }
-
-    $selectParts = [];
-    foreach ($baseCols as $alias => $col) {
-        if (!empty($existingMap) && !isset($existingMap[$alias])) {
-            $selectParts[] = "NULL AS `$alias`";
-        } else {
-            $selectParts[] = $col;
-        }
-    }
-
-    foreach ($checkCols as $colName) {
-        if (!empty($existingMap) && !isset($existingMap[$colName])) {
-            $selectParts[] = "NULL AS `$colName`";
-        } else {
-            $selectParts[] = "p.`$colName`";
-        }
-    }
-
-    $selectParts[] = "un.name AS unit_name";
-    $selectParts[] = "un.code AS unit_code";
-    $selectParts[] = "un.address AS unit_address";
-    $selectParts[] = "un.phone AS unit_phone";
-
-    $columnsSql = implode(', ', $selectParts);
-    return $columnsSql;
+    return "p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, p.gender, p.blood_type, p.phone, p.photo_url, p.status, p.created_at, p.class_name, p.last_education, p.organizations, p.birth_place, p.birth_date, p.religion, p.address, p.school_address, p.school_phone, p.parent_name, p.parent_address, p.parent_phone, p.parent_job, p.is_disabled, p.disability_type, p.emergency_contact, p.assignment_letter_url, p.registration_type, p.reject_reason, p.email, p.certificate_number, p.sub_categories, un.name AS unit_name, un.code AS unit_code, un.address AS unit_address, un.phone AS unit_phone";
 }
 
 // GET /api/participants.php?action=me
@@ -289,60 +213,7 @@ if ($method === 'GET' && $action === 'export') {
     $unitName = $unitInfo ? $unitInfo['name'] : 'Semua Unit Kontingen';
     $safeFilename = 'Data_Peserta_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $unitName) . '_' . date('Ymd_His');
 
-    if ($format === 'csv') {
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $safeFilename . '.csv"');
-        $output = fopen('php://output', 'w');
-        // UTF-8 BOM for Microsoft Excel
-        fputs($output, "\xEF\xBB\xBF");
-
-        fputcsv($output, [
-            'No', 'Kode Peserta', 'Nama Lengkap', 'NIK / NISN', 'Kategori', 'Tingkat PMR', 'Kelas / Pend. Terakhir',
-            'Jenis Kelamin', 'Gol. Darah', 'Tempat Lahir', 'Tanggal Lahir', 'Agama', 'No. WhatsApp', 'Kontak Darurat',
-            'Nama Orang Tua/Wali', 'Pekerjaan Orang Tua', 'No. Telp Orang Tua', 'Alamat Domisili', 'Status Verifikasi', 'Unit / Kontingen'
-        ]);
-
-        $no = 1;
-        foreach ($participants as $p) {
-            $catLabel = ($p['registration_type'] === 'Pendamping') ? 'Pembina Pendamping' : ($p['registration_type'] ?? 'Peserta');
-            $statusLabel = [
-                'pending_unit' => 'Menunggu Verifikasi Unit',
-                'verified_unit' => 'Terverifikasi Unit',
-                'verified_kabupaten' => 'Terverifikasi Kabupaten',
-                'revision' => 'Perlu Revisi',
-                'rejected' => 'Ditolak'
-            ][$p['status'] ?? ''] ?? ($p['status'] ?? '-');
-
-            $eduOrClass = ($p['registration_type'] === 'Pendamping') ? ($p['last_education'] ?? '-') : ($p['class_name'] ? ('Kelas ' . $p['class_name']) : '-');
-
-            fputcsv($output, [
-                $no++,
-                $p['code'] ?? '-',
-                $p['full_name'] ?? '-',
-                $p['nisn'] ?? '-',
-                $catLabel,
-                $p['level'] ?? '-',
-                $eduOrClass,
-                $p['gender'] === 'L' ? 'Laki-laki' : 'Perempuan',
-                $p['blood_type'] ?? '-',
-                $p['birth_place'] ?? '-',
-                $p['birth_date'] ?? '-',
-                $p['religion'] ?? '-',
-                $p['phone'] ?? '-',
-                $p['emergency_contact'] ?? '-',
-                $p['parent_name'] ?? '-',
-                $p['parent_job'] ?? '-',
-                $p['parent_phone'] ?? '-',
-                $p['address'] ?? '-',
-                $statusLabel,
-                $p['unit_name'] ?? '-'
-            ]);
-        }
-        fclose($output);
-        exit;
-    }
-
-    // Default: EXCEL (.xls styled spreadsheet compatible with Excel, LibreOffice, Google Sheets)
+    // EXCEL (.xls styled spreadsheet compatible with Excel, LibreOffice, Google Sheets)
     header('Content-Type: application/vnd.ms-excel; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $safeFilename . '.xls"');
     header('Pragma: no-cache');
@@ -654,6 +525,14 @@ if (($method === 'POST' || $method === 'PATCH') && $action === 'status') {
     $stmt = $pdo->prepare("UPDATE participants SET status = ?, reject_reason = ? WHERE id = ?");
     $stmt->execute([$newStatus, $reason ?: null, $partId]);
 
+    logActivity('verify_participant', 'participants', "Memperbarui status verifikasi peserta {$part['full_name']} ({$part['code']}) menjadi '{$newStatus}'" . ($reason ? " (Catatan: {$reason})" : ""), [
+        'participant_id' => $partId,
+        'code' => $part['code'],
+        'name' => $part['full_name'],
+        'status' => $newStatus,
+        'reason' => $reason
+    ]);
+
     $waUrl = null;
     if ($part && !empty($part['phone'])) {
         $phone = preg_replace('/[^0-9]/', '', $part['phone']);
@@ -820,14 +699,6 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
         if ($uploadedLetter) $assignmentLetterUrl = $uploadedLetter;
     }
 
-    // Dynamically filter update columns to match existing table schema safely
-    try {
-        $existingCols = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
-        $existingMap = array_flip($existingCols);
-    } catch (Exception $e) {
-        $existingMap = [];
-    }
-
     $fields = [
         'full_name' => $fullName,
         'nisn' => $nisn,
@@ -862,10 +733,8 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
     $setSql = [];
     $updateParams = [];
     foreach ($fields as $colName => $val) {
-        if (empty($existingMap) || isset($existingMap[$colName])) {
-            $setSql[] = "`$colName` = ?";
-            $updateParams[] = $val;
-        }
+        $setSql[] = "`$colName` = ?";
+        $updateParams[] = $val;
     }
     $updateParams[] = $id;
 
@@ -885,6 +754,13 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
             } catch (PDOException $e2) {}
         }
     }
+
+    logActivity('update_participant', 'participants', "Memperbarui data lengkap peserta: {$fullName} ({$part['code']})", [
+        'participant_id' => $id,
+        'code' => $part['code'],
+        'name' => $fullName,
+        'unit_id' => $unitId
+    ]);
 
     jsonResponse(['message' => 'Data dan berkas peserta berhasil diperbarui!']);
 }
@@ -918,6 +794,13 @@ if ($method === 'DELETE') {
         $stmtDelP = $pdo->prepare("DELETE FROM participants WHERE id = ?");
         $stmtDelP->execute([$partId]);
         $pdo->commit();
+
+        logActivity('delete_participant', 'participants', "Menghapus data peserta: {$part['full_name']} ({$part['code']})", [
+            'participant_id' => $partId,
+            'code' => $part['code'],
+            'name' => $part['full_name'],
+            'unit_id' => $part['unit_id']
+        ]);
 
         jsonResponse(['message' => 'Data peserta dan akun pengguna berhasil dihapus.']);
     } catch (Exception $e) {

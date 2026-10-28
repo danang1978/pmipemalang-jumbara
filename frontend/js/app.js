@@ -363,6 +363,7 @@ const App = {
     }
     this.renderMobileBottomNav();
     this.renderFooterNav();
+    this.updateFeedbackFloatingVisibility();
   },
 
   async renderView() {
@@ -403,6 +404,33 @@ const App = {
 
     this.renderMobileBottomNav();
     this.renderFooterNav();
+    this.updateFeedbackFloatingVisibility();
+  },
+
+  updateFeedbackFloatingVisibility() {
+    const fbBtn = document.getElementById('floatingFeedbackBtn');
+    const isInsideAdmin = this.currentUser && ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit'].includes(this.currentUser.role);
+    const hasAnyDashboard = !!this.currentUser;
+
+    if (isInsideAdmin) {
+      document.body.classList.add('in-admin-dashboard');
+    } else {
+      document.body.classList.remove('in-admin-dashboard');
+    }
+
+    if (hasAnyDashboard) {
+      document.body.classList.add('user-logged-in');
+    } else {
+      document.body.classList.remove('user-logged-in');
+    }
+
+    if (fbBtn) {
+      if (hasAnyDashboard) {
+        fbBtn.style.display = 'none';
+      } else {
+        fbBtn.style.display = 'inline-flex';
+      }
+    }
   },
 
   startJumbotronCarousel() {
@@ -496,6 +524,7 @@ const App = {
   // VIEW 1: PUBLIC LANDING PAGE WITH JUMBOTRON HERO CAROUSEL & DEADLINE
   // =========================================================================
   async renderPublicLanding(container) {
+    this.updateFeedbackFloatingVisibility();
     const s = this.appSettings;
 
     // Parse Jumbotron Images Array
@@ -2428,7 +2457,7 @@ const App = {
                 <!-- TICKET QR SECTION BESAR FULL FOKUS -->
                 <div class="ticket-qr-area">
                   <div class="ticket-qr-wrapper">
-                    <img src="${profile.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(profile.code || 'JMB-2026-0001')}`}" 
+                    <img src="${profile.qr_code_base64 || Utils.getQRCodeUrl(profile.code || 'JMB-2026-0001', 300)}" 
                          alt="QR Presensi" class="ticket-qr-img">
                   </div>
                   
@@ -3191,7 +3220,7 @@ const App = {
 
                 <div class="ticket-qr-area">
                   <div class="ticket-qr-wrapper">
-                    <img src="${profile.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(pnjCode)}`}" 
+                    <img src="${profile.qr_code_base64 || Utils.getQRCodeUrl(pnjCode, 300)}" 
                          alt="QR Peninjau" class="ticket-qr-img">
                   </div>
                   
@@ -4364,8 +4393,8 @@ const App = {
     if (!this.cachedAllParticipants || !this.cachedAllParticipants.length) {
       listContainer.innerHTML = '<p style="text-align: center; padding: 1.5rem 0; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data seluruh peserta...</p>';
       try {
-        const parts = await API.getParticipants();
-        this.cachedAllParticipants = parts || [];
+        const parts = await API.getParticipants({ all: 'true' });
+        this.cachedAllParticipants = Array.isArray(parts) ? parts : (parts.data || []);
       } catch (e) {
         listContainer.innerHTML = `<p style="color: red; text-align: center;">Gagal memuat peserta: ${Utils.escapeHtml(e.message)}</p>`;
         return;
@@ -4373,7 +4402,7 @@ const App = {
     }
 
     const q = (query || '').toLowerCase().trim();
-    let filtered = this.cachedAllParticipants;
+    let filtered = Array.isArray(this.cachedAllParticipants) ? this.cachedAllParticipants : [];
     if (q) {
       filtered = filtered.filter(p => 
         (p.full_name && p.full_name.toLowerCase().includes(q)) ||
@@ -4436,6 +4465,7 @@ const App = {
   // VIEW 3: ADMIN UNIT PMR PORTAL VIEW
   // =========================================================================
   async renderAdminUnitPortal(container) {
+    this.updateFeedbackFloatingVisibility();
     this.activeUnitTab = this.activeUnitTab || 'peserta';
 
     container.innerHTML = `
@@ -4539,7 +4569,7 @@ const App = {
                 <th style="padding: 10px 12px; text-align: left;">Nama Peserta</th>
                 <th style="padding: 10px 12px; text-align: center;">Unsur / Role</th>
                 <th style="padding: 10px 12px; text-align: center;">Nomor Piagam Resmi</th>
-                <th style="padding: 10px 12px; text-align: right;">Aksi</th>
+                <th class="col-actions" style="padding: 10px 12px; text-align: right;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -4550,7 +4580,7 @@ const App = {
                   <td style="padding: 10px 12px; text-align: center; font-family: monospace; font-weight: 800; color: #16a34a;">
                     ${p.certificate_number ? Utils.escapeHtml(p.certificate_number) : '<span style="color: #dc2626; font-family: inherit; font-weight: normal;">Belum diterbitkan</span>'}
                   </td>
-                  <td style="padding: 10px 12px; text-align: right;">
+                  <td class="col-actions" style="padding: 10px 12px; text-align: right;">
                     <button class="btn btn-outline btn-sm" onclick="App.openPiagamPrintWindow([${JSON.stringify(p).replace(/"/g, '&quot;')}])">
                       <i class="fa-solid fa-print"></i> Cetak Piagam
                     </button>
@@ -4870,9 +4900,14 @@ const App = {
           <h3 class="panel-title" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fa-solid fa-users-line" style="color: var(--primary);"></i> Data Peserta & Kontingen Unit Sekolah
           </h3>
-          <button type="button" class="btn btn-outline btn-sm" onclick="App.openAddParticipantModal ? App.openAddParticipantModal() : (window.location.hash='#tambah-peserta')" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fa-solid fa-user-plus"></i> Tambah Anggota
-          </button>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-success btn-sm" onclick="App.exportPesertaXLS()" style="font-weight: 700; font-size: 0.8rem; background: #059669; border-color: #059669; color: #fff; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-file-excel"></i> Export Excel (.xls)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="App.openAddParticipantModal ? App.openAddParticipantModal() : (window.location.hash='#tambah-peserta')" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-user-plus"></i> Tambah Anggota
+            </button>
+          </div>
         </div>
 
         <!-- Filter Toolbar -->
@@ -5035,14 +5070,13 @@ const App = {
             <thead>
               <tr>
                 <th class="col-code">Kode</th>
-                <th class="col-name">Nama Pendaftar</th>
+                <th class="col-name">Nama & Identitas</th>
                 <th class="col-category">Kategori / Tingkat</th>
-                <th style="width: 110px; text-align: center;">Jenis Kelamin</th>
-                <th class="col-blood">Gol. Darah</th>
-                <th style="width: 130px;">Kontak HP</th>
+                <th style="width: 50px; text-align: center;">JK</th>
+                <th class="col-blood">Gol.</th>
                 <th class="col-doc">Surat Tugas</th>
                 <th class="col-status">Status</th>
-                <th class="col-actions">Aksi Pengelolaan & Verifikasi</th>
+                <th class="col-actions">Aksi Verifikasi</th>
               </tr>
             </thead>
             <tbody>
@@ -5056,36 +5090,39 @@ const App = {
         const isPending = p.status === 'pending_unit';
 
         return `
-                <tr style="${isPending ? 'background: #fffdf5;' : ''}">
+                <tr class="${isPending ? 'row-pending-unit' : ''}">
                   <td class="col-code"><span class="badge-code">${p.code}</span></td>
                   <td class="col-name">
-                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="display: flex; align-items: center; gap: 0.55rem;">
                       <img src="${photoUrl}" class="participant-avatar" loading="lazy" onclick="window.open('${p.photo_url || photoUrl}', '_blank')" title="Klik untuk lihat foto asli">
                       <div style="min-width: 0; flex: 1;">
                         <div class="participant-name" title="${escapedName}">${escapedName}</div>
-                        <div class="participant-subtext">${subtext}</div>
+                        <div class="participant-subtext" title="${subtext}">
+                          ${subtext}${p.phone ? ` &bull; <i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> ${Utils.escapeHtml(p.phone)}` : ''}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td class="col-category">${badgeCategoryHtml}</td>
-                  <td style="text-align: center; white-space: nowrap;">${p.gender === 'L' ? '<span style="color:#0284c7; font-weight:600;"><i class="fa-solid fa-mars"></i> Laki-Laki</span>' : '<span style="color:#db2777; font-weight:600;"><i class="fa-solid fa-venus"></i> Perempuan</span>'}</td>
+                  <td style="text-align: center; white-space: nowrap;">
+                    ${p.gender === 'L' ? '<span style="color:#0284c7; font-weight:700;" title="Laki-Laki">♂ L</span>' : '<span style="color:#db2777; font-weight:700;" title="Perempuan">♀ P</span>'}
+                  </td>
                   <td class="col-blood"><span class="blood-badge ${hasBlood ? 'has-blood' : ''}">${p.blood_type || '-'}</span></td>
-                  <td style="white-space: nowrap; font-size: 0.82rem; color: #475569;">${Utils.escapeHtml(p.phone || '-')}</td>
                   <td class="col-doc">
                     ${p.assignment_letter_url ? `
-                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
-                    ` : `<span class="badge-no-doc">Belum Upload</span>`}
+                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat</a>
+                    ` : `<span class="badge-no-doc">Belum</span>`}
                   </td>
                   <td class="col-status">${Utils.getStatusBadgeHtml(p.status)}</td>
                   <td class="col-actions">
                     <div class="action-btn-group">
                       ${isPending ? `
-                        <button class="btn-act" onclick="App.quickApproveUnitParticipant(${p.id}, '${escapedName}')" style="background: #10b981; color: white; border-color: #10b981; font-weight: 700;" title="Setujui Verifikasi Unit Langsung"><i class="fa-solid fa-circle-check"></i> Setujui</button>
+                        <button class="btn-act" onclick="App.quickApproveUnitParticipant(${p.id}, '${escapedName}')" style="background: #10b981; color: white; border-color: #10b981;" title="Setujui Verifikasi Unit Langsung"><i class="fa-solid fa-circle-check"></i></button>
                       ` : ''}
                       <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
-                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data Lengkap & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
-                      <button class="btn-act" onclick="App.openBiodataModal(${p.id})" style="background: #0284c7; color: white; border-color: #0284c7; font-weight: 700;" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i> Form</button>
-                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
+                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data Lengkap & Berkas Peserta"><i class="fa-solid fa-pen-to-square"></i></button>
+                      <button class="btn-act btn-act-card" onclick="App.openBiodataModal(${p.id})" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i></button>
+                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card"><i class="fa-solid fa-id-badge"></i></button>
                       <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                   </td>
@@ -5172,7 +5209,7 @@ const App = {
                 <th>Tanggal & Jam</th>
                 <th>Lokasi</th>
                 <th>Status Pendaftaran & Kuota</th>
-                <th>Aksi Pendaftaran Unit</th>
+                <th class="col-actions" style="text-align: right;">Aksi Pendaftaran Unit</th>
               </tr>
             </thead>
             <tbody>
@@ -5199,13 +5236,13 @@ const App = {
                       ${e.max_participants_per_unit > 0 ? `<strong style="color: #b45309;"><i class="fa-solid fa-user-lock"></i> Batas Kuota: ${e.max_participants_per_unit} / Unit</strong>` : `<span style="color: var(--text-muted);"><i class="fa-solid fa-infinity"></i> Kuota: Tanpa Batas</span>`}
                     </span>
                   </td>
-                  <td>
-                    <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                  <td class="col-actions">
+                    <div class="action-btn-group">
                       <button type="button" class="btn btn-primary btn-sm" style="font-weight: 700;" onclick="App.openUnitEventRegistrationModal(${e.id})">
-                        <i class="fa-solid fa-user-pen"></i> 📝 Kelola Pendaftaran Unit
+                        <i class="fa-solid fa-user-pen"></i> Kelola
                       </button>
                       <button type="button" class="btn btn-outline btn-sm" style="font-weight: 700; color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff;" onclick="App.openRegisteredParticipantsModal(${e.id})">
-                        <i class="fa-solid fa-users"></i> 📋 Lihat Semua Pendaftar
+                        <i class="fa-solid fa-users"></i> Pendaftar
                       </button>
                     </div>
                   </td>
@@ -5395,7 +5432,7 @@ const App = {
         { id: 'jadwal', label: 'Kelola Jadwal', icon: 'fa-solid fa-calendar-days', category: 'agenda', enabled: true, isSystem: true },
         { id: 'presensi', label: 'Scan Presensi QR', icon: 'fa-solid fa-qrcode', category: 'agenda', enabled: true, isSystem: true },
         { id: 'materi', label: 'Unduh & Kelola Materi', icon: 'fa-solid fa-book-bookmark', category: 'agenda', enabled: true, isSystem: true },
-        { id: 'feedback', label: 'Kotak Saran & Aspirasi', icon: 'fa-solid fa-comments', category: 'agenda', enabled: true, isSystem: true },
+        { id: 'feedback', label: 'Kotak Saran & Aspirasi', icon: 'fa-solid fa-comments', category: 'agenda', enabled: false, isSystem: false },
         { id: 'pengumuman', label: 'Pengumuman', icon: 'fa-solid fa-bullhorn', category: 'agenda', enabled: true, isSystem: true },
         { id: 'aspek', label: 'Aspek Penilaian Kegiatan', icon: 'fa-solid fa-list-check', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'rekap_nilai', label: 'Rekap Nilai per Kegiatan', icon: 'fa-solid fa-chart-simple', category: 'penilaian', enabled: true, isSystem: true },
@@ -5403,6 +5440,8 @@ const App = {
         { id: 'laporan', label: 'Laporan & Export', icon: 'fa-solid fa-file-export', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'pengaturan', label: 'Pengaturan DB & Hero', icon: 'fa-solid fa-gear', category: 'pengaturan', enabled: true, isSystem: true },
         { id: 'users', label: 'Kelola User & Password', icon: 'fa-solid fa-users-gear', category: 'pengaturan', enabled: true, isSystem: true },
+        { id: 'logs', label: 'Log Aktivitas User', icon: 'fa-solid fa-clock-rotate-left', category: 'pengaturan', enabled: true, isSystem: true },
+        { id: 'backup', label: 'Backup & Database', icon: 'fa-solid fa-cloud-arrow-down', category: 'pengaturan', enabled: true, isSystem: true },
         { id: 'menu', label: 'Pengaturan Menu', icon: 'fa-solid fa-list-check', category: 'pengaturan', enabled: true, isSystem: true, isRequired: true },
         { id: 'password', label: 'Ganti Password Saya', icon: 'fa-solid fa-key', category: 'pengaturan', enabled: true, isSystem: true, isRequired: true }
       ]
@@ -5528,6 +5567,7 @@ const App = {
   // VIEW 4: ADMIN KABUPATEN PORTAL VIEW
   // =========================================================================
   async renderAdminKabupatenPortal(container) {
+    this.updateFeedbackFloatingVisibility();
     const struct = this.getMenuStructure();
     const categories = struct.categories || [];
     if (!this.activeCategory || !categories.some(c => c.id === this.activeCategory)) {
@@ -5644,6 +5684,10 @@ const App = {
       this.renderTabLaporan(content);
     } else if (tabName === 'users') {
       this.renderTabUsers(content);
+    } else if (tabName === 'logs') {
+      this.renderTabLogs(content);
+    } else if (tabName === 'backup') {
+      this.renderTabBackup(content);
     } else if (tabName === 'menu') {
       this.renderTabMenu(content);
     } else if (tabName === 'password') {
@@ -5708,7 +5752,10 @@ const App = {
             <button type="button" class="btn btn-primary btn-sm" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.openUnitBreakdownModal()">
               <i class="fa-solid fa-school-flag"></i> Rekap Peserta per Unit
             </button>
-            <button type="button" class="btn btn-success btn-sm" style="font-weight: 700; font-size: 0.8rem; background: #059669; border-color: #059669; color: white; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.openEventParticipantsOverviewModal()">
+            <button type="button" class="btn btn-success btn-sm" style="font-weight: 700; font-size: 0.8rem; background: #059669; border-color: #059669; color: white; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.exportPesertaXLS()">
+              <i class="fa-solid fa-file-excel"></i> Export Excel (.xls)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" style="font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem;" onclick="App.openEventParticipantsOverviewModal()">
               <i class="fa-solid fa-users"></i> Peserta per Kegiatan
             </button>
           </div>
@@ -5811,10 +5858,10 @@ const App = {
                 <th class="col-name">Nama Pendaftar</th>
                 <th class="col-unit">Unit PMR</th>
                 <th class="col-category">Kategori / Tingkat</th>
-                <th class="col-blood">Gol. Darah</th>
+                <th class="col-blood">Gol.</th>
                 <th class="col-doc">Surat Tugas</th>
                 <th class="col-status">Status</th>
-                <th class="col-actions">Aksi Verifikasi Final</th>
+                <th class="col-actions">Aksi Verifikasi</th>
               </tr>
             </thead>
             <tbody>
@@ -5831,11 +5878,11 @@ const App = {
                 <tr>
                   <td class="col-code"><span class="badge-code">${p.code}</span></td>
                   <td class="col-name">
-                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="display: flex; align-items: center; gap: 0.55rem;">
                       <img src="${photoUrl}" class="participant-avatar" loading="lazy" onclick="window.open('${p.photo_url || photoUrl}', '_blank')" title="Klik untuk lihat foto asli">
                       <div style="min-width: 0; flex: 1;">
                         <div class="participant-name" title="${escapedName}">${escapedName}</div>
-                        <div class="participant-subtext">${subtext}</div>
+                        <div class="participant-subtext" title="${subtext}">${subtext}</div>
                       </div>
                     </div>
                   </td>
@@ -5846,16 +5893,16 @@ const App = {
                   </td>
                   <td class="col-doc">
                     ${p.assignment_letter_url ? `
-                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat Tugas</a>
-                    ` : `<span class="badge-no-doc">Belum Upload</span>`}
+                      <a href="${p.assignment_letter_url}" target="_blank" class="btn-doc-link"><i class="fa-solid fa-file-pdf"></i> Surat</a>
+                    ` : `<span class="badge-no-doc">Belum</span>`}
                   </td>
                   <td class="col-status">${Utils.getStatusBadgeHtml(p.status)}</td>
                   <td class="col-actions">
                     <div class="action-btn-group">
                       <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
-                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
-                      <button class="btn-act" onclick="App.openBiodataModal(${p.id})" style="background: #0284c7; color: white; border-color: #0284c7; font-weight: 700;" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i> Form</button>
-                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
+                      <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-pen-to-square"></i></button>
+                      <button class="btn-act" onclick="App.openBiodataModal(${p.id})" style="background: #0284c7; color: white; border-color: #0284c7;" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i></button>
+                      <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card"><i class="fa-solid fa-id-badge"></i></button>
                       <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                   </td>
@@ -6211,8 +6258,17 @@ const App = {
         return;
       }
 
-      const cardsHtml = verifiedParticipants.map(p => this.generateIDCardHtml(p));
-      batchContainer.innerHTML = cardsHtml.join('');
+      // Limit DOM preview rendering to prevent browser freeze on huge datasets (100k+)
+      const displayCards = verifiedParticipants.slice(0, 100);
+      const cardsHtml = displayCards.map(p => this.generateIDCardHtml(p));
+      const moreNote = verifiedParticipants.length > 100 
+        ? `<div style="grid-column: 1/-1; text-align: center; padding: 1.5rem; color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; margin: 1rem 0;">
+            <i class="fa-solid fa-layer-group" style="font-size: 1.5rem; color: #64748b; margin-bottom: 0.5rem; display: block;"></i>
+            <strong>Menampilkan 100 dari ${verifiedParticipants.length.toLocaleString('id-ID')} ID Card untuk pratinjau.</strong>
+            <p style="font-size: 0.85rem; margin: 0.35rem 0 0 0; color: #64748b;">Gunakan filter Kontingen atau Jenjang di atas untuk mencetak batch secara spesifik agar printer tidak kehabisan memori.</p>
+           </div>`
+        : '';
+      batchContainer.innerHTML = cardsHtml.join('') + moreNote;
     } catch (err) {
       console.error('ID Card batch error:', err);
     }
@@ -6287,7 +6343,7 @@ const App = {
       code: 'JMB-2026-0001',
       nik: '3401074802830002',
       photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      qr_code_base64: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=JMB-2026-0001'
+      qr_code_base64: Utils.getQRCodeUrl('JMB-2026-0001', 180)
     };
 
     previewBox.innerHTML = this.generateIDCardHtml(sampleData, currentFormSettings);
@@ -7242,7 +7298,7 @@ const App = {
       const unitsRes = await API.getUnits();
       const units = Array.isArray(unitsRes) ? unitsRes : (unitsRes.units || []);
 
-      const partRes = await API.getParticipants({ limit: 1000 });
+      const partRes = await API.getParticipants({ all: 'true' });
       const participants = Array.isArray(partRes) ? partRes : (partRes.data || []);
 
       const unitMap = {};
@@ -7355,6 +7411,9 @@ const App = {
             <div style="display: flex; gap: 0.4rem;">
               <button type="button" class="btn btn-outline btn-sm" style="flex: 1; font-size: 0.78rem; font-weight: 700;" onclick="App.filterPesertaByUnit('${u.id}')">
                 <i class="fa-solid fa-filter"></i> Lihat Peserta Unit
+              </button>
+              <button type="button" class="btn btn-success btn-sm" style="font-size: 0.78rem; font-weight: 700; background: #059669; border-color: #059669; color: #fff; padding: 0.35rem 0.65rem;" title="Download Excel Peserta Unit" onclick="App.exportPesertaXLS('${u.id}')">
+                <i class="fa-solid fa-file-excel"></i> XLS
               </button>
             </div>
           </div>
@@ -8247,7 +8306,7 @@ const App = {
                 <th>Daftar Aspek Penilaian</th>
                 <th>Bobot / Skor Maksimal per Aspek</th>
                 <th style="text-align: center;">Total Maksimal</th>
-                ${canEdit ? '<th style="text-align: center;">Aksi</th>' : ''}
+                ${canEdit ? '<th class="col-actions" style="text-align: right;">Aksi</th>' : ''}
               </tr>
             </thead>
             <tbody>
@@ -8317,7 +8376,7 @@ const App = {
                     <td>${aspectScoresHtml}</td>
                     <td style="text-align: center;"><strong style="color: #059669; font-size: 0.95rem;">${totalMax} Poin</strong></td>
                     ${canEdit ? `
-                      <td style="text-align: center;">
+                      <td class="col-actions" style="text-align: right;">
                         <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.78rem; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;" onclick="App.openManageAspectsModal(${e.id})">
                           <i class="fa-solid fa-sliders"></i> Edit Aspek
                         </button>
@@ -8427,7 +8486,7 @@ const App = {
                 <th>Batas Kuota / Unit</th>
                 <th>Lokasi</th>
                 <th>Tanggal & Jam</th>
-                <th>Aksi</th>
+                <th class="col-actions" style="text-align: right;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -8445,15 +8504,15 @@ const App = {
                   </td>
                   <td>📍 ${Utils.escapeHtml(e.location)}</td>
                   <td>${e.event_date} (${e.start_time} - ${e.end_time})</td>
-                  <td>
-                    <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                  <td class="col-actions">
+                    <div class="action-btn-group">
                       <button type="button" class="btn btn-primary btn-sm" style="font-weight: 700;" onclick="App.openEventModal(${e.id})">
                         <i class="fa-solid fa-pen-to-square"></i> Edit
                       </button>
                       <button type="button" class="btn btn-outline btn-sm" style="font-weight: 700; color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff;" onclick="App.openRegisteredParticipantsModal(${e.id})">
                         <i class="fa-solid fa-users"></i> Pendaftar
                       </button>
-                      <button type="button" class="btn btn-danger btn-sm" onclick="App.deleteEvent(${e.id})">Hapus</button>
+                      <button type="button" class="btn btn-danger btn-sm" onclick="App.deleteEvent(${e.id})"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                   </td>
                 </tr>
@@ -8610,7 +8669,7 @@ const App = {
             <td style="font-size: 0.8rem; color: #64748b; white-space: nowrap;">
               ${Utils.formatDate(m.created_at)}
             </td>
-            <td style="text-align: center; white-space: nowrap;">
+            <td class="col-actions" style="text-align: center; white-space: nowrap;">
               <a href="${m.file_url}" target="_blank" download class="btn btn-outline btn-xs" style="padding: 0.3rem 0.6rem; font-size: 0.78rem; text-decoration: none; margin-right: 0.3rem;" title="Download / Preview">
                 <i class="fa-solid fa-eye"></i>
               </a>
@@ -8633,7 +8692,7 @@ const App = {
                 <th>Format & Ukuran</th>
                 <th style="text-align: center;">Diunduh</th>
                 <th>Tanggal Rilis</th>
-                <th style="text-align: center; width: 100px;">Aksi</th>
+                <th class="col-actions" style="text-align: center; width: 100px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -8939,7 +8998,7 @@ const App = {
             <td>
               ${statusBadges[item.status] || item.status}
             </td>
-            <td style="text-align: center; white-space: nowrap;">
+            <td class="col-actions" style="text-align: center; white-space: nowrap;">
               <div style="display: flex; gap: 0.3rem; justify-content: center;">
                 ${item.status !== 'read' ? `
                   <button class="btn btn-outline btn-xs" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #059669; border-color: #a7f3d0;" onclick="App.updateFeedbackStatus(${item.id}, 'read')" title="Tandai Selesai / Dibaca">
@@ -8971,7 +9030,7 @@ const App = {
                 <th>Rating</th>
                 <th>Isi Masukan / Saran</th>
                 <th>Status</th>
-                <th style="text-align: center; width: 110px;">Aksi</th>
+                <th class="col-actions" style="text-align: center; width: 110px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -9736,7 +9795,7 @@ const App = {
                 <th>Unit / Kontingen</th>
                 <th>Kontak (Email & WA)</th>
                 <th>Tgl Dibuat</th>
-                <th>Aksi Kelola & Reset Password</th>
+                <th class="col-actions" style="text-align: right;">Aksi Kelola</th>
               </tr>
             </thead>
             <tbody>
@@ -9758,16 +9817,16 @@ const App = {
                     </div>
                   </td>
                   <td>${Utils.formatDate(u.created_at)}</td>
-                  <td>
-                    <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-                      <button class="btn btn-warning btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.openResetPasswordModal(${u.id}, this.dataset.username)">
-                        <i class="fa-solid fa-key"></i> Reset Password
+                  <td class="col-actions">
+                    <div class="action-btn-group">
+                      <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.28rem 0.5rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.openResetPasswordModal(${u.id}, this.dataset.username)" title="Reset Password">
+                        <i class="fa-solid fa-key"></i> Reset
                       </button>
-                      <button class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" onclick="App.openEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})">
-                        <i class="fa-solid fa-pen"></i> Edit
+                      <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.28rem 0.5rem;" onclick="App.openEditUserModal(${JSON.stringify(u).replace(/"/g, '&quot;')})" title="Edit User">
+                        <i class="fa-solid fa-pen"></i>
                       </button>
                       ${u.id !== this.currentUser?.id ? `
-                        <button class="btn btn-danger btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.handleDeleteUser(${u.id}, this.dataset.username)">
+                        <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.28rem 0.5rem;" data-username="${Utils.escapeHtml(u.username)}" onclick="App.handleDeleteUser(${u.id}, this.dataset.username)" title="Hapus User">
                           <i class="fa-solid fa-trash"></i>
                         </button>
                       ` : ''}
@@ -10591,6 +10650,723 @@ const App = {
     }
   },
 
+  // =========================================================================
+  // TAB: LOG AKTIVITAS USER & AUDIT SISTEM
+  // =========================================================================
+  logsState: {
+    page: 1,
+    limit: 25,
+    search: '',
+    module: 'all',
+    action: 'all',
+    role: 'all',
+    date_start: '',
+    date_end: ''
+  },
+  cachedLogsList: [],
+
+  async renderTabLogs(container) {
+    this.logsState.page = 1;
+    container.innerHTML = `
+      <div class="panel-card">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 0.6rem;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Log Aktivitas Pengguna & Audit Sistem
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+              Pencatatan real-time seluruh aktivitas pengguna: riwayat login, verifikasi peserta, perubahan data, pengelolaan user, dan aksi sistem.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-outline btn-sm" onclick="App.exportLogs('xls')" title="Unduh Log Format Excel (.xls)">
+              <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> <span>Export Excel (.xls)</span>
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="App.exportLogs('csv')" title="Unduh Log Format CSV">
+              <i class="fa-solid fa-file-csv" style="color: #0284c7;"></i> <span>Export CSV</span>
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="App.openClearLogsModal()" style="font-weight: 600;">
+              <i class="fa-solid fa-trash-can"></i> <span>Bersihkan Log</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Kartu Statistik Ringkasan Log -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;" id="logsStatCards">
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Total Aktivitas</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #0f172a;" id="statLogTotalAll">-</div>
+            </div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-calendar-day"></i>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Aktivitas Hari Ini</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #059669;" id="statLogToday">-</div>
+            </div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">User Aktif (7 Hari)</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #d97706;" id="statLogActiveUsers">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; align-items: flex-end;">
+            <div style="grid-column: span 2; min-width: 240px;">
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.3rem;">Pencarian Teks</label>
+              <div style="position: relative;">
+                <input type="text" id="logFilterSearch" placeholder="Cari nama user, deskripsi, IP..." style="width: 100%; padding: 0.55rem 0.75rem 0.55rem 2.2rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem;" onkeyup="if(event.key==='Enter') App.applyLogsFilter()">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem;"></i>
+              </div>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.3rem;">Modul</label>
+              <select id="logFilterModule" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" onchange="App.applyLogsFilter()">
+                <option value="all">Semua Modul</option>
+                <option value="auth">Autentikasi & Login</option>
+                <option value="participants">Peserta PMR</option>
+                <option value="units">Kontingen Unit</option>
+                <option value="users">Manajemen User</option>
+                <option value="settings">Pengaturan Sistem</option>
+                <option value="backup">Backup Database</option>
+                <option value="system">Sistem</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.3rem;">Peran (Role)</label>
+              <select id="logFilterRole" style="width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" onchange="App.applyLogsFilter()">
+                <option value="all">Semua Peran</option>
+                <option value="kabupaten">Admin Kabupaten</option>
+                <option value="unit">Pembina Unit</option>
+                <option value="juri">Dewan Juri</option>
+                <option value="peserta">Peserta</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.3rem;">Tanggal Mulai</label>
+              <input type="date" id="logFilterDateStart" style="width: 100%; padding: 0.5rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.3rem;">Tanggal Selesai</label>
+              <input type="date" id="logFilterDateEnd" style="width: 100%; padding: 0.5rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
+            </div>
+
+            <div style="display: flex; gap: 0.4rem;">
+              <button class="btn btn-primary" onclick="App.applyLogsFilter()" style="padding: 0.55rem 1rem; font-size: 0.85rem; font-weight: 700;">
+                <i class="fa-solid fa-filter"></i> Filter
+              </button>
+              <button class="btn btn-outline" onclick="App.resetLogsFilter()" style="padding: 0.55rem 0.85rem; font-size: 0.85rem;" title="Reset Filter">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabel Log Data Container -->
+        <div id="logsTableContainer">
+          <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top: 0.5rem;">Memuat log aktivitas...</p>
+          </div>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div id="logsPaginationContainer" style="margin-top: 1.25rem;"></div>
+      </div>
+    `;
+
+    this.fetchAndRenderLogs();
+  },
+
+  async fetchAndRenderLogs() {
+    const tableContainer = document.getElementById('logsTableContainer');
+    if (!tableContainer) return;
+
+    tableContainer.innerHTML = `
+      <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+        <p style="margin-top: 0.5rem;">Memuat log aktivitas...</p>
+      </div>
+    `;
+
+    try {
+      const params = {
+        page: this.logsState.page,
+        limit: this.logsState.limit,
+        search: this.logsState.search,
+        module: this.logsState.module,
+        role: this.logsState.role,
+        date_start: this.logsState.date_start,
+        date_end: this.logsState.date_end
+      };
+
+      const res = await API.getActivityLogs(params);
+      this.cachedLogsList = res.data || [];
+
+      // Update stat counters
+      if (res.stats) {
+        const elTotal = document.getElementById('statLogTotalAll');
+        const elToday = document.getElementById('statLogToday');
+        const elUsers = document.getElementById('statLogActiveUsers');
+        if (elTotal) elTotal.textContent = (res.stats.total_all || 0).toLocaleString('id-ID');
+        if (elToday) elToday.textContent = (res.stats.today || 0).toLocaleString('id-ID');
+        if (elUsers) elUsers.textContent = (res.stats.active_users_7d || 0).toLocaleString('id-ID');
+      }
+
+      this.renderLogsTableHtml(res.data || [], res.pagination);
+    } catch (err) {
+      tableContainer.innerHTML = `
+        <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px;">
+          <i class="fa-solid fa-triangle-exclamation fa-2x"></i>
+          <p style="margin-top: 0.5rem; font-weight: 700;">Gagal memuat log aktivitas: ${Utils.escapeHtml(err.message)}</p>
+          <button class="btn btn-primary btn-sm" onclick="App.fetchAndRenderLogs()" style="margin-top: 0.5rem;">Coba Lagi</button>
+        </div>
+      `;
+    }
+  },
+
+  renderLogsTableHtml(logs, pagination) {
+    const container = document.getElementById('logsTableContainer');
+    const paginationContainer = document.getElementById('logsPaginationContainer');
+    if (!container) return;
+
+    if (!logs || logs.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1.5rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color);">
+          <i class="fa-solid fa-file-circle-exclamation fa-3x" style="color: #cbd5e1; margin-bottom: 0.75rem;"></i>
+          <h4 style="margin: 0; color: #475569; font-size: 1.05rem;">Tidak Ada Rekaman Aktivitas</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+            Tidak ditemukan catatan log aktivitas yang cocok dengan filter pencarian Anda.
+          </p>
+        </div>
+      `;
+      if (paginationContainer) paginationContainer.innerHTML = '';
+      return;
+    }
+
+    const moduleBadgeColors = {
+      'auth': { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: 'AUTENTIKASI' },
+      'participants': { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0', label: 'PESERTA' },
+      'units': { bg: '#fef3c7', color: '#b45309', border: '#fde68a', label: 'KONTINGEN' },
+      'users': { bg: '#f3e8ff', color: '#7e22ce', border: '#e9d5ff', label: 'USER' },
+      'settings': { bg: '#e0e7ff', color: '#4338ca', border: '#c7d2fe', label: 'PENGATURAN' },
+      'backup': { bg: '#ccfbf1', color: '#0f766e', border: '#99f6e4', label: 'BACKUP' },
+      'system': { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', label: 'SISTEM' }
+    };
+
+    const rowsHtml = logs.map(log => {
+      const modInfo = moduleBadgeColors[log.module] || { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', label: (log.module || 'SYSTEM').toUpperCase() };
+      const roleBadge = log.role === 'kabupaten' ? '<span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #fee2e2; color: #dc2626; font-weight: 700;">Admin</span>'
+        : (log.role === 'unit' ? '<span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #d97706; font-weight: 700;">Unit</span>'
+        : (log.role === 'juri' ? '<span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #ecfdf5; color: #059669; font-weight: 700;">Juri</span>'
+        : `<span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #64748b; font-weight: 600;">${Utils.escapeHtml(log.role || 'guest')}</span>`));
+
+      const hasDetails = log.details && log.details.trim() !== '' && log.details !== 'null';
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 0.65rem 0.75rem; font-size: 0.78rem; font-family: monospace; color: #64748b;">
+            #${log.id}
+          </td>
+          <td style="padding: 0.65rem 0.75rem; font-size: 0.82rem; white-space: nowrap;">
+            <div style="font-weight: 700; color: #1e293b;">${Utils.formatDateTime ? Utils.formatDateTime(log.created_at) : log.created_at}</div>
+          </td>
+          <td style="padding: 0.65rem 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="font-weight: 700; font-size: 0.85rem; color: #0f172a;">${Utils.escapeHtml(log.username || 'System')}</span>
+              ${roleBadge}
+            </div>
+          </td>
+          <td style="padding: 0.65rem 0.75rem;">
+            <span style="display: inline-block; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: ${modInfo.bg}; color: ${modInfo.color}; border: 1px solid ${modInfo.border};">
+              ${modInfo.label}
+            </span>
+          </td>
+          <td style="padding: 0.65rem 0.75rem;">
+            <code style="font-size: 0.75rem; background: #f8fafc; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; color: #334155;">
+              ${Utils.escapeHtml(log.action)}
+            </code>
+          </td>
+          <td style="padding: 0.65rem 0.75rem; font-size: 0.85rem; color: #334155;">
+            ${Utils.escapeHtml(log.description)}
+          </td>
+          <td style="padding: 0.65rem 0.75rem; font-size: 0.75rem; color: #64748b; white-space: nowrap;">
+            <div title="${Utils.escapeHtml(log.user_agent || '')}"><i class="fa-solid fa-network-wired" style="margin-right: 4px; opacity: 0.7;"></i>${Utils.escapeHtml(log.ip_address || '-')}</div>
+          </td>
+          <td style="padding: 0.65rem 0.75rem; text-align: center;">
+            ${hasDetails ? `
+              <button class="btn btn-outline btn-sm" onclick="App.openLogDetailModal(${log.id})" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" title="Lihat Payload Detail">
+                <i class="fa-solid fa-code"></i> Detail
+              </button>
+            ` : '<span style="color: #cbd5e1; font-size: 0.75rem;">-</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="table-container" style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color); font-size: 0.78rem; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+              <th style="padding: 0.75rem; width: 60px;">ID</th>
+              <th style="padding: 0.75rem; width: 145px;">Waktu (WIB)</th>
+              <th style="padding: 0.75rem; width: 160px;">Pengguna</th>
+              <th style="padding: 0.75rem; width: 110px;">Modul</th>
+              <th style="padding: 0.75rem; width: 130px;">Jenis Aksi</th>
+              <th style="padding: 0.75rem;">Deskripsi Aktivitas</th>
+              <th style="padding: 0.75rem; width: 130px;">Alamat IP</th>
+              <th style="padding: 0.75rem; width: 80px; text-align: center;">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Render pagination
+    if (pagination && paginationContainer) {
+      const currentPage = pagination.page || 1;
+      const totalPages = pagination.total_pages || 1;
+      const totalItems = pagination.total || 0;
+      const startItem = totalItems > 0 ? (currentPage - 1) * (pagination.limit || 25) + 1 : 0;
+      const endItem = Math.min(currentPage * (pagination.limit || 25), totalItems);
+
+      paginationContainer.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem;">
+          <div style="color: #64748b;">
+            Menampilkan <strong>${startItem} - ${endItem}</strong> dari total <strong>${totalItems.toLocaleString('id-ID')}</strong> rekaman aktivitas
+          </div>
+          <div style="display: flex; gap: 0.35rem; align-items: center;">
+            <button class="btn btn-outline btn-sm" onclick="App.changeLogsPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding: 0.3rem 0.65rem;">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span style="padding: 0 0.5rem; font-weight: 700; color: var(--text-color);">
+              Hal. ${currentPage} / ${totalPages}
+            </span>
+            <button class="btn btn-outline btn-sm" onclick="App.changeLogsPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.65rem;">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  },
+
+  applyLogsFilter() {
+    this.logsState.search = document.getElementById('logFilterSearch')?.value.trim() || '';
+    this.logsState.module = document.getElementById('logFilterModule')?.value || 'all';
+    this.logsState.role = document.getElementById('logFilterRole')?.value || 'all';
+    this.logsState.date_start = document.getElementById('logFilterDateStart')?.value || '';
+    this.logsState.date_end = document.getElementById('logFilterDateEnd')?.value || '';
+    this.logsState.page = 1;
+    this.fetchAndRenderLogs();
+  },
+
+  resetLogsFilter() {
+    this.logsState = {
+      page: 1,
+      limit: 25,
+      search: '',
+      module: 'all',
+      action: 'all',
+      role: 'all',
+      date_start: '',
+      date_end: ''
+    };
+    const s = document.getElementById('logFilterSearch'); if (s) s.value = '';
+    const m = document.getElementById('logFilterModule'); if (m) m.value = 'all';
+    const r = document.getElementById('logFilterRole'); if (r) r.value = 'all';
+    const ds = document.getElementById('logFilterDateStart'); if (ds) ds.value = '';
+    const de = document.getElementById('logFilterDateEnd'); if (de) de.value = '';
+    this.fetchAndRenderLogs();
+  },
+
+  changeLogsPage(page) {
+    if (page < 1) return;
+    this.logsState.page = page;
+    this.fetchAndRenderLogs();
+  },
+
+  exportLogs(format = 'xls') {
+    const params = new URLSearchParams({
+      action: 'export',
+      format: format,
+      search: this.logsState.search || '',
+      module: this.logsState.module || 'all',
+      role: this.logsState.role || 'all',
+      date_start: this.logsState.date_start || '',
+      date_end: this.logsState.date_end || ''
+    });
+    window.location.href = `api/logs.php?${params.toString()}`;
+  },
+
+  openLogDetailModal(logId) {
+    const log = (this.cachedLogsList || []).find(l => l.id == logId);
+    if (!log) return;
+
+    let formattedDetails = log.details;
+    try {
+      const parsed = JSON.parse(log.details);
+      formattedDetails = JSON.stringify(parsed, null, 2);
+    } catch (e) {}
+
+    const modalHtml = `
+      <div class="modal-backdrop active" id="logDetailModal" style="display: flex; align-items: center; justify-content: center;">
+        <div class="modal-card" style="max-width: 620px; width: 95%;">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-code" style="color: var(--primary);"></i> Detail Parameter Log #${log.id}
+            </h3>
+            <button class="btn-close" onclick="document.getElementById('logDetailModal').remove()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 1.25rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; background: #f8fafc; padding: 0.85rem; border-radius: 6px;">
+              <div><strong>Waktu:</strong> ${log.created_at}</div>
+              <div><strong>Pengguna:</strong> ${Utils.escapeHtml(log.username || '-')} (${log.role || 'guest'})</div>
+              <div><strong>Modul:</strong> ${Utils.escapeHtml(log.module || '-')}</div>
+              <div><strong>Aksi:</strong> <code>${Utils.escapeHtml(log.action || '-')}</code></div>
+              <div style="grid-column: span 2;"><strong>IP & User Agent:</strong> ${Utils.escapeHtml(log.ip_address || '-')} (${Utils.escapeHtml(log.user_agent || '-')})</div>
+            </div>
+            <div style="margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 700; color: #475569;">Data Payload / Perubahan (JSON):</div>
+            <pre style="background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: 6px; font-size: 0.8rem; overflow-x: auto; max-height: 280px; margin: 0; line-height: 1.4;">${Utils.escapeHtml(formattedDetails || '{}')}</pre>
+          </div>
+          <div class="modal-footer" style="padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-color); text-align: right;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('logDetailModal').remove()">Tutup</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('#logDetailModal').forEach(el => el.remove());
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  },
+
+  openClearLogsModal() {
+    const modalHtml = `
+      <div class="modal-backdrop active" id="clearLogsModal" style="display: flex; align-items: center; justify-content: center;">
+        <div class="modal-card" style="max-width: 440px; width: 95%;">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #dc2626; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-trash-can"></i> Bersihkan Log Aktivitas
+            </h3>
+            <button class="btn-close" onclick="document.getElementById('clearLogsModal').remove()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 1.25rem;">
+            <p style="font-size: 0.88rem; color: #475569; margin-bottom: 1rem;">
+              Pilih kriteria rentang usia log yang ingin dibersihkan dari database untuk menghemat ruang penyimpanan server:
+            </p>
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Kriteria Pembersihan:</label>
+              <select id="clearLogsDaysOption" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem;">
+                <option value="30">Hapus log yang lebih dari 30 Hari lalu (Disarankan)</option>
+                <option value="60">Hapus log yang lebih dari 60 Hari lalu</option>
+                <option value="90">Hapus log yang lebih dari 90 Hari lalu</option>
+                <option value="0">Hapus SELURUH rekaman log (Reset Bersih)</option>
+              </select>
+            </div>
+            <div style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 0.75rem; border-radius: 6px; font-size: 0.8rem;">
+              <i class="fa-solid fa-triangle-exclamation"></i> <strong>Perhatian:</strong> Rekaman log yang telah dihapus tidak dapat dipulihkan kembali. Pastikan Anda telah melakukan export sebelum membersihkan log.
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('clearLogsModal').remove()">Batal</button>
+            <button class="btn btn-danger btn-sm" onclick="App.handleClearLogsSubmit()">
+              <i class="fa-solid fa-trash-can"></i> Bersihkan Sekarang
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('#clearLogsModal').forEach(el => el.remove());
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  },
+
+  async handleClearLogsSubmit() {
+    const days = parseInt(document.getElementById('clearLogsDaysOption')?.value || '30', 10);
+    if (!confirm('Apakah Anda yakin ingin melanjutkan proses pembersihan log ini?')) return;
+
+    try {
+      const res = await API.clearActivityLogs(days);
+      Utils.showToast(res.message || 'Log berhasil dibersihkan!', 'success');
+      document.getElementById('clearLogsModal')?.remove();
+      this.fetchAndRenderLogs();
+    } catch (err) {
+      Utils.showToast('Gagal membersihkan log: ' + err.message, 'error');
+    }
+  },
+
+  // =========================================================================
+  // TAB: BACKUP & DATABASE UTILITY
+  // =========================================================================
+  async renderTabBackup(container) {
+    container.innerHTML = `
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title" style="display: flex; align-items: center; gap: 0.6rem;">
+              <i class="fa-solid fa-cloud-arrow-down" style="color: var(--primary);"></i> Backup & Pemeliharaan Database JUMBARA
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+              Amankan seluruh data pendaftaran peserta, kontingen unit, penilaian dewan juri, presensi QR, piagam penghargaan, dan konfigurasi sistem dengan sekali klik.
+            </p>
+          </div>
+        </div>
+
+        <!-- Kartu Aksi Utama Backup (2 Kolom) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          
+          <!-- Kartu 1: Unduh File SQL Utuh Langsung -->
+          <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1.5px solid #93c5fd; border-radius: 10px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="width: 44px; height: 44px; border-radius: 10px; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                  <i class="fa-solid fa-download"></i>
+                </div>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.05rem; color: #1e3a8a; font-weight: 800;">Unduh Backup Database (.sql)</h4>
+                  <span style="font-size: 0.75rem; color: #3b82f6; font-weight: 600;">Ekspor SQL Lengkap & Langsung</span>
+                </div>
+              </div>
+              <p style="font-size: 0.85rem; color: #1e40af; line-height: 1.45; margin-bottom: 1.25rem;">
+                Unduh file dump <code>.sql</code> utuh langsung ke komputer atau laptop Anda dalam hitungan detik. Berisi struktur seluruh tabel (DDL) dan ribuan data pendaftaran peserta & penilaian (DML).
+              </p>
+            </div>
+            <div>
+              <a href="api/backup.php?action=download_sql" class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 800; padding: 0.75rem 1.25rem; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Unduh File SQL Sekarang
+              </a>
+              <span style="display: block; text-align: center; font-size: 0.72rem; color: #60a5fa; margin-top: 0.5rem;">
+                Kompatibel dengan phpMyAdmin, MySQL CLI, dan MariaDB
+              </span>
+            </div>
+          </div>
+
+          <!-- Kartu 2: Buat Snapshot Backup di Server -->
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1.5px solid #6ee7b7; border-radius: 10px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="width: 44px; height: 44px; border-radius: 10px; background: #059669; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                  <i class="fa-solid fa-server"></i>
+                </div>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.05rem; color: #064e3b; font-weight: 800;">Simpan Snapshot di Server</h4>
+                  <span style="font-size: 0.75rem; color: #059669; font-weight: 600;">Folder Internal Terproteksi</span>
+                </div>
+              </div>
+              <p style="font-size: 0.85rem; color: #065f46; line-height: 1.45; margin-bottom: 1.25rem;">
+                Arsipkan salinan database otomatis di direktori internal server (<code>backups/</code>) yang terlindungi dari akses publik (.htaccess). Anda dapat mengunduh atau menghapusnya kapan saja.
+              </p>
+            </div>
+            <div>
+              <button class="btn btn-outline" id="btnCreateBackupSnapshot" onclick="App.handleCreateBackupSnapshot()" style="width: 100%; justify-content: center; font-weight: 800; padding: 0.75rem 1.25rem; font-size: 0.95rem; background: #ffffff; color: #047857; border-color: #059669;">
+                <i class="fa-solid fa-floppy-disk"></i> Buat Snapshot di Server
+              </button>
+              <span style="display: block; text-align: center; font-size: 0.72rem; color: #34d399; margin-top: 0.5rem;">
+                Tersimpan aman dengan penanda waktu pembuatan
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bagian Ringkasan Status Database & Daftar Tabel -->
+        <div style="margin-bottom: 2rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-database" style="color: #6366f1;"></i> Status Database Aktif
+          </h4>
+          <div id="backupDbInfoContainer">
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <i class="fa-solid fa-spinner fa-spin"></i> Memeriksa status database...
+            </div>
+          </div>
+        </div>
+
+        <!-- Bagian Riwayat Snapshot di Server -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: #059669;"></i> Berkas Snapshot di Server (backups/)
+            </h4>
+            <button class="btn btn-outline btn-sm" onclick="App.fetchAndRenderBackupData()" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">
+              <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+          </div>
+          <div id="backupSnapshotsContainer">
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <i class="fa-solid fa-spinner fa-spin"></i> Memuat daftar arsip...
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.fetchAndRenderBackupData();
+  },
+
+  async fetchAndRenderBackupData() {
+    const infoContainer = document.getElementById('backupDbInfoContainer');
+    const snapContainer = document.getElementById('backupSnapshotsContainer');
+    if (!infoContainer || !snapContainer) return;
+
+    try {
+      const data = await API.getBackupInfo();
+
+      // Render DB info
+      const db = data.db_info || {};
+      const tables = db.tables || [];
+
+      infoContainer.innerHTML = `
+        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 6px;">
+            <div>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Nama Database</div>
+              <div style="font-size: 1rem; font-weight: 800; color: #0f172a; font-family: monospace;">${Utils.escapeHtml(db.name || '-')}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Host & Port</div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #334155; font-family: monospace;">${Utils.escapeHtml(db.host || '127.0.0.1')}:${db.port || '3306'}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Jumlah Tabel</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #2563eb;">${(db.total_tables || 0)} Tabel</div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Seluruh Baris</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #059669;">${(db.total_rows || 0).toLocaleString('id-ID')} Baris</div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Estimasi Ukuran</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #d97706;">${db.estimated_size_mb || '0.00 MB'}</div>
+            </div>
+          </div>
+
+          <details style="font-size: 0.85rem;">
+            <summary style="cursor: pointer; font-weight: 700; color: #4338ca; user-select: none;">
+              <i class="fa-solid fa-table-list"></i> Lihat Rincian ${tables.length} Tabel Database
+            </summary>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; margin-top: 0.85rem; max-height: 220px; overflow-y: auto; padding-right: 0.5rem;">
+              ${tables.map(t => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 0.35rem 0.65rem; border-radius: 4px; font-size: 0.78rem;">
+                  <span style="font-family: monospace; font-weight: 600; color: #334155;">${Utils.escapeHtml(t.name)}</span>
+                  <span style="background: #ffffff; padding: 1px 6px; border-radius: 4px; font-weight: 700; color: #059669; border: 1px solid #cbd5e1;">${t.rows.toLocaleString('id-ID')}</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        </div>
+      `;
+
+      // Render snapshots list
+      const snapshots = data.snapshots || [];
+      if (snapshots.length === 0) {
+        snapContainer.innerHTML = `
+          <div style="text-align: center; padding: 2.5rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color);">
+            <i class="fa-solid fa-box-open fa-2x" style="color: #cbd5e1; margin-bottom: 0.5rem;"></i>
+            <p style="margin: 0; font-size: 0.88rem; color: #64748b;">Belum ada berkas snapshot backup di server.</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.78rem; color: var(--text-muted);">Klik tombol <strong>"Buat Snapshot di Server"</strong> di atas untuk membuat arsip pertama.</p>
+          </div>
+        `;
+      } else {
+        const snapRows = snapshots.map(s => `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.75rem 1rem; font-weight: 700; font-family: monospace; font-size: 0.85rem; color: #1e293b;">
+              <i class="fa-solid fa-file-code" style="color: #0284c7; margin-right: 0.4rem;"></i> ${Utils.escapeHtml(s.filename)}
+            </td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 700; color: #059669;">
+              ${Utils.escapeHtml(s.size_formatted)}
+            </td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.82rem; color: #475569;">
+              ${Utils.escapeHtml(s.created_at)}
+            </td>
+            <td style="padding: 0.75rem 1rem; text-align: right;">
+              <a href="api/backup.php?action=download_snapshot&file=${encodeURIComponent(s.filename)}" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.25rem 0.6rem; color: #0284c7; border-color: #0284c7;" title="Unduh Berkas Ini">
+                <i class="fa-solid fa-download"></i> Unduh
+              </a>
+              <button class="btn btn-danger btn-sm" onclick="App.handleDeleteBackupSnapshot('${s.filename}')" style="font-size: 0.78rem; padding: 0.25rem 0.6rem; margin-left: 0.35rem;" title="Hapus Berkas Snapshot">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        snapContainer.innerHTML = `
+          <div class="table-container" style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color); font-size: 0.78rem; text-transform: uppercase; color: #64748b;">
+                  <th style="padding: 0.75rem 1rem;">Nama Berkas Backup (.sql)</th>
+                  <th style="padding: 0.75rem 1rem; width: 140px;">Ukuran</th>
+                  <th style="padding: 0.75rem 1rem; width: 180px;">Waktu Pembuatan</th>
+                  <th style="padding: 0.75rem 1rem; width: 180px; text-align: right;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${snapRows}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    } catch (err) {
+      infoContainer.innerHTML = `<p style="color: #dc2626;">Error: ${Utils.escapeHtml(err.message)}</p>`;
+      snapContainer.innerHTML = `<p style="color: #dc2626;">Error: ${Utils.escapeHtml(err.message)}</p>`;
+    }
+  },
+
+  async handleCreateBackupSnapshot() {
+    const btn = document.getElementById('btnCreateBackupSnapshot');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Membuat Snapshot...';
+    }
+
+    try {
+      const res = await API.createBackupSnapshot();
+      Utils.showToast(res.message || 'Snapshot backup berhasil disimpan di server!', 'success');
+      this.fetchAndRenderBackupData();
+    } catch (err) {
+      Utils.showToast('Gagal membuat snapshot backup: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Buat Snapshot di Server';
+      }
+    }
+  },
+
+  async handleDeleteBackupSnapshot(filename) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus berkas snapshot backup '${filename}' dari server?`)) return;
+
+    try {
+      const res = await API.deleteBackupSnapshot(filename);
+      Utils.showToast(res.message || 'Berkas snapshot berhasil dihapus!', 'success');
+      this.fetchAndRenderBackupData();
+    } catch (err) {
+      Utils.showToast('Gagal menghapus snapshot: ' + err.message, 'error');
+    }
+  },
+
+
   // --- TAB 8: LAPORAN & EXPORT DATA ---
   async renderTabLaporan(container) {
     container.innerHTML = `
@@ -10602,15 +11378,15 @@ const App = {
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
           
           <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-            <h4>Laporan Peserta PMR</h4>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export seluruh data registrasi peserta lengkap per unit dan status verifikasi.</p>
-            <button class="btn btn-primary btn-sm" onclick="App.exportPesertaCSV()">${Icons.export(16, '#ffffff')} Unduh CSV Peserta</button>
+            <h4>Laporan Peserta PMR (Excel .xls)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export seluruh data registrasi peserta lengkap per unit dan status verifikasi dalam format spreadsheet Excel (.xls).</p>
+            <button class="btn btn-primary btn-sm" onclick="App.exportPesertaXLS()"><i class="fa-solid fa-file-excel"></i> Unduh Excel (.xls) Peserta</button>
           </div>
 
           <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-            <h4>Laporan Medali & Juara Umum</h4>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export perolehan medali Tri Bakti PMR dan ranking kontingen unit.</p>
-            <button class="btn btn-secondary btn-sm" onclick="App.exportStandingsCSV()">${Icons.export(16, '#ffffff')} Unduh CSV Klasemen</button>
+            <h4>Laporan Medali & Juara Umum (Excel .xls)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export perolehan medali Tri Bakti PMR dan ranking kontingen unit dalam format spreadsheet Excel (.xls).</p>
+            <button class="btn btn-secondary btn-sm" onclick="App.exportStandingsXLS()"><i class="fa-solid fa-file-excel"></i> Unduh Excel (.xls) Klasemen</button>
           </div>
 
         </div>
@@ -10761,126 +11537,252 @@ const App = {
   async openAuditModal(id) {
     const container = document.getElementById('auditModalBody');
     if (!container) return;
-    container.innerHTML = '<p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data audit & berkas peserta...</p>';
+    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 3rem 0;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Memuat data audit & berkas peserta...</p>';
     this.openModal('auditModal');
 
     try {
       const p = await API.getParticipantIDCard(id);
 
-      container.innerHTML = `
-        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 1.25rem;">
-          <!-- Sisi Kiri: Berkas Foto & Surat Tugas -->
-          <div style="background: #f8fafc; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--secondary); margin-bottom: 0.75rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.3rem;">
-              <i class="fa-solid fa-file-image"></i> Berkas Foto & Dokumen
-            </h4>
+      // Parse sub-categories
+      let subCats = [];
+      try {
+        subCats = typeof p.sub_categories === 'string' ? JSON.parse(p.sub_categories) : (p.sub_categories || []);
+      } catch (e) {
+        subCats = [];
+      }
+      if (!Array.isArray(subCats) && typeof p.sub_categories === 'string' && p.sub_categories) {
+        subCats = p.sub_categories.split(',').map(s => s.trim());
+      }
 
-            <!-- Pas Foto 3x4 -->
-            <div style="text-align: center; margin-bottom: 1rem;">
-              <label class="form-label" style="font-size: 0.8rem; text-align: left; display: block; margin-bottom: 0.4rem;">Pas Foto Peserta (3x4):</label>
-              <div style="position: relative; display: inline-block;">
-                <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" style="width: 130px; height: 160px; object-fit: cover; border-radius: 6px; border: 2px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      const isPendamping = (p.registration_type === 'Pendamping' || p.level === 'Pendamping');
+      const cleanPhone = (p.phone || '').replace(/[^0-9]/g, '');
+      const waLink = cleanPhone ? (cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone) : '';
+
+      container.innerHTML = `
+        <div class="audit-grid-layout">
+          <!-- KOLOM 1: BERKAS FOTO, DOKUMEN & IDENTITAS CEPAT -->
+          <div class="audit-col-media">
+            <div class="audit-card" style="text-align: center; margin-bottom: 1rem;">
+              <div class="audit-section-title"><i class="fa-solid fa-camera"></i> Pas Foto Resmi</div>
+              <div style="position: relative; display: inline-block; margin-bottom: 0.65rem;">
+                <img src="${p.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" 
+                     style="width: 140px; height: 175px; object-fit: cover; border-radius: 10px; border: 2px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.12);"
+                     onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'">
               </div>
               ${p.photo_url ? `
-                <button type="button" class="btn btn-outline btn-sm" style="margin-top: 0.5rem; font-size: 0.75rem; width: 100%; justify-content: center;" onclick="window.open('${p.photo_url}', '_blank')">
-                  <i class="fa-solid fa-magnifying-glass-plus"></i> Pratinjau Foto Ukuran Penuh
+                <button type="button" class="btn btn-outline btn-xs" style="width: 100%; font-size: 0.75rem; justify-content: center; padding: 0.35rem 0.5rem;" onclick="window.open('${p.photo_url}', '_blank')">
+                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Zoom Foto Full
                 </button>
-              ` : '<p style="font-size: 0.75rem; color: red; margin-top: 0.4rem;">Belum ada pas foto</p>'}
+              ` : '<p style="font-size: 0.75rem; color: #dc2626; margin: 0; font-weight: 600;">Belum ada pas foto</p>'}
             </div>
 
-            <!-- Surat Tugas -->
-            <div style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
-              <label class="form-label" style="font-size: 0.8rem; display: block; margin-bottom: 0.4rem;">Surat Tugas Sekolah:</label>
+            <div class="audit-card" style="margin-bottom: 1rem;">
+              <div class="audit-section-title"><i class="fa-solid fa-file-contract"></i> Surat Tugas Sekolah</div>
               ${p.assignment_letter_url ? `
-                <div style="background: #ffffff; padding: 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center;">
-                  <i class="fa-solid fa-file-pdf" style="font-size: 2rem; color: #dc2626; margin-bottom: 0.4rem;"></i>
-                  <p style="font-size: 0.78rem; font-weight: 700; margin-bottom: 0.5rem; word-break: break-all; color: var(--secondary);">Surat Tugas Terunggah</p>
-                  <a href="${p.assignment_letter_url}" target="_blank" class="btn btn-primary btn-sm" style="font-size: 0.75rem; width: 100%; justify-content: center;">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Surat Tugas (Tab Baru)
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem; text-align: center;">
+                  <i class="fa-solid fa-file-pdf" style="font-size: 2.2rem; color: #dc2626; margin-bottom: 0.35rem;"></i>
+                  <div style="font-size: 0.78rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; word-break: break-all;">Dokumen Terunggah</div>
+                  <a href="${p.assignment_letter_url}" target="_blank" class="btn btn-primary btn-xs" style="width: 100%; justify-content: center; font-size: 0.75rem; padding: 0.4rem 0.5rem;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Surat Tugas
                   </a>
                 </div>
               ` : `
-                <div style="background: #fef2f2; border: 1px dashed #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 6px; font-size: 0.8rem; text-align: center;">
-                  <i class="fa-solid fa-triangle-exclamation"></i> Belum ada Surat Tugas diunggah
+                <div style="background: #fef2f2; border: 1px dashed #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 8px; font-size: 0.78rem; text-align: center;">
+                  <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-bottom: 0.25rem; display: block;"></i>
+                  Belum ada Surat Tugas terunggah
                 </div>
               `}
             </div>
+
+            <div class="audit-card" style="text-align: center;">
+              <div class="audit-section-title"><i class="fa-solid fa-qrcode"></i> ID Card E-Pass</div>
+              <img src="${Utils.getQRCodeUrl(p.code, 120)}" style="width: 110px; height: 110px; border-radius: 8px; border: 1px solid #cbd5e1; padding: 4px; background: #fff;" alt="QR Code">
+              <div style="font-family: monospace; font-size: 0.8rem; font-weight: 800; color: #dc2626; margin-top: 0.35rem;">${p.code}</div>
+            </div>
           </div>
 
-          <!-- Sisi Kanan: Biodata & Keputusan Verifikasi -->
-          <div>
-            <div style="background: #ffffff; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem;">
+          <!-- KOLOM 2: BIODATA LENGKAP & BERKAS ADMINISTRASI -->
+          <div class="audit-col-bio">
+            <!-- Header Kartu Peserta -->
+            <div class="audit-card" style="margin-bottom: 1rem; border-left: 5px solid #dc2626;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap;">
                 <div>
-                  <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--secondary); margin: 0;">${Utils.escapeHtml(p.full_name)}</h4>
-                  <span style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">Kode: ${p.code}</span>
+                  <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0;">${Utils.escapeHtml(p.full_name)}</h3>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: 0.82rem; color: #64748b;">
+                    <span><i class="fa-solid fa-id-badge" style="color: #dc2626;"></i> Kode: <strong>${p.code}</strong></span>
+                    <span>&bull;</span>
+                    <span><i class="fa-solid fa-school"></i> <strong>${Utils.escapeHtml(p.unit_name || '-')}</strong></span>
+                  </div>
                 </div>
-                ${Utils.getStatusBadgeHtml(p.status)}
+                <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                  ${Utils.getLevelBadgeHtml(p.registration_type || 'Peserta')}
+                  ${Utils.getStatusBadgeHtml(p.status)}
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid 2 Kolom Informasi Lengkap -->
+            <div class="audit-info-grid" style="margin-bottom: 1rem;">
+              <!-- 1. Info Kontingen & Sekolah -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-school-flag"></i> Kontingen / Unit</div>
+                <div class="audit-info-val">${Utils.escapeHtml(p.unit_name || '-')}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">
+                  ${(p.school_address || p.unit_address) ? `${Utils.escapeHtml(p.school_address || p.unit_address)}` : ''}
+                  ${(p.school_phone || p.unit_phone) ? ` (Telp: ${Utils.escapeHtml(p.school_phone || p.unit_phone)})` : ''}
+                </div>
               </div>
 
-              <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse; line-height: 1.6;">
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted); width: 35%;">Unit PMR Sekolah:</td><td style="font-weight: 700;">${Utils.escapeHtml(p.unit_name)}</td></tr>
-                ${p.school_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat & Telp Sekolah:</td><td>${Utils.escapeHtml(p.school_address)} ${p.school_phone ? `(Telp: ${Utils.escapeHtml(p.school_phone)})` : ''}</td></tr>` : ''}
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Kategori Registrasi:</td><td>${Utils.getLevelBadgeHtml(p.registration_type || 'Peserta')}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Tingkat / Kelas:</td><td>${(p.registration_type === 'Pendamping' || p.level === 'Pendamping') ? Utils.getLevelBadgeHtml('Pembina Pendamping') : `${Utils.getLevelBadgeHtml(p.level)} ${p.class_name ? `• Kelas <strong>${Utils.escapeHtml(p.class_name)}</strong>` : ''}`}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">NISN / NIK:</td><td>${p.nisn || '-'}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">TTL / Jenis Kelamin:</td><td>${p.birth_place || '-'}, ${Utils.formatDate(p.birth_date)} (${p.gender === 'P' ? 'Perempuan' : 'Laki-laki'})</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Agama / Gol. Darah:</td><td>${Utils.escapeHtml(p.religion || 'Islam')} / <strong style="color: var(--primary);">${p.blood_type || '-'}</strong></td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Status Disabilitas:</td><td>${p.is_disabled === 'Ya' ? `<strong style="color: #d97706;"><i class="fa-solid fa-wheelchair"></i> Penyandang Disabilitas (${Utils.escapeHtml(p.disability_type)})</strong>` : 'Non-Disabilitas'}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Tempat Tinggal:</td><td>${Utils.escapeHtml(p.address || '-')}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">No. WhatsApp:</td><td><strong style="color: #25d366;"><i class="fa-brands fa-whatsapp"></i> ${p.phone || '-'}</strong></td></tr>
-                ${(p.registration_type === 'Pendamping' || p.level === 'Pendamping') ? `
-                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Pendidikan Terakhir:</td><td><strong style="color: #1e40af;">${Utils.escapeHtml(p.last_education || '-')}</strong></td></tr>
-                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted); vertical-align: top;">Organisasi Diikuti:</td><td style="white-space: pre-line;">${Utils.escapeHtml(p.organizations || '-')}</td></tr>
-                ` : `
-                  <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Orang Tua / Wali:</td><td><strong>${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</strong> ${p.parent_job ? `(${Utils.escapeHtml(p.parent_job)})` : ''} ${p.parent_phone ? `• Telp: ${Utils.escapeHtml(p.parent_phone)}` : ''}</td></tr>
-                  ${p.parent_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Ortu / Wali:</td><td>${Utils.escapeHtml(p.parent_address)}</td></tr>` : ''}
-                `}
-              </table>
+              <!-- 2. Jenjang & Tingkat PMR -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-layer-group"></i> Jenjang & Kelas</div>
+                <div class="audit-info-val">
+                  ${isPendamping ? 'Pembina / Pendamping Resmi' : `Tingkat ${Utils.escapeHtml(p.level || '-')} ${p.class_name ? `&bull; Kelas ${Utils.escapeHtml(p.class_name)}` : ''}`}
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Kategori: ${Utils.escapeHtml(p.registration_type || 'Peserta')}</div>
+              </div>
+
+              <!-- 3. NISN / NIK -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-address-card"></i> NISN / NIK</div>
+                <div class="audit-info-val" style="font-family: monospace; font-size: 0.95rem;">${p.nisn || '-'}</div>
+              </div>
+
+              <!-- 4. Tempat, Tanggal Lahir & JK -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-cake-candles"></i> TTL & Jenis Kelamin</div>
+                <div class="audit-info-val">
+                  ${Utils.escapeHtml(p.birth_place || '-')}, ${Utils.formatDate(p.birth_date)}
+                  <span style="color: #64748b; font-weight: normal;">(${p.gender === 'P' ? 'Perempuan' : 'Laki-laki'})</span>
+                </div>
+              </div>
+
+              <!-- 5. Agama & Golongan Darah -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-droplet"></i> Agama & Gol. Darah</div>
+                <div class="audit-info-val">
+                  ${Utils.escapeHtml(p.religion || 'Islam')} &bull; Gol. Darah: <strong style="color: #dc2626; font-size: 0.95rem;">${p.blood_type || '-'}</strong>
+                </div>
+              </div>
+
+              <!-- 6. Status Disabilitas -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-wheelchair"></i> Status Disabilitas</div>
+                <div class="audit-info-val">
+                  ${p.is_disabled === 'Ya' ? `<span style="color: #d97706; font-weight: 700;"><i class="fa-solid fa-circle-exclamation"></i> Disabilitas (${Utils.escapeHtml(p.disability_type || '-')})</span>` : 'Non-Disabilitas'}
+                </div>
+              </div>
+
+              <!-- 7. Kontak WhatsApp & Email -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-brands fa-whatsapp"></i> Kontak Komunikasi</div>
+                <div class="audit-info-val">
+                  ${p.phone ? `
+                    <a href="https://wa.me/${waLink}" target="_blank" style="color: #16a34a; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;">
+                      <i class="fa-brands fa-whatsapp"></i> ${p.phone}
+                    </a>
+                  ` : '-'}
+                  ${p.email ? `<div style="font-size: 0.78rem; color: #64748b; font-weight: normal; margin-top: 0.2rem;"><i class="fa-solid fa-envelope"></i> ${Utils.escapeHtml(p.email)}</div>` : ''}
+                </div>
+              </div>
+
+              <!-- 8. Alamat Domisili -->
+              <div class="audit-info-item">
+                <div class="audit-info-label"><i class="fa-solid fa-map-location-dot"></i> Alamat Domisili</div>
+                <div class="audit-info-val" style="font-size: 0.82rem;">${Utils.escapeHtml(p.address || '-')}</div>
+              </div>
+
+              <!-- 9 & 10. Data Orang Tua / Wali atau Riwayat Pembina -->
+              ${isPendamping ? `
+                <div class="audit-info-item" style="grid-column: 1 / -1;">
+                  <div class="audit-info-label"><i class="fa-solid fa-user-graduate"></i> Pendidikan & Pengalaman Pembina</div>
+                  <div class="audit-info-val">Pendidikan Terakhir: <strong>${Utils.escapeHtml(p.last_education || '-')}</strong></div>
+                  ${p.organizations ? `<div style="font-size: 0.8rem; color: #475569; margin-top: 0.25rem;">Organisasi: ${Utils.escapeHtml(p.organizations)}</div>` : ''}
+                </div>
+              ` : `
+                <div class="audit-info-item">
+                  <div class="audit-info-label"><i class="fa-solid fa-user-group"></i> Orang Tua / Wali</div>
+                  <div class="audit-info-val">${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</div>
+                  <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.15rem;">
+                    Pekerjaan: ${Utils.escapeHtml(p.parent_job || '-')} ${p.parent_phone ? `&bull; Telp: ${p.parent_phone}` : ''}
+                  </div>
+                </div>
+                <div class="audit-info-item">
+                  <div class="audit-info-label"><i class="fa-solid fa-house-user"></i> Alamat Orang Tua / Wali</div>
+                  <div class="audit-info-val" style="font-size: 0.82rem;">${Utils.escapeHtml(p.parent_address || p.address || '-')}</div>
+                </div>
+              `}
+            </div>
+
+            <!-- Cabang Perlombaan / Unsur -->
+            <div class="audit-card" style="margin-bottom: 0.75rem;">
+              <div class="audit-section-title"><i class="fa-solid fa-trophy"></i> Cabang Lomba / Unsur Kegiatan Diikuti</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                ${subCats.length > 0 ? subCats.map(sc => `
+                  <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; padding: 0.35rem 0.65rem; border-radius: 9999px; font-size: 0.78rem;">
+                    <i class="fa-solid fa-check"></i> ${Utils.escapeHtml(sc)}
+                  </span>
+                `).join('') : '<em style="color: #94a3b8; font-size: 0.82rem;">Tidak ada cabang lomba terdaftar</em>'}
+              </div>
             </div>
 
             ${p.reject_reason ? `
-              <div style="background: #fefce8; border: 1px solid #fef08a; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.83rem;">
-                <strong style="color: #854d0e;"><i class="fa-solid fa-note-sticky"></i> Catatan/Alasan Keputusan Sebelumnya:</strong>
-                <p style="color: #713f12; margin-top: 0.2rem; margin-bottom: 0;">${Utils.escapeHtml(p.reject_reason)}</p>
+              <div style="background: #fefce8; border: 1px solid #fef08a; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem;">
+                <strong style="color: #854d0e;"><i class="fa-solid fa-triangle-exclamation"></i> Catatan/Alasan Keputusan Sebelumnya:</strong>
+                <p style="color: #713f12; margin: 0.25rem 0 0 0;">${Utils.escapeHtml(p.reject_reason)}</p>
               </div>
             ` : ''}
+          </div>
 
-            <!-- Form keputusan verifikasi admin -->
-            <div style="background: #f8fafc; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #cbd5e1;">
-              <h5 style="font-size: 0.9rem; font-weight: 800; color: var(--secondary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fa-solid fa-gavel" style="color: var(--primary);"></i> Formulir Keputusan Hasil Audit & Pengecekan Admin
-              </h5>
-              <input type="hidden" id="auditParticipantId" value="${p.id}">
-              <div class="form-group" style="margin-bottom: 0.75rem;">
-                <label class="form-label" style="font-size: 0.8rem;">Catatan Perbaikan / Alasan Penolakan (Wajib jika Revisi / Tolak):</label>
-                <textarea id="auditReasonInput" rows="2" placeholder="Contoh jika revisi: Pas foto kurang jelas / buram. Atau Surat Tugas belum ditandatangani Pembina..."></textarea>
+          <!-- KOLOM 3: PANEL KEPUTUSAN & TINDAKAN VERIFIKASI -->
+          <div class="audit-col-decision">
+            <div class="audit-card" style="border-top: 4px solid var(--primary); position: sticky; top: 0;">
+              <div class="audit-section-title" style="color: var(--primary);">
+                <i class="fa-solid fa-gavel"></i> Keputusan Audit
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
-                <button type="button" class="btn btn-success btn-sm" onclick="App.submitAuditDecision('approve')" style="justify-content: center; font-weight: 700;">
-                  <i class="fa-solid fa-circle-check"></i> Setujui
+              <div style="margin-bottom: 0.85rem; background: #f8fafc; padding: 0.6rem 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.78rem; color: #64748b; font-weight: 700;">Status Saat Ini:</span>
+                ${Utils.getStatusBadgeHtml(p.status)}
+              </div>
+
+              <input type="hidden" id="auditParticipantId" value="${p.id}">
+
+              <div class="form-group" style="margin-bottom: 0.85rem;">
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Catatan Audit / Alasan Perbaikan:
+                </label>
+                <textarea id="auditReasonInput" rows="3" class="form-control" style="width: 100%; font-size: 0.82rem; padding: 0.5rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;" placeholder="Contoh jika revisi: Pas foto belum formal 3x4 / buram. Atau Surat Tugas belum ada cap sekolah..."></textarea>
+                <small style="color: #64748b; font-size: 0.72rem; display: block; margin-top: 0.25rem;">Wajib diisi jika meminta revisi atau menolak.</small>
+              </div>
+
+              <!-- 3 Tombol Utama Eksekusi Verifikasi -->
+              <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                <button type="button" class="btn btn-success" onclick="App.submitAuditDecision('approve')" style="justify-content: center; font-weight: 800; padding: 0.65rem 1rem; font-size: 0.88rem; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);">
+                  <i class="fa-solid fa-circle-check"></i> Setujui / Lolos Verifikasi
                 </button>
-                <button type="button" class="btn btn-warning btn-sm" onclick="App.submitAuditDecision('revision')" style="background: #f59e0b; border-color: #f59e0b; color: white; justify-content: center; font-weight: 700;">
-                  <i class="fa-solid fa-rotate-left"></i> Minta Perbaikan
+                <button type="button" class="btn btn-warning" onclick="App.submitAuditDecision('revision')" style="background: #f59e0b; border-color: #f59e0b; color: #ffffff; justify-content: center; font-weight: 800; padding: 0.6rem 1rem; font-size: 0.85rem;">
+                  <i class="fa-solid fa-rotate-left"></i> Minta Perbaikan (Revisi)
                 </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="App.submitAuditDecision('reject')" style="justify-content: center; font-weight: 700;">
+                <button type="button" class="btn btn-danger" onclick="App.submitAuditDecision('reject')" style="justify-content: center; font-weight: 800; padding: 0.6rem 1rem; font-size: 0.85rem;">
                   <i class="fa-solid fa-circle-xmark"></i> Tolak Pendaftaran
                 </button>
               </div>
 
-              <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openBiodataModal(${p.id})" style="font-size: 0.8rem; color: #0284c7; border-color: #0284c7;">
+              <!-- Aksi Tambahan: Cetak, Edit, Hapus -->
+              <div style="border-top: 1px dashed #cbd5e1; padding-top: 0.85rem;">
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">Tindakan Lainnya:</div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openBiodataModal(${p.id})" style="justify-content: center; font-size: 0.78rem; font-weight: 700; color: #0284c7; border-color: #0284c7;">
                     <i class="fa-solid fa-print"></i> Cetak Formulir Biodata
                   </button>
-                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openEditParticipantModal(${p.id})" style="justify-content: center; font-size: 0.78rem; font-weight: 700;">
                     <i class="fa-solid fa-pen-to-square"></i> Edit Data Lengkap
                   </button>
+                  <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fca5a5; justify-content: center; font-size: 0.78rem;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)">
+                    <i class="fa-solid fa-trash-can"></i> Hapus Peserta
+                  </button>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-size: 0.8rem;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)">
-                  <i class="fa-solid fa-trash-can"></i> Hapus Peserta
-                </button>
               </div>
             </div>
           </div>
@@ -11304,7 +12206,7 @@ const App = {
       const name = data.full_name || (this.currentUser ? this.currentUser.username : 'Peserta Jumbara');
       const unit = data.unit_name || 'Kontingen PMI';
       const level = data.level || (data.registration_type || 'Peserta');
-      const qrUrl = data.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(code)}`;
+      const qrUrl = data.qr_code_base64 || Utils.getQRCodeUrl(code, 320);
 
       modalBody.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center;">
@@ -11417,8 +12319,11 @@ const App = {
       }
 
       const s = this.appSettings || {};
+      const pmiLogo = s.app_logo || 'frontend/images/logo-pmi.svg';
       const organizerName = s.organizer_name || 'PMI KABUPATEN PEMALANG';
       const eventYear = s.event_year || (s.event_dates ? s.event_dates.substring(0, 4) : '2026');
+      const addressDesc = s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Pemalang';
+      const contactDesc = s.contact_wa || s.contact_phone || '(021) 555-PMR-2026';
       
       let levelCat = p.level_category || '';
       if (!levelCat) {
@@ -11471,62 +12376,116 @@ const App = {
 
         html = `
         <div class="biodata-sheet">
-          <div class="biodata-sheet-header-box">
+          <!-- Kop Surat Resmi PMI (Logo dari Pengaturan) -->
+          <div class="biodata-sheet-kop">
+            <div class="biodata-kop-brand">
+              <img src="${pmiLogo}" class="biodata-kop-logo" alt="Logo PMI" onerror="this.src='frontend/images/logo-pmi.svg'">
+              <div class="biodata-kop-text">
+                <div class="biodata-kop-title">PALANG MERAH INDONESIA</div>
+                <div class="biodata-kop-sub">${Utils.escapeHtml((organizerName || 'KABUPATEN PEMALANG').toUpperCase())}</div>
+                <div class="biodata-kop-desc">${Utils.escapeHtml(addressDesc)} • Telp/WA: ${Utils.escapeHtml(contactDesc)}</div>
+              </div>
+            </div>
+            <div class="biodata-reg-box">
+              <div class="biodata-reg-lbl">NO. REGISTRASI</div>
+              <div class="biodata-reg-val">${Utils.escapeHtml(p.code || '-')}</div>
+            </div>
+          </div>
+          <div class="biodata-kop-divider"></div>
+
+          <!-- Judul Formulir Resmi PMI -->
+          <div class="biodata-sheet-title-box">
             <h2>BIODATA PEMBINA PENDAMPING</h2>
-            <h3>PESERTA JUMBARA PMR MADYA DAN WIRA TAHUN ${eventYear}</h3>
-            <h4>${Utils.escapeHtml(organizerName)}</h4>
+            <h3>PESERTA JUMBARA PMR TINGKAT KABUPATEN PEMALANG TAHUN ${eventYear}</h3>
           </div>
 
-          <!-- Tabel Data Resmi Pembina Pendamping Sesuai Blangko PMI -->
+          <!-- Bagian Atas: Data Identitas Kiri & Pas Foto 3x4 Kanan Atas -->
+          <div class="biodata-top-split">
+            <div class="biodata-top-left">
+              <table class="biodata-sheet-table">
+                ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
+                ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
+                ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
+                ${renderRow('3', 'N a m a', (p.full_name || '').toUpperCase())}
+                ${renderRow('4', 'Tempat / tgl lahir', ttl)}
+                ${renderRow('5', 'Jenis kelamin', genderText)}
+                ${renderRow('6', 'Pendidikan terakhir', p.last_education)}
+              </table>
+            </div>
+
+            <!-- Pas Foto Resmi 3x4 cm Berada di Bagian Atas Sesuai Standar Blangko PMI -->
+            <div class="biodata-top-right">
+              <div class="biodata-photo-frame">
+                ${p.photo_url ? `
+                  <img src="${p.photo_url}" class="biodata-photo-img" alt="Pas Foto 3x4" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                  <div class="biodata-photo-placeholder" style="display: none;">
+                    <span>PAS FOTO RESMI<br><strong>3 x 4 cm</strong></span>
+                  </div>
+                ` : `
+                  <div class="biodata-photo-placeholder">
+                    <span>PAS FOTO RESMI<br><strong>3 x 4 cm</strong></span>
+                  </div>
+                `}
+              </div>
+              <div class="biodata-photo-badge">
+                <span>GOL. DARAH: <strong>${p.blood_type || '-'}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bagian Bawah: Data Tambahan & Riwayat Organisasi -->
           <table class="biodata-sheet-table">
-            ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
-            ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
-            ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
-            ${renderRow('3', 'N a m a', (p.full_name || '').toUpperCase())}
-            ${renderRow('4', 'Tempat / tgl lahir', ttl)}
-            ${renderRow('5', 'Jenis kelamin', genderText)}
-            ${renderRow('6', 'Pendidikan terakhir', p.last_education)}
             ${renderRow('7', 'Agama', p.religion)}
             ${renderRow('8', 'Alamat rumah', p.address)}
             ${renderRow('', 'Telp. / HP.', p.phone, true)}
             ${renderRow('9', 'Golongan Darah', p.blood_type)}
             <tr>
-              <td class="col-num">4.</td>
+              <td class="col-num">10.</td>
               <td class="col-label" colspan="2">Organisasi yang diikuti :</td>
-              <td class="col-val" style="border-bottom: none;"></td>
+              <td class="col-val" style="border-bottom: none !important;"></td>
             </tr>
             <tr>
               <td class="col-num"></td>
-              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">a.</td>
+              <td class="col-label-sub" style="font-weight: 700;">a.</td>
               <td class="col-colon"></td>
               <td class="col-val">${Utils.escapeHtml(orgA)}</td>
             </tr>
             <tr>
               <td class="col-num"></td>
-              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">b.</td>
+              <td class="col-label-sub" style="font-weight: 700;">b.</td>
               <td class="col-colon"></td>
               <td class="col-val">${Utils.escapeHtml(orgB)}</td>
             </tr>
             <tr>
               <td class="col-num"></td>
-              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">c.</td>
+              <td class="col-label-sub" style="font-weight: 700;">c.</td>
               <td class="col-colon"></td>
               <td class="col-val">${Utils.escapeHtml(orgC)}</td>
             </tr>
             <tr>
               <td class="col-num"></td>
-              <td class="col-label-sub" style="text-align: right; padding-right: 14px; font-weight: 700;">d.</td>
+              <td class="col-label-sub" style="font-weight: 700;">d.</td>
               <td class="col-colon"></td>
               <td class="col-val">${Utils.escapeHtml(orgD)}</td>
             </tr>
           </table>
 
-          <!-- Blok Tanda Tangan Pembina Pendamping Sesuai Format PMI -->
-          <div class="biodata-sheet-signature-box">
-            <div class="biodata-sheet-signature">
-              <div class="sig-date">Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
-              <div class="sig-role">Pembina Pendamping,</div>
-              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...........................................').toUpperCase())} )</div>
+          <!-- Footer Tanda Tangan 2 Kolom Bersih & Simetris (Tanpa Foto di Bawah) -->
+          <div class="biodata-sheet-footer-grid">
+            <div class="biodata-sig-col">
+              <div class="sig-date" style="visibility: hidden;">&nbsp;</div>
+              <div class="sig-role">Mengetahui,<br><strong>Kepala Sekolah / Pangkalan</strong></div>
+              <div class="sig-space"></div>
+              <div class="sig-name">( .............................................................. )</div>
+              <div class="sig-nip">NIP. .....................................................</div>
+            </div>
+
+            <div class="biodata-sig-col">
+              <div class="sig-date">Pemalang, ..................................... ${eventYear}</div>
+              <div class="sig-role"><strong>Pembina Pendamping,</strong></div>
+              <div class="sig-space"></div>
+              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...................................................').toUpperCase())} )</div>
+              <div class="sig-nip">NIP/NBM. ...............................................</div>
             </div>
           </div>
         </div>
@@ -11534,27 +12493,71 @@ const App = {
       } else {
         html = `
         <div class="biodata-sheet">
-          <div class="biodata-sheet-header-box">
+          <!-- Kop Surat Resmi PMI (Logo dari Pengaturan) -->
+          <div class="biodata-sheet-kop">
+            <div class="biodata-kop-brand">
+              <img src="${pmiLogo}" class="biodata-kop-logo" alt="Logo PMI" onerror="this.src='frontend/images/logo-pmi.svg'">
+              <div class="biodata-kop-text">
+                <div class="biodata-kop-title">PALANG MERAH INDONESIA</div>
+                <div class="biodata-kop-sub">${Utils.escapeHtml((organizerName || 'KABUPATEN PEMALANG').toUpperCase())}</div>
+                <div class="biodata-kop-desc">${Utils.escapeHtml(addressDesc)} • Telp/WA: ${Utils.escapeHtml(contactDesc)}</div>
+              </div>
+            </div>
+            <div class="biodata-reg-box">
+              <div class="biodata-reg-lbl">NO. REGISTRASI</div>
+              <div class="biodata-reg-val">${Utils.escapeHtml(p.code || '-')}</div>
+            </div>
+          </div>
+          <div class="biodata-kop-divider"></div>
+
+          <!-- Judul Formulir Resmi PMI -->
+          <div class="biodata-sheet-title-box">
             <h2>BIODATA PESERTA</h2>
             <h3>PESERTA JUMBARA PMR ${Utils.escapeHtml(levelCat)} TAHUN ${eventYear}</h3>
-            <h4>${Utils.escapeHtml(organizerName)}</h4>
           </div>
 
-          <!-- Tabel Data Resmi Peserta Sesuai Blangko PMI -->
+          <!-- Bagian Atas: Data Identitas Kiri & Pas Foto 3x4 Kanan Atas -->
+          <div class="biodata-top-split">
+            <div class="biodata-top-left">
+              <table class="biodata-sheet-table">
+                ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
+                ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
+                ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
+                ${renderRow('3', 'Nama Lengkap', (p.full_name || '').toUpperCase())}
+                ${renderRow('4', 'Tempat / Tgl Lahir', ttl)}
+                ${renderRow('5', 'Kelas', p.class_name)}
+                ${renderRow('6', 'Jenis Kelamin', genderText)}
+              </table>
+            </div>
+
+            <!-- Pas Foto Resmi 3x4 cm Berada di Bagian Atas Sesuai Standar Blangko PMI -->
+            <div class="biodata-top-right">
+              <div class="biodata-photo-frame">
+                ${p.photo_url ? `
+                  <img src="${p.photo_url}" class="biodata-photo-img" alt="Pas Foto 3x4" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                  <div class="biodata-photo-placeholder" style="display: none;">
+                    <span>PAS FOTO RESMI<br><strong>3 x 4 cm</strong></span>
+                  </div>
+                ` : `
+                  <div class="biodata-photo-placeholder">
+                    <span>PAS FOTO RESMI<br><strong>3 x 4 cm</strong></span>
+                  </div>
+                `}
+              </div>
+              <div class="biodata-photo-badge">
+                <span>GOL. DARAH: <strong>${p.blood_type || '-'}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bagian Bawah: Data Tambahan & Data Orang Tua/Wali -->
           <table class="biodata-sheet-table">
-            ${renderRow('1', 'Nama Sekolah', p.unit_name || p.school_name)}
-            ${renderRow('2', 'Alamat Sekolah', p.school_address || p.unit_address)}
-            ${renderRow('', 'Telp. / HP', p.school_phone || p.unit_phone, true)}
-            ${renderRow('3', 'Nama Lengkap', (p.full_name || '').toUpperCase())}
-            ${renderRow('4', 'Tempat / Tgl Lahir', ttl)}
-            ${renderRow('5', 'Kelas', p.class_name)}
-            ${renderRow('6', 'A l a m a t', p.address)}
+            ${renderRow('7', 'Alamat Rumah', p.address)}
             ${renderRow('', 'Telp. / HP', p.phone, true)}
-            ${renderRow('7', 'Agama', p.religion)}
-            ${renderRow('8', 'Jenis Kelamin', genderText)}
+            ${renderRow('8', 'Agama', p.religion)}
             ${renderRow('9', 'Golongan Darah', p.blood_type)}
             <tr>
-              <td colspan="4" style="padding: 4px 0;">
+              <td colspan="4" style="padding: 2px 0 !important;">
                 <div class="biodata-sheet-divider"></div>
               </td>
             </tr>
@@ -11562,25 +12565,35 @@ const App = {
               <td class="col-num"></td>
               <td class="col-label" style="font-weight: 800; text-decoration: underline;">Orang Tua / Wali</td>
               <td class="col-colon">:</td>
-              <td class="col-val" style="border-bottom: none;"></td>
+              <td class="col-val" style="border-bottom: none !important;"></td>
             </tr>
             ${renderRow('10', 'Nama Lengkap', p.parent_name || p.emergency_contact)}
             ${renderRow('11', 'A l a m a t', p.parent_address || p.address)}
             ${renderRow('', 'Telp. / HP', p.parent_phone || p.phone, true)}
             ${renderRow('12', 'Pekerjaan', p.parent_job)}
             <tr>
-              <td colspan="4" style="padding: 4px 0;">
+              <td colspan="4" style="padding: 2px 0 !important;">
                 <div class="biodata-sheet-divider"></div>
               </td>
             </tr>
           </table>
 
-          <!-- Blok Tanda Tangan Peserta Sesuai Format PMI -->
-          <div class="biodata-sheet-signature-box">
-            <div class="biodata-sheet-signature">
-              <div class="sig-date">Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
-              <div class="sig-role">Peserta,</div>
-              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...........................................').toUpperCase())} )</div>
+          <!-- Footer Tanda Tangan 2 Kolom Bersih & Simetris (Tanpa Foto di Bawah) -->
+          <div class="biodata-sheet-footer-grid">
+            <div class="biodata-sig-col">
+              <div class="sig-date" style="visibility: hidden;">&nbsp;</div>
+              <div class="sig-role">Mengetahui,<br><strong>Kepala Sekolah / Pembina PMR</strong></div>
+              <div class="sig-space"></div>
+              <div class="sig-name">( .............................................................. )</div>
+              <div class="sig-nip">NIP. .....................................................</div>
+            </div>
+
+            <div class="biodata-sig-col">
+              <div class="sig-date">Pemalang, ..................................... ${eventYear}</div>
+              <div class="sig-role"><strong>Peserta,</strong></div>
+              <div class="sig-space"></div>
+              <div class="sig-name">( ${Utils.escapeHtml((p.full_name || '...................................................').toUpperCase())} )</div>
+              <div class="sig-nip">NISN. ${Utils.escapeHtml(p.nisn || '..............................................')}</div>
             </div>
           </div>
         </div>
@@ -11594,7 +12607,378 @@ const App = {
   },
 
   triggerPrintBiodata() {
-    window.print();
+    const container = document.getElementById('biodataPrintContainer');
+    if (!container) return;
+    const sheet = container.querySelector('.biodata-sheet');
+    if (!sheet) {
+      Utils.showToast('Data formulir biodata belum siap untuk dicetak.', 'warning');
+      return;
+    }
+
+    this.printHtmlInIsolatedIframe(sheet.outerHTML, 'Formulir Biodata Resmi Standar PMI');
+  },
+
+  printHtmlInIsolatedIframe(contentHtml, title = 'Cetak Formulir Biodata PMI') {
+    let iframe = document.getElementById('biodataPrintIframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'biodataPrintIframe';
+      iframe.name = 'biodataPrintIframe';
+      iframe.style.position = 'fixed';
+      iframe.style.right = '100%';
+      iframe.style.bottom = '100%';
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.border = 'none';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>${Utils.escapeHtml(title)}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 12mm 8mm 12mm;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 9.5pt;
+      line-height: 1.25;
+      width: 100%;
+      height: 100%;
+    }
+    .biodata-sheet {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .biodata-sheet-kop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+    .biodata-kop-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+    .biodata-kop-logo {
+      height: 48px;
+      width: auto;
+      max-width: 60px;
+      object-fit: contain;
+      flex-shrink: 0;
+      display: block;
+    }
+    .biodata-kop-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .biodata-kop-title {
+      font-size: 11pt;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #000000;
+    }
+    .biodata-kop-sub {
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #000000;
+    }
+    .biodata-kop-desc {
+      font-size: 7.5pt;
+      color: #333333;
+      margin-top: 2px;
+    }
+    .biodata-reg-box {
+      border: 1.5px solid #000000;
+      padding: 4px 10px;
+      text-align: center;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+    .biodata-reg-lbl {
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #333333;
+      letter-spacing: 0.5px;
+    }
+    .biodata-reg-val {
+      font-size: 9pt;
+      font-weight: 800;
+      font-family: monospace, Courier, sans-serif;
+      letter-spacing: 0.5px;
+      color: #000000;
+    }
+    .biodata-kop-divider {
+      border-top: 2px solid #000000;
+      border-bottom: 0.75px solid #000000;
+      height: 3px;
+      margin: 4px 0 10px 0;
+      width: 100%;
+    }
+    .biodata-sheet-title-box {
+      border: 1.5px solid #000000;
+      padding: 6px 12px;
+      text-align: center;
+      margin-bottom: 12px;
+      background: #ffffff;
+    }
+    .biodata-sheet-title-box h2 {
+      font-size: 12.5pt;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #000000;
+      line-height: 1.2;
+    }
+    .biodata-sheet-title-box h3 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      margin: 3px 0 0 0;
+      text-transform: uppercase;
+      color: #000000;
+      line-height: 1.25;
+    }
+    .biodata-top-split {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 2px;
+      width: 100%;
+    }
+    .biodata-top-left {
+      flex: 1;
+      min-width: 0;
+    }
+    .biodata-top-right {
+      width: 115px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 2px;
+    }
+    .biodata-photo-frame {
+      width: 113px;
+      height: 148px;
+      border: 1.5px solid #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .biodata-photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .biodata-photo-placeholder {
+      text-align: center;
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #444444;
+      line-height: 1.3;
+      letter-spacing: 0.4px;
+      padding: 8px;
+    }
+    .biodata-photo-badge {
+      margin-top: 5px;
+      border: 1.2px solid #000000;
+      padding: 2px 6px;
+      font-size: 8pt;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+    .biodata-sheet-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      border-spacing: 0;
+      font-size: 9.5pt;
+      table-layout: fixed;
+      background: transparent;
+      border: none;
+      margin: 0;
+    }
+    .biodata-sheet-table tr {
+      background: transparent;
+      border: none;
+    }
+    .biodata-sheet-table td {
+      padding: 2.2px 0;
+      vertical-align: top;
+      border: none;
+      color: #000000;
+      line-height: 1.35;
+    }
+    .biodata-sheet-table .col-num {
+      width: 24px;
+      font-weight: 700;
+      color: #000000;
+      vertical-align: top;
+      padding-top: 2.2px;
+    }
+    .biodata-sheet-table .col-label {
+      width: 155px;
+      font-weight: 700;
+      color: #000000;
+      vertical-align: top;
+      padding-top: 2.2px;
+      white-space: nowrap;
+    }
+    .biodata-sheet-table .col-label-sub {
+      width: 155px;
+      font-weight: normal;
+      color: #000000;
+      vertical-align: top;
+      padding-top: 2.2px;
+      padding-left: 16px;
+    }
+    .biodata-sheet-table .col-colon {
+      width: 16px;
+      text-align: center;
+      font-weight: 700;
+      color: #000000;
+      vertical-align: top;
+      padding-top: 2.2px;
+    }
+    .biodata-sheet-table .col-val {
+      font-weight: 700;
+      color: #000000;
+      border-bottom: 1.2px dotted #000000;
+      padding: 1px 4px;
+      min-height: 18px;
+      word-break: break-word;
+      vertical-align: bottom;
+    }
+    .biodata-sheet-divider {
+      border-bottom: 1.2px dotted #000000;
+      height: 1px;
+      margin: 3px 0;
+      width: 100%;
+    }
+    .biodata-sheet-footer-grid {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      font-size: 9.5pt;
+      color: #000000;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .biodata-sig-col {
+      width: 270px;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .biodata-sig-col .sig-date {
+      margin-bottom: 4px;
+      font-size: 9.5pt;
+      color: #000000;
+    }
+    .biodata-sig-col .sig-role {
+      font-size: 9.5pt;
+      color: #000000;
+    }
+    .biodata-sig-col .sig-space {
+      height: 52px;
+    }
+    .biodata-sig-col .sig-name {
+      font-weight: 800;
+      text-decoration: underline;
+      text-transform: uppercase;
+      color: #000000;
+      letter-spacing: 0.3px;
+    }
+    .biodata-sig-col .sig-nip {
+      font-size: 8.5pt;
+      margin-top: 3px;
+      color: #333333;
+    }
+  </style>
+</head>
+<body>
+  ${contentHtml}
+</body>
+</html>`);
+    doc.close();
+
+    const doPrint = () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (err) {
+        console.warn('Iframe print error, falling back to window.print():', err);
+        window.print();
+      }
+    };
+
+    const images = doc.images;
+    let loaded = 0;
+    const total = images.length;
+    if (total === 0) {
+      setTimeout(doPrint, 80);
+    } else {
+      let triggered = false;
+      const onImgDone = () => {
+        loaded++;
+        if (loaded >= total && !triggered) {
+          triggered = true;
+          setTimeout(doPrint, 80);
+        }
+      };
+      for (let i = 0; i < total; i++) {
+        if (images[i].complete) {
+          onImgDone();
+        } else {
+          images[i].onload = onImgDone;
+          images[i].onerror = onImgDone;
+        }
+      }
+      setTimeout(() => {
+        if (!triggered) {
+          triggered = true;
+          doPrint();
+        }
+      }, 350);
+    }
   },
 
   generateBarcodeSVG(text, height = 36) {
@@ -11688,7 +13072,7 @@ const App = {
 
     const barcodeCode = data.nik || data.code || '3401074802830002';
     const barcodeSvg = this.generateBarcodeSVG(barcodeCode);
-    const qrImgSrc = data.qr_code_base64 || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.code || barcodeCode || 'JMB-2026-0001')}`;
+    const qrImgSrc = data.qr_code_base64 || Utils.getQRCodeUrl(data.code || barcodeCode || 'JMB-2026-0001', 180);
 
     const hasCustomTemplate = Boolean(s.idcard_template);
     const customTemplateBgStyle = hasCustomTemplate
@@ -13065,23 +14449,60 @@ const App = {
     }
   },
 
-  // Export Data
-  async exportPesertaCSV() {
+  // Export Data (Format Excel .xls)
+  async exportPesertaXLS(unitId = null) {
     try {
-      const parts = await API.getParticipants();
-      Utils.exportToCSV('data_peserta_jumbara_2026', parts);
+      let targetUnit = unitId;
+      if (!targetUnit) {
+        const sel = document.getElementById('filterKabUnit');
+        if (sel && sel.value) targetUnit = sel.value;
+      }
+      if (!targetUnit && this.currentUser && this.currentUser.role === 'unit' && this.currentUser.unit_id) {
+        targetUnit = this.currentUser.unit_id;
+      }
+
+      let url = 'api/participants.php?action=export&format=excel';
+      if (targetUnit) {
+        url += `&unit_id=${encodeURIComponent(targetUnit)}`;
+      }
+
+      Utils.showToast('Memulai unduh file Excel (.xls) peserta...', 'info');
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      Utils.showToast(err.message, 'error');
+    }
+  },
+
+  async exportPesertaCSV(unitId = null) {
+    return this.exportPesertaXLS(unitId);
+  },
+
+  async exportStandingsXLS() {
+    try {
+      const standings = await API.getStandings();
+      const rows = (Array.isArray(standings) ? standings : []).map((s, idx) => ({
+        'Peringkat': idx + 1,
+        'Nama Unit Kontingen': s.unit_name || '-',
+        'Jenjang': s.level_category || '-',
+        'Medali Emas': Number(s.emas || 0),
+        'Medali Perak': Number(s.perak || 0),
+        'Medali Perunggu': Number(s.perunggu || 0),
+        'Total Medali': Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0),
+        'Total Lomba Diikuti': Number(s.total_lomba || 0)
+      }));
+      Utils.exportToXLS('klasemen_medali_jumbara_2026', rows, 'REKAPITULASI KLASEMEN MEDALI JUMBARA PMR 2026');
     } catch (err) {
       Utils.showToast(err.message, 'error');
     }
   },
 
   async exportStandingsCSV() {
-    try {
-      const standings = await API.getStandings();
-      Utils.exportToCSV('klasemen_medali_jumbara_2026', standings);
-    } catch (err) {
-      Utils.showToast(err.message, 'error');
-    }
+    return this.exportStandingsXLS();
   },
 
   // Modal Open / Close Helpers
@@ -13421,7 +14842,6 @@ const App = {
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('peserta')"><i class="fa-solid fa-users"></i> Kelola & Verifikasi Peserta</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda')"><i class="fa-solid fa-calendar-days"></i> Agenda & Presensi Jumbara</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda', 'materi')"><i class="fa-solid fa-book-bookmark"></i> Kelola & Unduh Materi</a></li>
-            <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('agenda', 'feedback')"><i class="fa-solid fa-comments"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('penilaian')"><i class="fa-solid fa-trophy"></i> Penilaian & Rekap Medali</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchAdminCategory('pengaturan')"><i class="fa-solid fa-gear"></i> Pengaturan Aplikasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
@@ -13431,7 +14851,6 @@ const App = {
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('peserta')"><i class="fa-solid fa-users"></i> Data Peserta Sekolah</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('jadwal')"><i class="fa-solid fa-calendar-days"></i> Pendaftaran Kegiatan</a></li>
             <li><a href="#materi" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Unduh Materi & Juknis</a></li>
-            <li><a href="javascript:void(0)" onclick="App.openFeedbackModal()"><i class="fa-solid fa-comment-dots"></i> Kotak Saran & Aspirasi</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchUnitTab('piagam')"><i class="fa-solid fa-certificate"></i> Cetak Piagam Unit</a></li>
             <li><a href="javascript:void(0)" onclick="App.handleLogout()" style="color: #ef4444; font-weight: 700;"><i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout Sistem</a></li>
           `;
@@ -15069,7 +16488,7 @@ const App = {
                       <th>Pembina / Penanggung Jawab</th>
                       <th>Kontak / WhatsApp</th>
                       <th>Alamat / Pangkalan</th>
-                      <th style="text-align: center;">Aksi Pengelolaan</th>
+                      <th class="col-actions" style="text-align: right;">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -15105,15 +16524,16 @@ const App = {
                           <td style="font-size: 0.85rem; color: #475569;">
                             ${u.address ? `<i class="fa-solid fa-location-dot" style="color: #ef4444; margin-right: 0.3rem;"></i>${Utils.escapeHtml(u.address)}` : '-'}
                           </td>
-                          <td style="text-align: center;">
-                            <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                          <td class="col-actions">
+                            <div class="action-btn-group">
                               <button class="btn btn-outline btn-sm" onclick="App.openEditUnitModal(${u.id})" title="Edit Unit">
                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                               </button>
                               <button class="btn btn-danger btn-sm" onclick="App.deleteUnit(${u.id}, '${Utils.escapeHtml(u.name).replace(/'/g, "\\'")}')" title="Hapus Unit">
-                                <i class="fa-solid fa-trash-can"></i> Hapus
+                                <i class="fa-solid fa-trash-can"></i>
                               </button>
                             </div>
+                          </td>
                           </td>
                         </tr>
                       `;
@@ -15525,7 +16945,7 @@ const App = {
                   <th style="width: 160px;">Total Peserta Global</th>
                 `}
                 <th>Keterangan Deskripsi</th>
-                <th style="width: 140px; text-align: center;">Aksi Pengelolaan</th>
+                <th class="col-actions" style="text-align: right;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -15568,8 +16988,8 @@ const App = {
                       <td><strong style="color: var(--primary); font-size: 0.95rem;">${u.total_global || 0}</strong> Pendaftar Aktif</td>
                     `}
                     <td style="font-size: 0.85rem; color: #475569;">${Utils.escapeHtml(u.description || '-')}</td>
-                    <td style="text-align: center;">
-                      <div style="display: flex; gap: 0.35rem; justify-content: center;">
+                    <td class="col-actions" style="text-align: right;">
+                      <div class="action-btn-group">
                         <button class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.25rem 0.5rem;" onclick="App.openEditUnsurModalById(${u.id})">
                           <i class="fa-solid fa-pen"></i> Edit
                         </button>
@@ -16474,6 +17894,8 @@ const App = {
     this.currentUser = null;
     document.body.classList.remove('user-logged-in');
     document.body.classList.remove('has-mobile-portal');
+    document.body.classList.remove('in-admin-dashboard');
+    this.updateFeedbackFloatingVisibility();
     Utils.showToast('Anda telah logout.', 'info');
     this.renderHeaderNav();
     this.renderView();
@@ -16895,7 +18317,7 @@ const App = {
 
   buildPiagamHTML(p, cfg) {
     const qrText = `${window.location.origin}${window.APP_BASE_URL || '/'}?verify_cert=${encodeURIComponent(p.certificate_number || p.code || p.id)}`;
-    const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrText)}`;
+    const qrImgSrc = Utils.getQRCodeUrl(qrText, 180);
 
     const certNo = p.certificate_number || (cfg.piagam_number_format || '{NO}/02.05/JUMTEK-II/IX/2025').replace('{NO}', '0001');
 

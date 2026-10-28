@@ -10,68 +10,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
 
-// Auto-migration: Ensure table feedback exists
-try {
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS feedback (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            sender_name VARCHAR(150) DEFAULT 'Anonim',
-            is_anonymous TINYINT(1) NOT NULL DEFAULT 0,
-            unit_name VARCHAR(150) DEFAULT NULL,
-            sender_role VARCHAR(100) DEFAULT 'Peserta PMR',
-            category VARCHAR(100) NOT NULL DEFAULT 'Saran Umum',
-            rating INT NOT NULL DEFAULT 5,
-            message TEXT NOT NULL,
-            status ENUM('unread', 'read', 'followup') NOT NULL DEFAULT 'unread',
-            admin_notes TEXT DEFAULT NULL,
-            ip_address VARCHAR(45) DEFAULT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            KEY idx_fb_status (status),
-            KEY idx_fb_created (created_at),
-            KEY idx_fb_cat (category)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    ");
-
-    // Auto-seed sample feedback if empty for preview
-    $count = (int)$pdo->query("SELECT COUNT(*) FROM feedback")->fetchColumn();
-    if ($count === 0) {
-        $stmtSeed = $pdo->prepare("
-            INSERT INTO feedback (sender_name, is_anonymous, unit_name, sender_role, category, rating, message, status, admin_notes, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW() - INTERVAL ? HOUR)
-        ");
-        $samples = [
-            ['Rizky Pratama', 0, 'SMAN 1 Kabupaten PMI', 'Peserta PMR', 'Penyelenggaraan Lomba', 5, 'Aplikasi Jumbara ini sangat membantu dan praktis, terutama fitur ID Card dan live scoreboard-nya. Semoga perlombaan pertolongan pertama besok berjalan tepat waktu.', 'read', 'Sudah dicatat tim panitia lomba.', 2],
-            ['Anonim', 1, 'SMPN 2 Kota Bakti', 'Pembina Unit', 'Fasilitas & Sarpras', 4, 'Mohon agar titik air bersih di area tenda blok timur ditambah krannya, mengingat kontingen kami cukup banyak saat waktu sholat.', 'followup', 'Koordinasikan dengan Sie Sarpras untuk penambahan kran.', 5],
-            ['Budi Santoso', 0, 'Umum', 'Orang Tua / Publik', 'Pelayanan & Konsumsi', 5, 'Terima kasih atas pelayanan panitia PMI yang sangat sigap dan ramah saat mengantar kontingen. Sukses selalu untuk Jumbara 2026!', 'unread', null, 8]
-        ];
-
-        foreach ($samples as $s) {
-            $stmtSeed->execute($s);
-        }
-    }
-} catch (\Throwable $e) {
-    try {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS feedback (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                sender_name VARCHAR(150) DEFAULT 'Anonim',
-                is_anonymous TINYINT(1) NOT NULL DEFAULT 0,
-                unit_name VARCHAR(150) DEFAULT NULL,
-                sender_role VARCHAR(100) DEFAULT 'Peserta PMR',
-                category VARCHAR(100) NOT NULL DEFAULT 'Saran Umum',
-                rating INT NOT NULL DEFAULT 5,
-                message TEXT NOT NULL,
-                status ENUM('unread', 'read', 'followup') NOT NULL DEFAULT 'unread',
-                admin_notes TEXT DEFAULT NULL,
-                ip_address VARCHAR(45) DEFAULT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        ");
-    } catch (\Throwable $e2) {
-        error_log('[FEEDBACK AUTO-MIGRATE ERROR] ' . $e2->getMessage());
-    }
-}
-
 // --------------------------------------------------------------------------
 // 1. POST /api/feedback.php (Publik: Kirim Saran & Aspirasi)
 // --------------------------------------------------------------------------

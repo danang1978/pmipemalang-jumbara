@@ -489,5 +489,36 @@ const API = {
     return this.request(`/feedback.php?id=${id}`, {
       method: 'DELETE'
     });
+  },
+
+  // Log Aktivitas User & Audit
+  getActivityLogs(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/logs.php?${query}`);
+  },
+
+  clearActivityLogs(days = 30) {
+    return this.request('/logs.php?action=clear', {
+      method: 'POST',
+      body: JSON.stringify({ days })
+    });
+  },
+
+  // Backup & Restore Database
+  getBackupInfo() {
+    return this.request('/backup.php');
+  },
+
+  createBackupSnapshot() {
+    return this.request('/backup.php?action=create_snapshot', {
+      method: 'POST'
+    });
+  },
+
+  deleteBackupSnapshot(filename) {
+    return this.request('/backup.php?action=delete_snapshot', {
+      method: 'POST',
+      body: JSON.stringify({ filename })
+    });
   }
 };

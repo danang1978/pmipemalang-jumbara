@@ -60,7 +60,18 @@ else if ($favExt === 'png') $favType = 'image/png';
   <!-- html2pdf Library for Direct PDF File Downloads -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
-<body>
+<?php
+  $currentLoggedUser = getCurrentUser();
+  $headerBodyClasses = [];
+  if ($currentLoggedUser) {
+      $headerBodyClasses[] = 'user-logged-in';
+      $headerRole = $currentLoggedUser['role'] ?? '';
+      if (in_array($headerRole, ['kabupaten', 'admin_kabupaten', 'super_admin', 'unit', 'admin_unit'])) {
+          $headerBodyClasses[] = 'in-admin-dashboard';
+      }
+  }
+?>
+<body class="<?php echo implode(' ', $headerBodyClasses); ?>">
 
   <!-- Fixed Main Header Navigation Wrapper -->
   <header class="site-header">

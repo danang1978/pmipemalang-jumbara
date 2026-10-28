@@ -406,12 +406,21 @@ if ($method === 'GET') {
     $eventId = (int)($_GET['event_id'] ?? 0);
     if (!$eventId) jsonResponse(['logs' => [], 'stats' => null]);
 
+    $all = isset($_GET['all']) && $_GET['all'] === 'true';
+    $limit = $all ? 1000 : max(1, min(200, (int)($_GET['limit'] ?? 50)));
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $offset = ($page - 1) * $limit;
+
     // 1. Fetch Event Info
     $stmtEvt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
     $stmtEvt->execute([$eventId]);
     $event = $stmtEvt->fetch();
 
-    // 2. Fetch Logs
+    // 2. Fetch Total Logs Count & Paginated Logs
+    $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE event_id = ?");
+    $stmtCount->execute([$eventId]);
+    $totalLogs = (int)$stmtCount->fetchColumn();
+
     $stmt = $pdo->prepare("
         SELECT a.*, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
         FROM attendance a 
@@ -419,6 +428,7 @@ if ($method === 'GET') {
         JOIN units un ON p.unit_id = un.id 
         WHERE a.event_id = ? 
         ORDER BY a.scanned_at DESC
+        LIMIT $limit OFFSET $offset
     ");
     $stmt->execute([$eventId]);
     $logs = $stmt->fetchAll();
@@ -458,6 +468,12 @@ if ($method === 'GET') {
 
     jsonResponse([
         'logs' => $logs,
+        'pagination' => [
+            'total' => $totalLogs,
+            'page' => $page,
+            'limit' => $limit,
+            'total_pages' => (int)ceil($totalLogs / $limit) ?: 1
+        ],
         'stats' => [
             'total_registered' => $totalRegistered,
             'total_masuk' => $totalMasuk,

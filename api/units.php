@@ -35,6 +35,12 @@ if ($method === 'POST') {
             $unitId
         ]);
 
+        logActivity('update_unit', 'units', "Memperbarui data unit kontingen: {$name} (ID: {$unitId})", [
+            'unit_id' => $unitId,
+            'name' => $name,
+            'level' => $levelCategory
+        ]);
+
         jsonResponse(['message' => 'Data Unit sekolah berhasil diperbarui!']);
     }
 
@@ -60,6 +66,12 @@ if ($method === 'POST') {
         $input['phone'] ?? null, $input['address'] ?? null
     ]);
 
+    logActivity('create_unit', 'units', "Menambahkan unit kontingen baru: {$name} ({$unitCode})", [
+        'code' => $unitCode,
+        'name' => $name,
+        'level' => $levelCategory
+    ]);
+
     jsonResponse(['message' => 'Unit sekolah berhasil ditambahkan!']);
 }
 
@@ -83,6 +95,12 @@ if ($method === 'PUT') {
         $unitId
     ]);
 
+    logActivity('update_unit', 'units', "Memperbarui data unit kontingen: {$name} (ID: {$unitId})", [
+        'unit_id' => $unitId,
+        'name' => $name,
+        'level' => $levelCategory
+    ]);
+
     jsonResponse(['message' => 'Data Unit sekolah berhasil diperbarui!']);
 }
 
@@ -103,6 +121,8 @@ if ($method === 'DELETE') {
 
     $stmt = $pdo->prepare("DELETE FROM units WHERE id = ?");
     $stmt->execute([$unitId]);
+
+    logActivity('delete_unit', 'units', "Menghapus unit kontingen ID: {$unitId}", ['unit_id' => $unitId]);
 
     jsonResponse(['message' => 'Unit sekolah berhasil dihapus!']);
 }

@@ -141,28 +141,97 @@ const Utils = {
       .replace(/'/g, '&#039;');
   },
 
-  // Export JSON array to downloadable CSV file
-  exportToCSV(filename, rows) {
+  // Generate 100% Offline SVG Data URL for QR Code
+  getQRCodeUrl(text, size = 180) {
+    if (!text) text = 'JMB-2026-0001';
+    if (typeof window !== 'undefined' && window.QRCode && typeof window.QRCode.toString === 'function') {
+      try {
+        let svgStr = '';
+        window.QRCode.toString(String(text), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' }, function(err, svg) {
+          if (!err && svg) svgStr = svg;
+        });
+        if (svgStr) {
+          return 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
+        }
+      } catch (e) {
+        console.warn('Local QRCode error, falling back to online API:', e);
+      }
+    }
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(text)}`;
+  },
+
+  // Export JSON array to downloadable Excel (.xls) file with HTML Spreadsheet formatting
+  exportToXLS(filename, rows, title = 'Data Export JUMBARA 2026') {
     if (!rows || !rows.length) {
       this.showToast('Tidak ada data untuk diexport.', 'error');
       return;
     }
+    const cleanFilename = (filename || 'export').replace(/[^a-zA-Z0-9_-]/g, '_');
     const keys = Object.keys(rows[0]);
-    const csvContent = [
-      keys.join(','),
-      ...rows.map(row => keys.map(k => `"${String(row[k] || '').replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Data_Jumbara</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1e293b; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 0.5pt solid #cbd5e1; padding: 6px 10px; vertical-align: middle; }
+  th { background-color: #dc2626; color: #ffffff; font-weight: bold; text-align: center; }
+  .kop-title { font-size: 14pt; font-weight: bold; color: #b91c1c; text-align: center; background-color: #fee2e2; }
+  .kop-meta { font-size: 9.5pt; color: #64748b; background-color: #f8fafc; }
+  .row-even { background-color: #ffffff; }
+  .row-odd { background-color: #f8fafc; }
+  .text-num { mso-number-format: "\\@"; text-align: center; }
+  .text-left { text-align: left; }
+</style>
+</head>
+<body>
+<table>
+<thead>
+<tr>
+  <th colspan="${keys.length + 1}" class="kop-title">${this.escapeHtml(title)}</th>
+</tr>
+<tr>
+  <th colspan="${keys.length + 1}" class="kop-meta">Tanggal Unduh: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })} | Total Data: ${rows.length} Baris</th>
+</tr>
+<tr style="height: 10px;"><td colspan="${keys.length + 1}" style="border: none;"></td></tr>
+<tr>
+  <th style="width: 50px;">No</th>
+  ${keys.map(k => `<th>${this.escapeHtml(k.replace(/_/g, ' ').toUpperCase())}</th>`).join('')}
+</tr>
+</thead>
+<tbody>
+${rows.map((row, idx) => `
+<tr class="${idx % 2 === 0 ? 'row-even' : 'row-odd'}">
+  <td class="text-num">${idx + 1}</td>
+  ${keys.map(k => {
+    let val = row[k];
+    if (val === null || val === undefined) val = '-';
+    else if (typeof val === 'object') val = JSON.stringify(val);
+    return `<td class="text-num">${this.escapeHtml(String(val))}</td>`;
+  }).join('')}
+</tr>`).join('')}
+</tbody>
+</table>
+</body>
+</html>`;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `${filename}.csv`);
+    link.setAttribute('download', `${cleanFilename}.xls`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    this.showToast(`Berhasil mengunduh data ${filename}.csv`, 'success');
+    this.showToast(`Berhasil mengunduh data ${cleanFilename}.xls`, 'success');
+  },
+
+  // Export JSON array to downloadable file (Dialihkan ke XLS sesuai permintaan pengguna)
+  exportToCSV(filename, rows, title) {
+    return this.exportToXLS(filename, rows, title);
   },
 
   // Render Status Badge with FontAwesome vector icons
