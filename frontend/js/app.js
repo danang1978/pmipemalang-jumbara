@@ -13346,23 +13346,18 @@ const App = {
     container.innerHTML = `
       <div class="panel-card" style="max-width: 900px; margin: 0 auto 2rem auto;">
         
-        <!-- KOP SURAT RESMI PALANG MERAH INDONESIA KABUPATEN -->
-        <div class="kop-surat-container">
-          ${s.app_kop ? `
-            <div style="text-align: center; margin-bottom: 1rem;">
-              <img src="${Utils.escapeHtml(s.app_kop)}" alt="Kop Surat Resmi PMI" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-bottom: 3px double var(--primary); padding-bottom: 0.5rem; border-radius: var(--radius-sm);">
-            </div>
-          ` : `
-            <div class="kop-header">
-              <img src="${Utils.escapeHtml(s.app_logo || 'frontend/images/logo-pmi.svg')}" alt="Logo PMI" class="kop-logo">
-              <div class="kop-text">
-                <h2>PALANG MERAH INDONESIA (PMI) KABUPATEN</h2>
-                <h3>PANITIA PELAKSANA JUMBARA PMR TINGKAT KABUPATEN 2026</h3>
-                <p>Jl. Palang Merah No. 1, Markas PMI Kabupaten | Telp: (021) 555-PMR-2026 | Email: sekretariat@jumbara-pmi.or.id</p>
-              </div>
-            </div>
-            <div class="kop-divider"></div>
-          `}
+        <!-- LOGO RESMI JUMBARA & PMI (BERSIH & TANPA CARD) -->
+        <div style="text-align: center; padding: 0.25rem 0 0.85rem 0; margin-bottom: 1rem;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+            <img src="${Utils.escapeHtml(s.app_logo || 'frontend/images/logo-pmi.svg')}" alt="Logo PMI" style="height: 56px; max-height: 56px; width: auto; object-fit: contain;">
+            ${s.event_logo ? `
+              <div style="width: 1.5px; height: 38px; background: #cbd5e1;"></div>
+              <img src="${Utils.escapeHtml(s.event_logo)}" alt="Logo Jumbara" style="height: 56px; max-height: 56px; width: auto; object-fit: contain;">
+            ` : ''}
+          </div>
+          <div style="font-size: 0.82rem; font-weight: 800; color: #dc2626; letter-spacing: 0.5px; text-transform: uppercase;">
+            ${Utils.escapeHtml(s.organizer_name || 'PMI KABUPATEN PEMALANG')}
+          </div>
         </div>
 
         <div style="text-align: center; margin-bottom: 1.5rem;">

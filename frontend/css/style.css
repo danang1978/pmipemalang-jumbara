@@ -2580,11 +2580,12 @@ table.data-table tbody tr:hover {
 
 /* Kop Surat Resmi PMI Kabupaten */
 .kop-surat-container {
-  background: #ffffff;
-  padding: 1.25rem 1.5rem 0.5rem 1.5rem;
-  border-radius: var(--radius-md);
+  background: transparent;
+  padding: 0.5rem 0 1rem 0;
+  border-radius: 0;
   margin-bottom: 1.25rem;
-  border: 1px solid var(--border-color);
+  border: none;
+  box-shadow: none;
 }
 
 .kop-header {

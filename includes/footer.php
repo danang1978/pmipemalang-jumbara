@@ -145,23 +145,18 @@ $settings = getAppSettings();
         <button class="modal-close" onclick="App.closeModal('registerModal')">&times;</button>
       </div>
       <form onsubmit="App.handleRegister(event)">
-          <!-- KOP SURAT RESMI PALANG MERAH INDONESIA KABUPATEN -->
-          <div class="kop-surat-container" style="margin-bottom: 1rem;">
-            <?php if (!empty($settings['app_kop'])): ?>
-              <div style="text-align: center; margin-bottom: 1rem;">
-                <img src="<?php echo htmlspecialchars($settings['app_kop']); ?>" alt="Kop Surat Resmi PMI" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-bottom: 3px double var(--primary); padding-bottom: 0.5rem; border-radius: 4px;">
-              </div>
-            <?php else: ?>
-              <div class="kop-header">
-                <img src="<?php echo htmlspecialchars($settings['app_logo'] ?? 'frontend/images/logo-pmi.svg'); ?>" alt="Logo PMI" class="kop-logo">
-                <div class="kop-text">
-                  <h2>PALANG MERAH INDONESIA (PMI) KABUPATEN</h2>
-                  <h3>PANITIA PELAKSANA JUMBARA PMR TINGKAT KABUPATEN 2026</h3>
-                  <p>Jl. Palang Merah No. 1, Markas PMI Kabupaten | Telp: (021) 555-PMR-2026 | Email: sekretariat@jumbara-pmi.or.id</p>
-                </div>
-              </div>
-              <div class="kop-divider"></div>
-            <?php endif; ?>
+          <!-- HEADER LOGO RESMI JUMBARA & PMI (BERSIH & TANPA CARD) -->
+          <div style="text-align: center; padding: 0.25rem 0 0.85rem 0; margin-bottom: 1rem;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
+              <img src="<?php echo htmlspecialchars($logoUrl); ?>" alt="Logo PMI" style="height: 48px; max-height: 48px; width: auto; object-fit: contain;">
+              <?php if (!empty($eventLogoUrl)): ?>
+                <div style="width: 1.5px; height: 32px; background: #cbd5e1;"></div>
+                <img src="<?php echo htmlspecialchars($eventLogoUrl); ?>" alt="Logo Jumbara" style="height: 48px; max-height: 48px; width: auto; object-fit: contain;">
+              <?php endif; ?>
+            </div>
+            <div style="font-size: 0.78rem; font-weight: 800; color: #dc2626; letter-spacing: 0.5px; text-transform: uppercase;">
+              <?php echo htmlspecialchars(!empty($settings['organizer_name']) ? $settings['organizer_name'] : 'PMI KABUPATEN PEMALANG'); ?>
+            </div>
           </div>
 
           <h4 style="color: var(--secondary); margin-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem;">
