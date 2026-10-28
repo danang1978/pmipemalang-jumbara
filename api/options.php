@@ -9,8 +9,8 @@ $pdo = getPDOConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    // 1. Fetch Units from MySQL Table
-    $stmtUnits = $pdo->query("SELECT id, code, name, level_category FROM units ORDER BY name ASC");
+    // 1. Fetch Units from MySQL Table (including address and phone for auto-fill biodata)
+    $stmtUnits = $pdo->query("SELECT id, code, name, level_category, address, phone FROM units ORDER BY name ASC");
     $units = $stmtUnits->fetchAll();
 
     // 2. Fetch Master Option Settings from MySQL Table

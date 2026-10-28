@@ -72,7 +72,7 @@ if ($method === 'GET' && $action === 'idcard') {
     }
 
     $stmt = $pdo->prepare("
-        SELECT p.*, un.name AS unit_name, un.level_category 
+        SELECT p.*, un.name AS unit_name, un.level_category, un.address AS unit_address, un.phone AS unit_phone 
         FROM participants p 
         LEFT JOIN units un ON p.unit_id = un.id 
         WHERE p.id = ?
@@ -207,10 +207,14 @@ if ($method === 'GET') {
     $totalRecords = (int)$stmtCount->fetchColumn();
 
     $columns = "
-        p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, 
-        p.gender, p.blood_type, p.phone, p.photo_url, p.status, p.created_at, 
-        p.assignment_letter_url, p.registration_type,
-        un.name AS unit_name, un.code AS unit_code
+        p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, p.class_name,
+        p.birth_place, p.birth_date, p.religion, p.address,
+        p.school_address, p.school_phone,
+        p.parent_name, p.parent_address, p.parent_phone, p.parent_job,
+        p.is_disabled, p.disability_type,
+        p.gender, p.blood_type, p.phone, p.emergency_contact, p.photo_url, p.status, p.created_at, 
+        p.assignment_letter_url, p.registration_type, p.reject_reason,
+        un.name AS unit_name, un.code AS unit_code, un.address AS unit_address, un.phone AS unit_phone
     ";
 
     if ($noPaginate) {
@@ -434,6 +438,14 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
     $address = trim($input['address'] ?? $part['address'] ?? '');
     $email = trim($input['email'] ?? $part['email'] ?? '');
     
+    $className = trim($input['class_name'] ?? $part['class_name'] ?? '');
+    $schoolAddress = trim($input['school_address'] ?? $part['school_address'] ?? '');
+    $schoolPhone = trim($input['school_phone'] ?? $part['school_phone'] ?? '');
+    $parentName = trim($input['parent_name'] ?? $part['parent_name'] ?? '');
+    $parentAddress = trim($input['parent_address'] ?? $part['parent_address'] ?? '');
+    $parentPhone = trim($input['parent_phone'] ?? $part['parent_phone'] ?? '');
+    $parentJob = trim($input['parent_job'] ?? $part['parent_job'] ?? '');
+
     $subCategories = $part['sub_categories'];
     if (isset($input['sub_categories'])) {
         $subCategories = is_array($input['sub_categories']) ? json_encode($input['sub_categories']) : $input['sub_categories'];
@@ -453,17 +465,21 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
 
     $stmtUpdate = $pdo->prepare("
         UPDATE participants SET 
-            full_name = ?, nisn = ?, registration_type = ?, level = ?, gender = ?, blood_type = ?,
+            full_name = ?, nisn = ?, registration_type = ?, level = ?, class_name = ?, gender = ?, blood_type = ?,
             phone = ?, emergency_contact = ?, status = ?, photo_url = ?, assignment_letter_url = ?,
             birth_place = ?, birth_date = ?, religion = ?, is_disabled = ?, disability_type = ?,
-            address = ?, email = ?, sub_categories = ?
+            address = ?, email = ?, school_address = ?, school_phone = ?,
+            parent_name = ?, parent_address = ?, parent_phone = ?, parent_job = ?,
+            sub_categories = ?
         WHERE id = ?
     ");
     $stmtUpdate->execute([
-        $fullName, $nisn, $registrationType, $level, $gender, $bloodType,
+        $fullName, $nisn, $registrationType, $level, $className ?: null, $gender, $bloodType,
         $phone, $emergencyContact, $status, $photoUrl, $assignmentLetterUrl,
         $birthPlace, $birthDate, $religion, $isDisabled, $disabilityType,
-        $address, $email, $subCategories, $id
+        $address, $email, $schoolAddress ?: null, $schoolPhone ?: null,
+        $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null, $parentJob ?: null,
+        $subCategories, $id
     ]);
 
     // Keep users table in sync with participant's contact, name and email

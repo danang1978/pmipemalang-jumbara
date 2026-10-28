@@ -973,8 +973,63 @@ $settings = getAppSettings();
             </div>
           </div>
 
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Kelas Peserta</label>
+              <input type="text" id="adminEditClassName" placeholder="Contoh: VII A, VIII C, X MIPA 1..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Email Pendaftar</label>
+              <input type="email" id="adminEditEmail" placeholder="contoh@email.com" style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px;">
+            </div>
+          </div>
+
+          <!-- Section: Data Orang Tua / Wali -->
+          <div style="background: #f1f5f9; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
+            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: var(--secondary);">
+              <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali
+            </h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.5rem;">
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Nama Lengkap Ortu / Wali</label>
+                <input type="text" id="adminEditParentName" placeholder="Nama Orang Tua/Wali" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Pekerjaan Ortu / Wali</label>
+                <input type="text" id="adminEditParentJob" placeholder="PNS, Wiraswasta, Buruh, Petani, dll" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.75rem;">
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Telp / HP Ortu</label>
+                <input type="text" id="adminEditParentPhone" placeholder="08xxxxxxxxxx" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Alamat Ortu / Wali</label>
+                <input type="text" id="adminEditParentAddress" placeholder="Alamat lengkap orang tua/wali" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Data Sekolah / Unit -->
+          <div style="background: #f8fafc; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; border: 1px solid #cbd5e1;">
+            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; font-weight: 800; color: var(--secondary);">
+              <i class="fa-solid fa-school" style="color: var(--primary);"></i> Data Sekolah / Unit Kontingen
+            </h5>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Alamat Sekolah</label>
+                <input type="text" id="adminEditSchoolAddress" placeholder="Alamat lengkap sekolah" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+              <div>
+                <label style="font-weight: 700; font-size: 0.8rem; color: var(--secondary);">Telp Sekolah</label>
+                <input type="text" id="adminEditSchoolPhone" placeholder="(0284) xxxxxx" style="width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+              </div>
+            </div>
+          </div>
+
           <div style="margin-bottom: 0.85rem;">
-            <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Alamat Lengkap Domisili</label>
+            <label style="font-weight: 700; font-size: 0.85rem; color: var(--secondary);">Alamat Lengkap Domisili Peserta</label>
             <textarea id="adminEditAddress" rows="2" placeholder="Nama jalan, RT/RW, Desa/Kelurahan, Kecamatan..." style="width: 100%; padding: 0.45rem 0.65rem; border: 1px solid var(--border-color); border-radius: 4px; resize: vertical;"></textarea>
           </div>
 
@@ -1006,13 +1061,47 @@ $settings = getAppSettings();
           </div>
         </div>
         <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.preventDefault(); event.stopPropagation(); App.handleDeleteFromEditModal(event)"><i class="fa-solid fa-trash-can"></i> Hapus Peserta</button>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;" onclick="event.preventDefault(); event.stopPropagation(); App.handleDeleteFromEditModal(event)"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+            <button type="button" class="btn btn-outline btn-sm" style="color: #0284c7; border-color: #bae6fd; font-weight: 700;" onclick="App.openBiodataModal(document.getElementById('adminEditParticipantId').value)"><i class="fa-solid fa-print"></i> Cetak Formulir</button>
+          </div>
           <div style="display: flex; gap: 0.5rem;">
             <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('adminEditParticipantModal')">Batal</button>
             <button type="submit" id="adminEditSubmitBtn" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Data</button>
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Cetak Formulir Biodata Resmi Peserta (Standar PMI Pemalang) -->
+  <div class="modal" id="biodataPrintModal">
+    <div class="modal-dialog" style="max-width: 860px;">
+      <div class="modal-header no-print" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="modal-title" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--secondary);">
+          <i class="fa-solid fa-file-invoice" style="color: var(--primary);"></i> Cetak Formulir Biodata Peserta Resmi
+        </h3>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintBiodata()" style="font-weight: 700; background: #0284c7; border-color: #0284c7;">
+            <i class="fa-solid fa-print"></i> Cetak / Print Dokumen
+          </button>
+          <button class="modal-close" onclick="App.closeModal('biodataPrintModal')">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem; background: #cbd5e1; max-height: calc(100vh - 180px); overflow-y: auto;">
+        <div id="biodataPrintContainer">
+          <!-- Dokumen Biodata Dirender Oleh App.openBiodataModal -->
+        </div>
+      </div>
+      <div class="modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Formulir siap dicetak langsung dalam 1 lembar kertas A4 Portrait bersih.</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('biodataPrintModal')">Tutup</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintBiodata()" style="font-weight: 700; background: #0284c7; border-color: #0284c7;">
+            <i class="fa-solid fa-print"></i> Cetak Dokumen
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

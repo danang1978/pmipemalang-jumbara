@@ -277,6 +277,26 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $disabilityType = trim($input['disability_type'] ?? 'Tidak Ada');
     $address = trim($input['address'] ?? '');
 
+    // Form Biodata Peserta Resmi (Kelas, Sekolah, Orang Tua/Wali)
+    $className = trim($input['class_name'] ?? '');
+    $schoolAddress = trim($input['school_address'] ?? '');
+    $schoolPhone = trim($input['school_phone'] ?? '');
+    $parentName = trim($input['parent_name'] ?? '');
+    $parentAddress = trim($input['parent_address'] ?? '');
+    $parentPhone = trim($input['parent_phone'] ?? '');
+    $parentJob = trim($input['parent_job'] ?? '');
+
+    // Fallback alamat & telp sekolah dari database Unit jika kosong
+    if (!$schoolAddress || !$schoolPhone) {
+        $stmtU = $pdo->prepare("SELECT address, phone FROM units WHERE id = ?");
+        $stmtU->execute([$unitId]);
+        $uRow = $stmtU->fetch();
+        if ($uRow) {
+            if (!$schoolAddress && !empty($uRow['address'])) $schoolAddress = $uRow['address'];
+            if (!$schoolPhone && !empty($uRow['phone'])) $schoolPhone = $uRow['phone'];
+        }
+    }
+
     // Process Pas Foto Upload
     $photoUrl = null;
     if (!empty($input['photo_data'])) {
@@ -359,16 +379,17 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmtPart = $pdo->prepare("
             INSERT INTO participants 
-            (code, user_id, unit_id, full_name, nisn, level, registration_type, religion, is_disabled, disability_type, address, birth_place, birth_date, gender, blood_type, phone, emergency_contact, photo_url, assignment_letter_url, sub_categories, status, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_unit', ?)
+            (code, user_id, unit_id, school_address, school_phone, full_name, nisn, level, class_name, registration_type, religion, is_disabled, disability_type, address, birth_place, birth_date, gender, blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone, parent_job, photo_url, assignment_letter_url, sub_categories, status, email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_unit', ?)
         ");
         $stmtPart->execute([
-            $participantCode, $userId, $unitId, $fullName,
-            $input['nisn'] ?? null, $level, $registrationType, $religion, $isDisabled, $disabilityType,
+            $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName,
+            $input['nisn'] ?? null, $level, $className ?: null, $registrationType, $religion, $isDisabled, $disabilityType,
             $address ?: null, $input['birth_place'] ?? null,
             $input['birth_date'] ?? null, $input['gender'] ?? 'L',
             $input['blood_type'] ?? 'O', $input['phone'] ?? null,
-            $input['emergency_contact'] ?? null, $photoUrl, $assignmentLetterUrl,
+            $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null, $parentJob ?: null,
+            $photoUrl, $assignmentLetterUrl,
             $subCategories, $email ?: null
         ]);
 

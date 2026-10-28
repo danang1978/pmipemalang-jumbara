@@ -274,6 +274,14 @@ try {
         $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) DEFAULT NULL");
     } catch (Exception $e) {}
 
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN class_name VARCHAR(50) NULL DEFAULT NULL AFTER level"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN school_address TEXT NULL DEFAULT NULL AFTER unit_id"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN school_phone VARCHAR(50) NULL DEFAULT NULL AFTER school_address"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_name VARCHAR(255) NULL DEFAULT NULL AFTER emergency_contact"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_address TEXT NULL DEFAULT NULL AFTER parent_name"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_phone VARCHAR(50) NULL DEFAULT NULL AFTER parent_address"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_job VARCHAR(150) NULL DEFAULT NULL AFTER parent_phone"); } catch (Exception $e) {}
+
     try {
         $pdo->exec("ALTER TABLE users ADD COLUMN full_name VARCHAR(150) NULL AFTER unit_id");
     } catch (Exception $e) {}

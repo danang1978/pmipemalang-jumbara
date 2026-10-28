@@ -5084,6 +5084,7 @@ const App = {
                       ` : ''}
                       <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                       <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data Lengkap & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                      <button class="btn-act" onclick="App.openBiodataModal(${p.id})" style="background: #0284c7; color: white; border-color: #0284c7; font-weight: 700;" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i> Form</button>
                       <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
                       <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
@@ -5128,6 +5129,7 @@ const App = {
                   ` : ''}
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                   <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                  <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; color: #0284c7; border-color: #0284c7;" onclick="App.openBiodataModal(${p.id})" title="Cetak Formulir Biodata"><i class="fa-solid fa-print"></i> Form</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
                   <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700;" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i></button>
@@ -5852,6 +5854,7 @@ const App = {
                     <div class="action-btn-group">
                       <button class="btn-act btn-act-audit" onclick="App.openAuditModal(${p.id})" title="Pengecekan Audit Data, Pas Foto & Surat Tugas"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                       <button class="btn-act btn-act-edit" onclick="App.openEditParticipantModal(${p.id})" title="Edit Data & Berkas Peserta"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                      <button class="btn-act" onclick="App.openBiodataModal(${p.id})" style="background: #0284c7; color: white; border-color: #0284c7; font-weight: 700;" title="Cetak Formulir Biodata Resmi"><i class="fa-solid fa-print"></i> Form</button>
                       <button class="btn-act btn-act-card" onclick="App.openIDCardModal(${p.id})" title="Cetak ID Card">${Icons.idcard(13)} ID Card</button>
                       <button class="btn-act btn-act-delete" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)" title="Hapus Data Peserta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
@@ -5891,6 +5894,7 @@ const App = {
                 <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">
                   <button class="btn btn-primary btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openAuditModal(${p.id})"><i class="fa-solid fa-clipboard-check"></i> Audit</button>
                   <button class="btn btn-warning btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; font-weight: 700; background: #f59e0b; border-color: #f59e0b; color: white;" onclick="App.openEditParticipantModal(${p.id})"><i class="fa-solid fa-user-pen"></i> Edit</button>
+                  <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; color: #0284c7; border-color: #0284c7;" onclick="App.openBiodataModal(${p.id})" title="Cetak Formulir Biodata"><i class="fa-solid fa-print"></i> Form</button>
                   <button class="btn btn-outline btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem;" onclick="App.openIDCardModal(${p.id})">${Icons.idcard(12)} ID Card</button>
                   ${p.assignment_letter_url ? `<a href="${p.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--primary); border-color: var(--primary);"><i class="fa-solid fa-file-pdf"></i> Surat</a>` : ''}
                   <button class="btn btn-danger btn-sm" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700;" data-name="${escapedName}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)"><i class="fa-solid fa-trash-can"></i></button>
@@ -10816,15 +10820,17 @@ const App = {
 
               <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse; line-height: 1.6;">
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted); width: 35%;">Unit PMR Sekolah:</td><td style="font-weight: 700;">${Utils.escapeHtml(p.unit_name)}</td></tr>
+                ${p.school_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat & Telp Sekolah:</td><td>${Utils.escapeHtml(p.school_address)} ${p.school_phone ? `(Telp: ${Utils.escapeHtml(p.school_phone)})` : ''}</td></tr>` : ''}
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Kategori Registrasi:</td><td>${Utils.getLevelBadgeHtml(p.registration_type || 'Peserta')}</td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Tingkat PMR:</td><td>${Utils.getLevelBadgeHtml(p.level)}</td></tr>
+                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Tingkat / Kelas:</td><td>${Utils.getLevelBadgeHtml(p.level)} ${p.class_name ? `• Kelas <strong>${Utils.escapeHtml(p.class_name)}</strong>` : ''}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">NISN / NIK:</td><td>${p.nisn || '-'}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">TTL / Jenis Kelamin:</td><td>${p.birth_place || '-'}, ${Utils.formatDate(p.birth_date)} (${p.gender === 'L' ? 'Laki-laki' : 'Perempuan'})</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Agama / Gol. Darah:</td><td>${Utils.escapeHtml(p.religion || 'Islam')} / <strong style="color: var(--primary);">${p.blood_type || '-'}</strong></td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Status Disabilitas:</td><td>${p.is_disabled === 'Ya' ? `<strong style="color: #d97706;"><i class="fa-solid fa-wheelchair"></i> Penyandang Disabilitas (${Utils.escapeHtml(p.disability_type)})</strong>` : 'Non-Disabilitas'}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Tempat Tinggal:</td><td>${Utils.escapeHtml(p.address || '-')}</td></tr>
                 <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">No. WhatsApp Peserta:</td><td><strong style="color: #25d366;"><i class="fa-brands fa-whatsapp"></i> ${p.phone || '-'}</strong></td></tr>
-                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Nama Pembina / Ortu:</td><td>${Utils.escapeHtml(p.emergency_contact || '-')}</td></tr>
+                <tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Orang Tua / Wali:</td><td><strong>${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</strong> ${p.parent_job ? `(${Utils.escapeHtml(p.parent_job)})` : ''} ${p.parent_phone ? `• Telp: ${Utils.escapeHtml(p.parent_phone)}` : ''}</td></tr>
+                ${p.parent_address ? `<tr><td style="padding: 0.25rem 0; color: var(--text-muted);">Alamat Ortu / Wali:</td><td>${Utils.escapeHtml(p.parent_address)}</td></tr>` : ''}
               </table>
             </div>
 
@@ -10859,9 +10865,14 @@ const App = {
               </div>
 
               <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="App.openEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
-                  <i class="fa-solid fa-pen-to-square"></i> Edit Data Lengkap
-                </button>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openBiodataModal(${p.id})" style="font-size: 0.8rem; color: #0284c7; border-color: #0284c7;">
+                    <i class="fa-solid fa-print"></i> Cetak Formulir Biodata
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="App.openEditParticipantModal(${p.id})" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit Data Lengkap
+                  </button>
+                </div>
                 <button type="button" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-size: 0.8rem;" data-name="${Utils.escapeHtml(p.full_name)}" onclick="event.stopPropagation(); App.deleteParticipant(${p.id}, this.dataset.name)">
                   <i class="fa-solid fa-trash-can"></i> Hapus Peserta
                 </button>
@@ -10988,6 +10999,22 @@ const App = {
       if (ecEl) ecEl.value = p.emergency_contact || '';
       const addrEl = document.getElementById('adminEditAddress');
       if (addrEl) addrEl.value = p.address || '';
+      const clsEl = document.getElementById('adminEditClassName');
+      if (clsEl) clsEl.value = p.class_name || '';
+      const emEl = document.getElementById('adminEditEmail');
+      if (emEl) emEl.value = p.email || '';
+      const pnEl = document.getElementById('adminEditParentName');
+      if (pnEl) pnEl.value = p.parent_name || p.emergency_contact || '';
+      const pjEl = document.getElementById('adminEditParentJob');
+      if (pjEl) pjEl.value = p.parent_job || '';
+      const ppEl = document.getElementById('adminEditParentPhone');
+      if (ppEl) ppEl.value = p.parent_phone || '';
+      const paEl = document.getElementById('adminEditParentAddress');
+      if (paEl) paEl.value = p.parent_address || '';
+      const saEl = document.getElementById('adminEditSchoolAddress');
+      if (saEl) saEl.value = p.school_address || p.unit_address || '';
+      const spEl = document.getElementById('adminEditSchoolPhone');
+      if (spEl) spEl.value = p.school_phone || p.unit_phone || '';
 
       // Set photo preview
       const photoPrev = document.getElementById('adminEditPhotoPreview');
@@ -11059,6 +11086,14 @@ const App = {
         id: Number(id),
         full_name: document.getElementById('adminEditFullName')?.value.trim(),
         nisn: document.getElementById('adminEditNisn')?.value.trim(),
+        class_name: document.getElementById('adminEditClassName')?.value.trim(),
+        email: document.getElementById('adminEditEmail')?.value.trim(),
+        parent_name: document.getElementById('adminEditParentName')?.value.trim(),
+        parent_job: document.getElementById('adminEditParentJob')?.value.trim(),
+        parent_phone: document.getElementById('adminEditParentPhone')?.value.trim(),
+        parent_address: document.getElementById('adminEditParentAddress')?.value.trim(),
+        school_address: document.getElementById('adminEditSchoolAddress')?.value.trim(),
+        school_phone: document.getElementById('adminEditSchoolPhone')?.value.trim(),
         registration_type: document.getElementById('adminEditRegistrationType')?.value,
         level: document.getElementById('adminEditLevel')?.value,
         status: document.getElementById('adminEditStatus')?.value,
@@ -11069,7 +11104,7 @@ const App = {
         birth_place: document.getElementById('adminEditBirthPlace')?.value.trim(),
         birth_date: document.getElementById('adminEditBirthDate')?.value,
         phone: document.getElementById('adminEditPhone')?.value.trim(),
-        emergency_contact: document.getElementById('adminEditEmergencyContact')?.value.trim(),
+        emergency_contact: document.getElementById('adminEditEmergencyContact')?.value.trim() || document.getElementById('adminEditParentName')?.value.trim(),
         address: document.getElementById('adminEditAddress')?.value.trim(),
         photo_data: photoData,
         assignment_letter_data: assignmentData
@@ -11331,6 +11366,195 @@ const App = {
     } catch (err) {
       modalContent.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
     }
+  },
+
+  async openBiodataModal(id) {
+    const container = document.getElementById('biodataPrintContainer');
+    const stLink = document.getElementById('biodataModalStLink');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align: center; padding: 2.5rem;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i><p style="margin-top: 0.8rem; color: #64748b; font-size: 0.95rem;">Memuat formulir biodata peserta...</p></div>';
+    this.openModal('biodataPrintModal');
+
+    try {
+      const p = await API.getParticipantIDCard(id);
+      if (!p) throw new Error('Data peserta tidak ditemukan');
+
+      if (stLink) {
+        if (p.assignment_letter_url) {
+          stLink.href = p.assignment_letter_url;
+          stLink.style.display = 'inline-flex';
+        } else {
+          stLink.href = '#';
+          stLink.style.display = 'none';
+        }
+      }
+
+      const s = this.appSettings || {};
+      const organizerName = s.organizer_name || 'PMI KABUPATEN PEMALANG';
+      const eventYear = s.event_year || (s.event_dates ? s.event_dates.substring(0, 4) : '2026');
+      
+      let levelCat = p.level_category || '';
+      if (!levelCat) {
+        if (p.level === 'Mula') levelCat = 'MULA';
+        else if (p.level === 'Madya') levelCat = 'MADYA';
+        else if (p.level === 'Wira') levelCat = 'WIRA';
+        else levelCat = 'MADYA DAN WIRA';
+      }
+
+      const formattedBirthDate = p.birth_date ? Utils.formatDate(p.birth_date) : '';
+      const ttl = [p.birth_place, formattedBirthDate].filter(Boolean).join(', ') || '-';
+      const genderText = p.gender === 'L' ? 'Laki-laki' : (p.gender === 'P' ? 'Perempuan' : (p.gender || '-'));
+
+      const html = `
+        <div class="biodata-sheet">
+          <div class="biodata-sheet-header-box">
+            <h2>BIODATA PESERTA</h2>
+            <h3>PESERTA JUMBARA PMR ${Utils.escapeHtml(levelCat)} TAHUN ${eventYear}</h3>
+            <h4>${Utils.escapeHtml(organizerName)}</h4>
+          </div>
+
+          <div style="position: relative; min-height: 220px;">
+            <!-- Pas Foto 3x4 Frame -->
+            <div style="position: absolute; right: 0; top: 0; width: 114px; height: 152px; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; box-sizing: border-box; text-align: center;">
+              ${p.photo_url ? `
+                <img src="${Utils.escapeHtml(p.photo_url)}" alt="Pas Foto 3x4" style="width: 100%; height: 100%; object-fit: cover;">
+              ` : `
+                <div style="font-size: 8pt; font-weight: 700; color: #475569; line-height: 1.35;">
+                  PAS FOTO<br>3 x 4
+                </div>
+              `}
+            </div>
+
+            <!-- Bagian 1: Data Peserta & Sekolah -->
+            <table class="biodata-sheet-table" style="width: calc(100% - 130px);">
+              <tr>
+                <td class="col-num">1.</td>
+                <td class="col-label">Nama Sekolah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.unit_name || p.school_name || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.</td>
+                <td class="col-label">Alamat Sekolah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.school_address || p.unit_address || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num"></td>
+                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.school_phone || p.unit_phone || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">3.</td>
+                <td class="col-label">Nama Lengkap</td>
+                <td class="col-colon">:</td>
+                <td class="col-val" style="font-weight: 800; text-transform: uppercase;">${Utils.escapeHtml(p.full_name || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.</td>
+                <td class="col-label">Tempat / Tgl Lahir</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(ttl)}</td>
+              </tr>
+              <tr>
+                <td class="col-num">5.</td>
+                <td class="col-label">Kelas</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.class_name || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.</td>
+                <td class="col-label" style="letter-spacing: 2px;">A l a m a t</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.address || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num"></td>
+                <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.phone || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">7.</td>
+                <td class="col-label">Agama</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.religion || '-')}</td>
+              </tr>
+              <tr>
+                <td class="col-num">8.</td>
+                <td class="col-label">Jenis Kelamin</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(genderText)}</td>
+              </tr>
+              <tr>
+                <td class="col-num">9.</td>
+                <td class="col-label">Golongan Darah</td>
+                <td class="col-colon">:</td>
+                <td class="col-val">${Utils.escapeHtml(p.blood_type || '-')}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="biodata-sheet-dots" style="margin: 8px 0;"></div>
+
+          <!-- Bagian 2: Orang Tua / Wali -->
+          <table class="biodata-sheet-table">
+            <tr>
+              <td class="col-num"></td>
+              <td class="col-label" style="font-weight: 800; text-decoration: underline;">Orang Tua / Wali</td>
+              <td class="col-colon">:</td>
+              <td class="col-val"></td>
+            </tr>
+            <tr>
+              <td class="col-num">10.</td>
+              <td class="col-label">Nama Lengkap</td>
+              <td class="col-colon">:</td>
+              <td class="col-val" style="font-weight: 700;">${Utils.escapeHtml(p.parent_name || p.emergency_contact || '-')}</td>
+            </tr>
+            <tr>
+              <td class="col-num">11.</td>
+              <td class="col-label" style="letter-spacing: 2px;">A l a m a t</td>
+              <td class="col-colon">:</td>
+              <td class="col-val">${Utils.escapeHtml(p.parent_address || p.address || '-')}</td>
+            </tr>
+            <tr>
+              <td class="col-num"></td>
+              <td class="col-label" style="text-align: right; padding-right: 18px; font-weight: normal;">Telp. / HP</td>
+              <td class="col-colon">:</td>
+              <td class="col-val">${Utils.escapeHtml(p.parent_phone || p.phone || '-')}</td>
+            </tr>
+            <tr>
+              <td class="col-num">12.</td>
+              <td class="col-label">Pekerjaan</td>
+              <td class="col-colon">:</td>
+              <td class="col-val">${Utils.escapeHtml(p.parent_job || '-')}</td>
+            </tr>
+          </table>
+
+          <div class="biodata-sheet-dots" style="margin: 8px 0 25px 0;"></div>
+
+          <!-- Bagian 3: Tanda Tangan Peserta -->
+          <div class="biodata-sheet-signature-box">
+            <div class="biodata-sheet-signature">
+              <div>Pemalang, ${Utils.formatDate(p.created_at || new Date().toISOString())}</div>
+              <div style="margin-top: 4px; font-weight: 700;">Peserta,</div>
+              <div style="height: 65px;"></div>
+              <div style="font-weight: 800; text-decoration: underline; text-transform: uppercase;">( ${Utils.escapeHtml(p.full_name || '...........................................')} )</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    } catch (err) {
+      container.innerHTML = `<div style="text-align: center; padding: 2rem; color: #dc2626;"><i class="fa-solid fa-triangle-exclamation fa-2x"></i><p style="margin-top: 0.5rem; font-weight: 600;">Gagal memuat formulir biodata: ${Utils.escapeHtml(err.message)}</p></div>`;
+    }
+  },
+
+  triggerPrintBiodata() {
+    window.print();
   },
 
   generateBarcodeSVG(text, height = 36) {
@@ -13263,6 +13487,17 @@ const App = {
     const levelLabel = document.getElementById('fullRegLevelLabel');
     const nisnLabel = document.getElementById('fullRegNisnLabel');
 
+    const schoolGroup = document.getElementById('fullRegSchoolGroup');
+    const classGroup = document.getElementById('fullRegClassGroup');
+    const classInput = document.getElementById('fullRegClassName');
+    const parentGroup = document.getElementById('fullRegParentGroup');
+
+    const isPeserta = (val === 'Peserta');
+    if (schoolGroup) schoolGroup.style.display = isPeserta ? 'grid' : 'none';
+    if (classGroup) classGroup.style.display = isPeserta ? 'block' : 'none';
+    if (classInput) classInput.required = isPeserta;
+    if (parentGroup) parentGroup.style.display = isPeserta ? 'block' : 'none';
+
     // Tampilkan Unit & Unsur untuk Peserta, Panitia, Peninjau, dan Pendamping
     const showUnitAndUnsur = (val === 'Peserta' || val === 'Panitia' || val === 'Peninjau' || val === 'Pendamping');
 
@@ -13320,6 +13555,33 @@ const App = {
     }
   },
 
+  handleUnitChangeInRegistration(unitId) {
+    this.updateUnsurOptionsByUnit(unitId, 'fullRegLevel');
+    if (this._registrationUnits && unitId) {
+      const u = this._registrationUnits.find(item => String(item.id) === String(unitId));
+      if (u) {
+        const addrEl = document.getElementById('fullRegSchoolAddress');
+        const phoneEl = document.getElementById('fullRegSchoolPhone');
+        if (addrEl && (!addrEl.value || addrEl.dataset.autofilled === 'true')) {
+          addrEl.value = u.address || '';
+          addrEl.dataset.autofilled = 'true';
+        }
+        if (phoneEl && (!phoneEl.value || phoneEl.dataset.autofilled === 'true')) {
+          phoneEl.value = u.phone || '';
+          phoneEl.dataset.autofilled = 'true';
+        }
+      }
+    }
+  },
+
+  handleCopyAddressToParent(isChecked) {
+    const parentAddrEl = document.getElementById('fullRegParentAddress');
+    const participantAddrEl = document.getElementById('fullRegAddress');
+    if (parentAddrEl && isChecked) {
+      parentAddrEl.value = participantAddrEl ? participantAddrEl.value : '';
+    }
+  },
+
   async renderRegisterPage(container) {
     if (!container) container = document.getElementById('mainContainer');
     if (!container) return;
@@ -13332,6 +13594,7 @@ const App = {
       console.warn('Failed loading options from DB:', e);
       opts.units = await API.getUnits().catch(() => []);
     }
+    this._registrationUnits = opts.units || [];
 
     const unitOptionsHtml = (opts.units || []).map(u =>
       `<option value="${u.id}">${Utils.escapeHtml(u.name)} (${u.level_category})</option>`
@@ -13424,7 +13687,7 @@ const App = {
               </div>
               <div class="form-group" id="fullRegUnitGroup">
                 <label class="form-label" id="fullRegUnitLabel">Kontingen / Unit / Instansi *</label>
-                <select id="fullRegUnitId" required onchange="App.updateUnsurOptionsByUnit(this.value, 'fullRegLevel')">
+                <select id="fullRegUnitId" required onchange="App.handleUnitChangeInRegistration(this.value)">
                   <option value="">-- Pilih Kontingen / Instansi --</option>
                   ${unitOptionsHtml}
                 </select>
@@ -13435,6 +13698,19 @@ const App = {
                   <option value="">-- Pilih Unsur Kontingen --</option>
                   ${levelOptionsHtml}
                 </select>
+              </div>
+            </div>
+
+            <!-- Alamat & Telp Sekolah / Pangkalan Unit -->
+            <div id="fullRegSchoolGroup" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color);">
+              <div class="form-group">
+                <label class="form-label">Alamat Sekolah / Pangkalan Kontingen</label>
+                <input type="text" id="fullRegSchoolAddress" placeholder="Alamat lengkap sekolah...">
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Otomatis terisi dari master unit, dapat disesuaikan jika perlu.</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Telp. / HP Sekolah</label>
+                <input type="text" id="fullRegSchoolPhone" placeholder="Contoh: (0284) 321xxx / 08xxx">
               </div>
             </div>
           </div>
@@ -13485,18 +13761,23 @@ const App = {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div class="form-group" id="fullRegClassGroup">
+                <label class="form-label" id="fullRegClassLabel">Kelas (Khusus Peserta PMR) *</label>
+                <input type="text" id="fullRegClassName" placeholder="Contoh: VII A, VIII B, X-1, XI MIPA 2" required>
+              </div>
               <div class="form-group">
                 <label class="form-label">Status Disabilitas (Penyandang Disabilitas?) *</label>
                 <select id="fullRegIsDisabled" onchange="App.toggleDisabilityTypeField(this.value)" required>
                   ${disabilityStatusOptionsHtml}
                 </select>
               </div>
-              <div class="form-group" id="fullRegDisabilityTypeGroup" style="display: none;">
-                <label class="form-label">Jenis Disabilitas *</label>
-                <select id="fullRegDisabilityType">
-                  ${disabilityTypeOptionsHtml}
-                </select>
-              </div>
+            </div>
+
+            <div class="form-group" id="fullRegDisabilityTypeGroup" style="display: none; margin-bottom: 1rem;">
+              <label class="form-label">Jenis Disabilitas *</label>
+              <select id="fullRegDisabilityType">
+                ${disabilityTypeOptionsHtml}
+              </select>
             </div>
 
             <div class="form-group" style="margin-bottom: 0.5rem;">
@@ -13508,9 +13789,9 @@ const App = {
 
           <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
             <h4 style="color: var(--primary); margin-bottom: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-envelope-open-text"></i> 3. Kontak WhatsApp, Email Pendaftar & Pendamping
+              <i class="fa-solid fa-envelope-open-text"></i> 3. Kontak WhatsApp, Email & Data Orang Tua / Wali
             </h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
               <div class="form-group">
                 <label class="form-label">Nomor WhatsApp Aktif (Notifikasi WA) *</label>
                 <input type="text" id="fullRegPhone" placeholder="Contoh: 08123456789" required>
@@ -13521,9 +13802,35 @@ const App = {
                 <input type="email" id="fullRegEmail" placeholder="contoh@email.com" required>
                 <small style="color: var(--text-muted); font-size: 0.75rem;">Informasi pendaftaran, user & password dikirim otomatis ke email ini.</small>
               </div>
-              <div class="form-group">
-                <label class="form-label">Nama Pembina / Kontak Darurat / Instansi</label>
-                <input type="text" id="fullRegEmergencyContact" placeholder="Nama Pembina / Ortu / Lembaga...">
+            </div>
+
+            <!-- Orang Tua / Wali (Khusus Peserta PMR) -->
+            <div id="fullRegParentGroup" style="background: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 0.5rem;">
+              <h5 style="color: #0f172a; margin-bottom: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem;">
+                <i class="fa-solid fa-user-group" style="color: var(--primary);"></i> Data Orang Tua / Wali (Wajib untuk Peserta PMR)
+              </h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap Orang Tua / Wali *</label>
+                  <input type="text" id="fullRegParentName" placeholder="Nama ayah / ibu / wali...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pekerjaan Orang Tua / Wali</label>
+                  <input type="text" id="fullRegParentJob" placeholder="PNS, Wiraswasta, Petani, dll...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Telp. / HP Orang Tua / Wali *</label>
+                  <input type="text" id="fullRegParentPhone" placeholder="Contoh: 08123456789">
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                  <label class="form-label" style="margin-bottom: 0;">Alamat Tempat Tinggal Orang Tua / Wali *</label>
+                  <label style="font-size: 0.78rem; color: var(--primary); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    <input type="checkbox" onchange="App.handleCopyAddressToParent(this.checked)"> Sama dengan alamat peserta
+                  </label>
+                </div>
+                <textarea id="fullRegParentAddress" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
               </div>
             </div>
           </div>
@@ -13565,7 +13872,7 @@ const App = {
       const unitEl = document.getElementById('fullRegUnitId');
       if (unitEl) {
         unitEl.value = String(this.currentUser.unit_id);
-        this.updateUnsurOptionsByUnit(this.currentUser.unit_id, 'fullRegLevel');
+        this.handleUnitChangeInRegistration(this.currentUser.unit_id);
       }
     }
 
@@ -13639,10 +13946,19 @@ const App = {
       const phoneVal = document.getElementById('fullRegPhone').value;
       const emailVal = document.getElementById('fullRegEmail').value;
 
+      const classNameVal = document.getElementById('fullRegClassName')?.value.trim() || '';
+      const schoolAddressVal = document.getElementById('fullRegSchoolAddress')?.value.trim() || '';
+      const schoolPhoneVal = document.getElementById('fullRegSchoolPhone')?.value.trim() || '';
+      const parentNameVal = document.getElementById('fullRegParentName')?.value.trim() || '';
+      const parentAddressVal = document.getElementById('fullRegParentAddress')?.value.trim() || '';
+      const parentPhoneVal = document.getElementById('fullRegParentPhone')?.value.trim() || '';
+      const parentJobVal = document.getElementById('fullRegParentJob')?.value.trim() || '';
+
       const data = {
         registration_type: regType,
         unit_id: document.getElementById('fullRegUnitId').value,
         level: levelVal,
+        class_name: classNameVal,
         full_name: document.getElementById('fullRegFullName').value,
         nisn: document.getElementById('fullRegNisn').value,
         religion: document.getElementById('fullRegReligion').value,
@@ -13655,7 +13971,13 @@ const App = {
         birth_date: document.getElementById('fullRegBirthDate').value,
         phone: phoneVal,
         email: emailVal,
-        emergency_contact: document.getElementById('fullRegEmergencyContact').value,
+        emergency_contact: parentNameVal || document.getElementById('fullRegEmergencyContact')?.value || '',
+        school_address: schoolAddressVal,
+        school_phone: schoolPhoneVal,
+        parent_name: parentNameVal,
+        parent_address: parentAddressVal,
+        parent_phone: parentPhoneVal,
+        parent_job: parentJobVal,
         photo_data: photoData,
         assignment_letter_data: assignmentData
       };
@@ -13673,6 +13995,7 @@ const App = {
         full_name: data.full_name,
         nisn: data.nisn,
         level: data.level,
+        class_name: data.class_name,
         registration_type: data.registration_type,
         unit_name: selectedUnitText,
         religion: data.religion,
@@ -13686,6 +14009,12 @@ const App = {
         phone: data.phone,
         email: data.email,
         emergency_contact: data.emergency_contact,
+        school_address: data.school_address,
+        school_phone: data.school_phone,
+        parent_name: data.parent_name,
+        parent_address: data.parent_address,
+        parent_phone: data.parent_phone,
+        parent_job: data.parent_job,
         photo_url: photoData,
         status: 'pending_unit'
       };
@@ -14035,12 +14364,12 @@ const App = {
               <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.registration_type || 'Peserta')}</td>
             </tr>
             <tr>
-              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Tingkat / Unsur PMR</th>
-              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">${Utils.escapeHtml(participantData.level || '-')}</td>
+              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Tingkat / Kelas</th>
+              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">${Utils.escapeHtml(participantData.level || '-')} ${participantData.class_name ? `• Kelas ${Utils.escapeHtml(participantData.class_name)}` : ''}</td>
             </tr>
             <tr>
               <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Kontingen / Unit Sekolah</th>
-              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.unit_name || participantData.unit_id || '-')}</td>
+              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.unit_name || participantData.unit_id || '-')} ${participantData.school_address ? `<br><small style="color: #64748b;">${Utils.escapeHtml(participantData.school_address)} (Telp: ${Utils.escapeHtml(participantData.school_phone || '-')})</small>` : ''}</td>
             </tr>
             <tr>
               <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">NISN / NIK / Identitas</th>
@@ -14079,8 +14408,8 @@ const App = {
               <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.email || '-')}</td>
             </tr>
             <tr>
-              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Kontak Darurat / Pembina</th>
-              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.emergency_contact || '-')}</td>
+              <th style="background: #f1f5f9; padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left; font-size: 8.5pt;">Orang Tua / Wali</th>
+              <td style="padding: 5px 8px; border: 1px solid #cbd5e1; font-size: 8.5pt;">${Utils.escapeHtml(participantData.parent_name || participantData.emergency_contact || '-')} ${participantData.parent_job ? `(${Utils.escapeHtml(participantData.parent_job)})` : ''} ${participantData.parent_phone ? `• Telp: ${Utils.escapeHtml(participantData.parent_phone)}` : ''} ${participantData.parent_address ? `<br><small style="color: #64748b;">Alamat Ortu: ${Utils.escapeHtml(participantData.parent_address)}</small>` : ''}</td>
             </tr>
           </tbody>
         </table>
@@ -14312,12 +14641,12 @@ const App = {
               <td>${Utils.escapeHtml(participantData.registration_type || 'Peserta')}</td>
             </tr>
             <tr>
-              <th>Tingkat / Unsur PMR</th>
-              <td>${Utils.escapeHtml(participantData.level || '-')}</td>
+              <th>Tingkat / Kelas</th>
+              <td>${Utils.escapeHtml(participantData.level || '-')} ${participantData.class_name ? `• Kelas ${Utils.escapeHtml(participantData.class_name)}` : ''}</td>
             </tr>
             <tr>
               <th>Kontingen / Unit Sekolah</th>
-              <td>${Utils.escapeHtml(participantData.unit_name || participantData.unit_id || '-')}</td>
+              <td>${Utils.escapeHtml(participantData.unit_name || participantData.unit_id || '-')} ${participantData.school_address ? `<br><small style="color: #64748b;">${Utils.escapeHtml(participantData.school_address)} (Telp: ${Utils.escapeHtml(participantData.school_phone || '-')})</small>` : ''}</td>
             </tr>
             <tr>
               <th>NISN / NIK / Identitas</th>
@@ -14356,8 +14685,8 @@ const App = {
               <td>${Utils.escapeHtml(participantData.email || '-')}</td>
             </tr>
             <tr>
-              <th>Kontak Darurat / Pembina</th>
-              <td>${Utils.escapeHtml(participantData.emergency_contact || '-')}</td>
+              <th>Orang Tua / Wali</th>
+              <td>${Utils.escapeHtml(participantData.parent_name || participantData.emergency_contact || '-')} ${participantData.parent_job ? `(${Utils.escapeHtml(participantData.parent_job)})` : ''} ${participantData.parent_phone ? `• Telp: ${Utils.escapeHtml(participantData.parent_phone)}` : ''} ${participantData.parent_address ? `<br><small style="color: #64748b;">Alamat Ortu: ${Utils.escapeHtml(participantData.parent_address)}</small>` : ''}</td>
             </tr>
           </table>
 
