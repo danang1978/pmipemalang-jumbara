@@ -14204,7 +14204,7 @@ const App = {
                   <small style="color: var(--text-muted);">Daftar unit sekolah/kontingen peserta yang terdaftar resmi di sistem</small>
                 </div>
                 <button class="btn btn-primary btn-sm" onclick="App.openAddUnitModal()">
-                  <i class="fa-solid fa-plus"></i> Tambah Unit Sekolah Baru
+                  <i class="fa-solid fa-plus"></i> Tambah Unit
                 </button>
               </div>
               
@@ -14258,7 +14258,7 @@ const App = {
                           </td>
                         </tr>
                       `;
-      }).join('') : '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Belum ada unit sekolah terdaftar. Klik "Tambah Unit Sekolah Baru" di atas.</td></tr>'}
+      }).join('') : '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Belum ada unit terdaftar. Klik "Tambah Unit" di atas.</td></tr>'}
                   </tbody>
                 </table>
               </div>
@@ -14851,7 +14851,7 @@ const App = {
     const phoneInput = document.getElementById('unitPhoneInput');
     const addressInput = document.getElementById('unitAddressInput');
 
-    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-school"></i> Tambah Unit Sekolah Baru';
+    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-school"></i> Tambah Unit';
     if (editId) editId.value = '';
     if (nameInput) nameInput.value = '';
     if (levelInput) levelInput.value = 'Wira (SMA)';

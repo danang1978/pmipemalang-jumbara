@@ -636,11 +636,11 @@ $settings = getAppSettings();
 
 
 
-  <!-- Modal 6: Kelola Unit Sekolah (Tambah / Edit) -->
+  <!-- Modal 6: Kelola Unit (Tambah / Edit) -->
   <div class="modal" id="unitModal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title" id="unitModalTitle"><i class="fa-solid fa-school"></i> Kelola Unit Sekolah Kontingen</h3>
+        <h3 class="modal-title" id="unitModalTitle"><i class="fa-solid fa-school"></i> Kelola Unit</h3>
         <button class="modal-close" onclick="App.closeModal('unitModal')">&times;</button>
       </div>
       <form onsubmit="App.handleSaveUnit(event)">
@@ -675,7 +675,7 @@ $settings = getAppSettings();
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('unitModal')">Batal</button>
-          <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Simpan Unit Sekolah</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Simpan Unit</button>
         </div>
       </form>
     </div>
