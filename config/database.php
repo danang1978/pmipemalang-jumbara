@@ -91,5 +91,27 @@ function getPDOConnection() {
         }
     }
 
+    // Auto-Migration Check (Safe & Idempotent): Ensure users table has full_name & phone
+    static $schemaChecked = false;
+    if (!$schemaChecked) {
+        $schemaChecked = true;
+        try {
+            $cols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN);
+            if (!empty($cols)) {
+                if (!in_array('full_name', $cols)) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN full_name VARCHAR(150) NULL AFTER unit_id");
+                }
+                if (!in_array('phone', $cols)) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN phone VARCHAR(30) NULL AFTER full_name");
+                }
+                if (!in_array('email', $cols)) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN email VARCHAR(100) NULL AFTER password");
+                }
+            }
+        } catch (Exception $eMigrate) {
+            // Silently ignore if table users doesn't exist yet or permissions restricted
+        }
+    }
+
     return $pdo;
 }

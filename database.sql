@@ -404,6 +404,8 @@ CREATE TABLE `users` (
   `email` varchar(150) DEFAULT NULL,
   `role` varchar(50) NOT NULL DEFAULT 'peserta',
   `unit_id` int DEFAULT NULL,
+  `full_name` varchar(150) DEFAULT NULL,
+  `phone` varchar(30) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),

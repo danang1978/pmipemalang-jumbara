@@ -59,7 +59,8 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("
         SELECT u.*, un.name AS unit_name,
                p.id AS participant_id, p.code AS participant_code, 
-               COALESCE(p.full_name, u.full_name) AS full_name,
+               p.full_name AS participant_name,
+               p.phone AS participant_phone,
                p.level, p.status AS participant_status, p.photo_url
         FROM users u 
         LEFT JOIN units un ON u.unit_id = un.id 
@@ -71,6 +72,13 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ");
     $stmt->execute([$username, $username, $username]);
     $user = $stmt->fetch();
+
+    if ($user) {
+        $user['full_name'] = !empty($user['participant_name']) ? $user['participant_name'] : (!empty($user['full_name']) ? $user['full_name'] : ($user['username'] ?? ''));
+        if (!empty($user['participant_phone']) && empty($user['phone'])) {
+            $user['phone'] = $user['participant_phone'];
+        }
+    }
 
     if (!$user || !password_verify($password, $user['password'])) {
         // Record failure on IP tracker
@@ -134,7 +142,8 @@ if ($action === 'me') {
         $stmt = $pdo->prepare("
             SELECT u.*, un.name AS unit_name,
                    p.id AS participant_id, p.code AS participant_code,
-                   COALESCE(p.full_name, u.full_name) AS full_name,
+                   p.full_name AS participant_name,
+                   p.phone AS participant_phone,
                    p.level, p.status AS participant_status, p.photo_url
             FROM users u 
             LEFT JOIN units un ON u.unit_id = un.id 
@@ -145,6 +154,10 @@ if ($action === 'me') {
         $fresh = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($fresh) {
             unset($fresh['password']);
+            $fresh['full_name'] = !empty($fresh['participant_name']) ? $fresh['participant_name'] : (!empty($fresh['full_name']) ? $fresh['full_name'] : ($fresh['username'] ?? ''));
+            if (!empty($fresh['participant_phone']) && empty($fresh['phone'])) {
+                $fresh['phone'] = $fresh['participant_phone'];
+            }
             $_SESSION['user'] = $fresh;
             jsonResponse(['user' => $fresh]);
         }
@@ -311,8 +324,23 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
+
+        // Check if users table already has full_name & phone
+        $hasFullNameCol = false;
+        $hasPhoneCol = false;
+        try {
+            $uCols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN);
+            $hasFullNameCol = in_array('full_name', $uCols);
+            $hasPhoneCol = in_array('phone', $uCols);
+        } catch (Exception $eCols) {}
+
+        if ($hasFullNameCol && $hasPhoneCol) {
+            $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
+        } else {
+            $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
+            $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId]);
+        }
         $userId = $pdo->lastInsertId();
 
         $codePrefixMap = [

@@ -387,8 +387,12 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'update-me') {
 
     // Keep users table in sync with participant's contact and name
     if (!empty($part['user_id'])) {
-        $stmtUpdUser = $pdo->prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?");
-        $stmtUpdUser->execute([$fullName, $phone ?: null, $part['user_id']]);
+        try {
+            $stmtUpdUser = $pdo->prepare("UPDATE users SET full_name = ?, phone = ? WHERE id = ?");
+            $stmtUpdUser->execute([$fullName, $phone ?: null, $part['user_id']]);
+        } catch (PDOException $e) {
+            // Ignore if columns do not exist yet
+        }
     }
 
     jsonResponse(['message' => 'Data dan berkas pendaftaran Anda telah berhasil diperbarui!']);
@@ -464,8 +468,15 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
 
     // Keep users table in sync with participant's contact, name and email
     if (!empty($part['user_id'])) {
-        $stmtUpdUser = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, email = ? WHERE id = ?");
-        $stmtUpdUser->execute([$fullName, $phone ?: null, $email ?: null, $part['user_id']]);
+        try {
+            $stmtUpdUser = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, email = ? WHERE id = ?");
+            $stmtUpdUser->execute([$fullName, $phone ?: null, $email ?: null, $part['user_id']]);
+        } catch (PDOException $e) {
+            try {
+                $stmtUpdUser = $pdo->prepare("UPDATE users SET email = ? WHERE id = ?");
+                $stmtUpdUser->execute([$email ?: null, $part['user_id']]);
+            } catch (PDOException $e2) {}
+        }
     }
 
     jsonResponse(['message' => 'Data dan berkas peserta berhasil diperbarui!']);

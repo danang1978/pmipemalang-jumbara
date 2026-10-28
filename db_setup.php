@@ -28,6 +28,8 @@ try {
             email VARCHAR(100),
             role VARCHAR(50) NOT NULL DEFAULT 'peserta',
             unit_id INT NULL,
+            full_name VARCHAR(150) NULL,
+            phone VARCHAR(30) NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

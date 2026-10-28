@@ -25,9 +25,8 @@ if ($method === 'GET') {
     $params = [];
 
     if ($search !== '') {
-        $where[] = "(u.username LIKE ? OR u.email LIKE ? OR un.name LIKE ? OR u.full_name LIKE ? OR p.full_name LIKE ? OR p.code LIKE ? OR p.phone LIKE ?)";
+        $where[] = "(u.username LIKE ? OR u.email LIKE ? OR un.name LIKE ? OR p.full_name LIKE ? OR p.code LIKE ? OR p.phone LIKE ?)";
         $term = "%{$search}%";
-        $params[] = $term;
         $params[] = $term;
         $params[] = $term;
         $params[] = $term;
@@ -54,10 +53,10 @@ if ($method === 'GET') {
     $total = (int)$countStmt->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT u.id, u.username, u.email, u.role, u.unit_id, u.created_at,
-               COALESCE(u.full_name, p.full_name) AS full_name,
-               COALESCE(u.phone, p.phone) AS phone,
+        SELECT u.*,
                p.id AS participant_id, p.code AS participant_code, p.level, p.status AS participant_status,
+               p.full_name AS participant_name,
+               p.phone AS participant_phone,
                un.name AS unit_name
         FROM users u
         LEFT JOIN units un ON u.unit_id = un.id
@@ -68,6 +67,15 @@ if ($method === 'GET') {
     ");
     $stmt->execute($params);
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($users as &$usr) {
+        unset($usr['password']);
+        $usr['full_name'] = !empty($usr['participant_name']) ? $usr['participant_name'] : (!empty($usr['full_name']) ? $usr['full_name'] : ($usr['username'] ?? ''));
+        if (!empty($usr['participant_phone']) && empty($usr['phone'])) {
+            $usr['phone'] = $usr['participant_phone'];
+        }
+    }
+    unset($usr);
 
     jsonResponse([
         'data' => $users,
@@ -132,8 +140,13 @@ if ($method === 'POST') {
         }
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null]);
+        try {
+            $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null]);
+        } catch (PDOException $e) {
+            $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
+            $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId]);
+        }
 
         jsonResponse([
             'message' => "User baru '{$username}' dengan peran '{$role}' berhasil dibuat!",
@@ -153,8 +166,13 @@ if ($method === 'POST') {
             jsonResponse(['error' => 'ID User dan Peran/Role wajib diisi.'], 400);
         }
 
-        $stmtUpd = $pdo->prepare("UPDATE users SET email = ?, role = ?, unit_id = ?, full_name = ?, phone = ? WHERE id = ?");
-        $stmtUpd->execute([$email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null, $userId]);
+        try {
+            $stmtUpd = $pdo->prepare("UPDATE users SET email = ?, role = ?, unit_id = ?, full_name = ?, phone = ? WHERE id = ?");
+            $stmtUpd->execute([$email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null, $userId]);
+        } catch (PDOException $e) {
+            $stmtUpd = $pdo->prepare("UPDATE users SET email = ?, role = ?, unit_id = ? WHERE id = ?");
+            $stmtUpd->execute([$email ?: null, $role, $unitId, $userId]);
+        }
 
         // If user is a participant, also update participant's full_name and phone
         $stmtPartUpd = $pdo->prepare("UPDATE participants SET full_name = ?, phone = ?, email = ? WHERE user_id = ?");
