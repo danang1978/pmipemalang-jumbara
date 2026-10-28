@@ -738,6 +738,31 @@ $settings = getAppSettings();
     </div>
   </div>
 
+  <!-- Modal: Print / Export Roster Peserta per Unit -->
+  <div class="modal" id="unitRosterPrintModal">
+    <div class="modal-dialog" style="max-width: 1050px; width: 96%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
+        <h3 class="modal-title" id="unitRosterPrintModalTitle" style="color: white;"><i class="fa-solid fa-file-invoice"></i> Roster Peserta Kontingen Unit</h3>
+        <button class="modal-close" style="color: white;" onclick="App.closeModal('unitRosterPrintModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; background: #f1f5f9; max-height: 80vh; overflow-y: auto;">
+        <div id="unitRosterPrintPreviewArea" style="background: #ffffff; padding: 25px 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); color: #000000;">
+          <p style="text-align: center; color: var(--text-muted); padding: 2rem 0;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat dokumen roster peserta...</p>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Format standar cetak dokumen A4 Landscape / Portrait PMI Kabupaten Pemalang</span>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('unitRosterPrintModal')">Tutup</button>
+          <button type="button" class="btn btn-success btn-sm" id="btnDownloadUnitRosterExcel" style="background: #16a34a; border-color: #16a34a; color: white; font-weight: 700;"><i class="fa-solid fa-file-excel"></i> Download Excel</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnDownloadUnitRosterPdf" style="background: #dc2626; border-color: #dc2626; color: white; font-weight: 700;"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.printUnitRosterDocument()" style="font-weight: 700;"><i class="fa-solid fa-print"></i> Cetak / Print</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Modal 8: Kelola Pendaftaran Peserta Unit ke Kegiatan -->
   <div class="modal" id="unitEventRegistrationModal">
     <div class="modal-dialog" style="max-width: 720px; width: 95%;">

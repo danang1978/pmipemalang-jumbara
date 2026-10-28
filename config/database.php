@@ -112,8 +112,68 @@ function getPDOConnection() {
             try {
                 $pdo->exec("ALTER TABLE units MODIFY COLUMN level_category VARCHAR(100) NOT NULL DEFAULT 'Wira (SMA)'");
             } catch (Exception $eUnits) {}
+
+            // Auto-Migration for participants table (Guarantees no SQLSTATE[42S22] Column not found errors)
+            $pCols = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
+            if (!empty($pCols)) {
+                $pColsMap = array_flip($pCols);
+                if (!isset($pColsMap['class_name'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN class_name VARCHAR(50) NULL DEFAULT NULL AFTER level"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['last_education'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN last_education VARCHAR(100) NULL DEFAULT NULL AFTER class_name"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['organizations'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN organizations TEXT NULL DEFAULT NULL AFTER last_education"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['school_address'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN school_address TEXT NULL DEFAULT NULL AFTER unit_id"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['school_phone'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN school_phone VARCHAR(50) NULL DEFAULT NULL AFTER school_address"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['parent_name'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_name VARCHAR(255) NULL DEFAULT NULL AFTER emergency_contact"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['parent_address'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_address TEXT NULL DEFAULT NULL AFTER parent_name"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['parent_phone'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_phone VARCHAR(50) NULL DEFAULT NULL AFTER parent_address"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['parent_job'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN parent_job VARCHAR(150) NULL DEFAULT NULL AFTER parent_phone"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['email'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN email VARCHAR(100) NULL DEFAULT NULL"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['certificate_number'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN certificate_number VARCHAR(100) NULL DEFAULT NULL"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['registration_type'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN registration_type VARCHAR(50) DEFAULT 'Peserta'"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['reject_reason'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN reject_reason TEXT NULL DEFAULT NULL"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['assignment_letter_url'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN assignment_letter_url VARCHAR(255) NULL DEFAULT NULL"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['sub_categories'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN sub_categories TEXT NULL DEFAULT NULL"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['religion'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN religion VARCHAR(50) NULL DEFAULT 'Islam'"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['is_disabled'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN is_disabled VARCHAR(20) NULL DEFAULT 'Tidak'"); } catch (Exception $e) {}
+                }
+                if (!isset($pColsMap['disability_type'])) {
+                    try { $pdo->exec("ALTER TABLE participants ADD COLUMN disability_type VARCHAR(100) NULL DEFAULT 'Tidak Ada'"); } catch (Exception $e) {}
+                }
+            }
         } catch (Exception $eMigrate) {
-            // Silently ignore if table users doesn't exist yet or permissions restricted
+            // Silently ignore if table users/participants doesn't exist yet or permissions restricted
         }
     }
 

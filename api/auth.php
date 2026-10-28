@@ -379,22 +379,63 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $participantCode = $codePrefix . str_pad($userId, 4, '0', STR_PAD_LEFT);
         $subCategories = json_encode($input['sub_categories'] ?? []);
 
+        try {
+            $existingCols = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
+            $existingMap = array_flip($existingCols);
+        } catch (Exception $e) {
+            $existingMap = [];
+        }
+
+        $partData = [
+            'code' => $participantCode,
+            'user_id' => $userId,
+            'unit_id' => $unitId,
+            'school_address' => $schoolAddress ?: null,
+            'school_phone' => $schoolPhone ?: null,
+            'full_name' => $fullName,
+            'nisn' => $input['nisn'] ?? null,
+            'level' => $level,
+            'class_name' => $className ?: null,
+            'last_education' => $lastEducation ?: null,
+            'organizations' => $organizations ?: null,
+            'registration_type' => $registrationType,
+            'religion' => $religion,
+            'is_disabled' => $isDisabled,
+            'disability_type' => $disabilityType,
+            'address' => $address ?: null,
+            'birth_place' => $input['birth_place'] ?? null,
+            'birth_date' => $input['birth_date'] ?? null,
+            'gender' => $input['gender'] ?? 'L',
+            'blood_type' => $input['blood_type'] ?? 'O',
+            'phone' => $input['phone'] ?? null,
+            'emergency_contact' => $input['emergency_contact'] ?? null,
+            'parent_name' => $parentName ?: null,
+            'parent_address' => $parentAddress ?: null,
+            'parent_phone' => $parentPhone ?: null,
+            'parent_job' => $parentJob ?: null,
+            'photo_url' => $photoUrl,
+            'assignment_letter_url' => $assignmentLetterUrl,
+            'sub_categories' => $subCategories,
+            'status' => 'pending_unit',
+            'email' => $email ?: null
+        ];
+
+        $insertCols = [];
+        $insertPlaceholders = [];
+        $insertVals = [];
+        foreach ($partData as $col => $val) {
+            if (empty($existingMap) || isset($existingMap[$col])) {
+                $insertCols[] = "`$col`";
+                $insertPlaceholders[] = "?";
+                $insertVals[] = $val;
+            }
+        }
+
         $stmtPart = $pdo->prepare("
-            INSERT INTO participants 
-            (code, user_id, unit_id, school_address, school_phone, full_name, nisn, level, class_name, last_education, organizations, registration_type, religion, is_disabled, disability_type, address, birth_place, birth_date, gender, blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone, parent_job, photo_url, assignment_letter_url, sub_categories, status, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_unit', ?)
+            INSERT INTO participants (" . implode(', ', $insertCols) . ")
+            VALUES (" . implode(', ', $insertPlaceholders) . ")
         ");
-        $stmtPart->execute([
-            $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName,
-            $input['nisn'] ?? null, $level, $className ?: null, $lastEducation ?: null, $organizations ?: null,
-            $registrationType, $religion, $isDisabled, $disabilityType,
-            $address ?: null, $input['birth_place'] ?? null,
-            $input['birth_date'] ?? null, $input['gender'] ?? 'L',
-            $input['blood_type'] ?? 'O', $input['phone'] ?? null,
-            $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null, $parentJob ?: null,
-            $photoUrl, $assignmentLetterUrl,
-            $subCategories, $email ?: null
-        ]);
+        $stmtPart->execute($insertVals);
 
         $pdo->commit();
 

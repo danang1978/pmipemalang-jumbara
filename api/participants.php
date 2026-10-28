@@ -10,6 +10,86 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $id = (int)($_GET['id'] ?? 0);
 
+function getParticipantSelectColumns(PDO $pdo): string {
+    static $columnsSql = null;
+    if ($columnsSql !== null) {
+        return $columnsSql;
+    }
+
+    $baseCols = [
+        'id' => 'p.id',
+        'code' => 'p.code',
+        'user_id' => 'p.user_id',
+        'unit_id' => 'p.unit_id',
+        'full_name' => 'p.full_name',
+        'nisn' => 'p.nisn',
+        'level' => 'p.level',
+        'gender' => 'p.gender',
+        'blood_type' => 'p.blood_type',
+        'phone' => 'p.phone',
+        'photo_url' => 'p.photo_url',
+        'status' => 'p.status',
+        'created_at' => 'p.created_at'
+    ];
+
+    $checkCols = [
+        'class_name',
+        'last_education',
+        'organizations',
+        'birth_place',
+        'birth_date',
+        'religion',
+        'address',
+        'school_address',
+        'school_phone',
+        'parent_name',
+        'parent_address',
+        'parent_phone',
+        'parent_job',
+        'is_disabled',
+        'disability_type',
+        'emergency_contact',
+        'assignment_letter_url',
+        'registration_type',
+        'reject_reason',
+        'email',
+        'certificate_number',
+        'sub_categories'
+    ];
+
+    try {
+        $existing = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
+        $existingMap = array_flip($existing);
+    } catch (Exception $e) {
+        $existingMap = [];
+    }
+
+    $selectParts = [];
+    foreach ($baseCols as $alias => $col) {
+        if (!empty($existingMap) && !isset($existingMap[$alias])) {
+            $selectParts[] = "NULL AS `$alias`";
+        } else {
+            $selectParts[] = $col;
+        }
+    }
+
+    foreach ($checkCols as $colName) {
+        if (!empty($existingMap) && !isset($existingMap[$colName])) {
+            $selectParts[] = "NULL AS `$colName`";
+        } else {
+            $selectParts[] = "p.`$colName`";
+        }
+    }
+
+    $selectParts[] = "un.name AS unit_name";
+    $selectParts[] = "un.code AS unit_code";
+    $selectParts[] = "un.address AS unit_address";
+    $selectParts[] = "un.phone AS unit_phone";
+
+    $columnsSql = implode(', ', $selectParts);
+    return $columnsSql;
+}
+
 // GET /api/participants.php?action=me
 if ($method === 'GET' && $action === 'me') {
     $user = requireUser(['peserta', 'panitia', 'peninjau', 'pendamping', 'tamu', 'media']);
@@ -136,6 +216,285 @@ if ($method === 'GET' && $action === 'stats') {
     jsonResponse($counts);
 }
 
+// GET /api/participants.php?action=export&unit_id=123&format=excel
+if ($method === 'GET' && $action === 'export') {
+    $user = requireUser(['kabupaten', 'unit', 'panitia', 'admin']);
+    $unitId = (int)($_GET['unit_id'] ?? 0);
+    if ($user['role'] === 'unit') {
+        $unitId = (int)$user['unit_id'];
+    }
+
+    $status = $_GET['status'] ?? '';
+    $level = $_GET['level'] ?? '';
+    $registrationType = trim($_GET['registration_type'] ?? $_GET['category'] ?? '');
+    $search = trim($_GET['search'] ?? '');
+    $format = strtolower($_GET['format'] ?? 'excel');
+
+    $where = [];
+    $params = [];
+
+    if ($unitId) {
+        $where[] = "p.unit_id = ?";
+        $params[] = $unitId;
+    }
+    if ($status) {
+        $where[] = "p.status = ?";
+        $params[] = $status;
+    }
+    if ($level) {
+        $where[] = "p.level = ?";
+        $params[] = $level;
+    }
+    if ($registrationType !== '') {
+        $where[] = "p.registration_type = ?";
+        $params[] = $registrationType;
+    }
+    if ($search !== '') {
+        $where[] = "(p.full_name LIKE ? OR p.code LIKE ? OR p.nisn LIKE ?)";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+
+    $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    $columns = getParticipantSelectColumns($pdo);
+
+    $sql = "
+        SELECT $columns 
+        FROM participants p 
+        LEFT JOIN units un ON p.unit_id = un.id 
+        $whereSql 
+        ORDER BY 
+            CASE 
+                WHEN p.registration_type = 'Pendamping' THEN 1 
+                WHEN p.level = 'Mula' THEN 2 
+                WHEN p.level = 'Madya' THEN 3 
+                WHEN p.level = 'Wira' THEN 4 
+                ELSE 5 
+            END ASC,
+            p.full_name ASC
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $participants = $stmt->fetchAll();
+
+    // Fetch Unit Info if single unit
+    $unitInfo = null;
+    if ($unitId) {
+        $stmtU = $pdo->prepare("SELECT * FROM units WHERE id = ?");
+        $stmtU->execute([$unitId]);
+        $unitInfo = $stmtU->fetch();
+    }
+
+    $unitName = $unitInfo ? $unitInfo['name'] : 'Semua Unit Kontingen';
+    $safeFilename = 'Data_Peserta_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $unitName) . '_' . date('Ymd_His');
+
+    if ($format === 'csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $safeFilename . '.csv"');
+        $output = fopen('php://output', 'w');
+        // UTF-8 BOM for Microsoft Excel
+        fputs($output, "\xEF\xBB\xBF");
+
+        fputcsv($output, [
+            'No', 'Kode Peserta', 'Nama Lengkap', 'NIK / NISN', 'Kategori', 'Tingkat PMR', 'Kelas / Pend. Terakhir',
+            'Jenis Kelamin', 'Gol. Darah', 'Tempat Lahir', 'Tanggal Lahir', 'Agama', 'No. WhatsApp', 'Kontak Darurat',
+            'Nama Orang Tua/Wali', 'Pekerjaan Orang Tua', 'No. Telp Orang Tua', 'Alamat Domisili', 'Status Verifikasi', 'Unit / Kontingen'
+        ]);
+
+        $no = 1;
+        foreach ($participants as $p) {
+            $catLabel = ($p['registration_type'] === 'Pendamping') ? 'Pembina Pendamping' : ($p['registration_type'] ?? 'Peserta');
+            $statusLabel = [
+                'pending_unit' => 'Menunggu Verifikasi Unit',
+                'verified_unit' => 'Terverifikasi Unit',
+                'verified_kabupaten' => 'Terverifikasi Kabupaten',
+                'revision' => 'Perlu Revisi',
+                'rejected' => 'Ditolak'
+            ][$p['status'] ?? ''] ?? ($p['status'] ?? '-');
+
+            $eduOrClass = ($p['registration_type'] === 'Pendamping') ? ($p['last_education'] ?? '-') : ($p['class_name'] ? ('Kelas ' . $p['class_name']) : '-');
+
+            fputcsv($output, [
+                $no++,
+                $p['code'] ?? '-',
+                $p['full_name'] ?? '-',
+                $p['nisn'] ?? '-',
+                $catLabel,
+                $p['level'] ?? '-',
+                $eduOrClass,
+                $p['gender'] === 'L' ? 'Laki-laki' : 'Perempuan',
+                $p['blood_type'] ?? '-',
+                $p['birth_place'] ?? '-',
+                $p['birth_date'] ?? '-',
+                $p['religion'] ?? '-',
+                $p['phone'] ?? '-',
+                $p['emergency_contact'] ?? '-',
+                $p['parent_name'] ?? '-',
+                $p['parent_job'] ?? '-',
+                $p['parent_phone'] ?? '-',
+                $p['address'] ?? '-',
+                $statusLabel,
+                $p['unit_name'] ?? '-'
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
+
+    // Default: EXCEL (.xls styled spreadsheet compatible with Excel, LibreOffice, Google Sheets)
+    header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $safeFilename . '.xls"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    // Aggregate stats for header
+    $totalCount = count($participants);
+    $mulaCount = 0; $madyaCount = 0; $wiraCount = 0; $pdpCount = 0;
+    $maleCount = 0; $femaleCount = 0; $verifiedKabCount = 0;
+
+    foreach ($participants as $p) {
+        if (($p['registration_type'] ?? '') === 'Pendamping') $pdpCount++;
+        elseif (($p['level'] ?? '') === 'Mula') $mulaCount++;
+        elseif (($p['level'] ?? '') === 'Madya') $madyaCount++;
+        elseif (($p['level'] ?? '') === 'Wira') $wiraCount++;
+
+        if (($p['gender'] ?? '') === 'L') $maleCount++; else $femaleCount++;
+        if (($p['status'] ?? '') === 'verified_kabupaten') $verifiedKabCount++;
+    }
+
+    // Output HTML Table formatted for Excel
+    echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+    echo '<head>';
+    echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
+    echo '<style>';
+    echo 'body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; }';
+    echo 'table { border-collapse: collapse; width: 100%; }';
+    echo 'th, td { border: 0.5pt solid #94a3b8; padding: 6px 8px; vertical-align: middle; }';
+    echo 'th { background-color: #b91c1c; color: #ffffff; font-weight: bold; text-align: center; }';
+    echo '.text-center { text-align: center; }';
+    echo '.text-left { text-align: left; }';
+    echo '.text-num { mso-number-format: "\@"; text-align: center; }';
+    echo '.text-telp { mso-number-format: "\@"; text-align: left; }';
+    echo '.row-even { background-color: #ffffff; }';
+    echo '.row-odd { background-color: #f8fafc; }';
+    echo '.title-kop { font-size: 15pt; font-weight: bold; color: #b91c1c; text-align: center; }';
+    echo '.subtitle-kop { font-size: 12pt; font-weight: bold; text-align: center; }';
+    echo '.meta-box { background-color: #f1f5f9; font-size: 10pt; }';
+    echo '.badge-verified { background-color: #dcfce7; color: #166534; font-weight: bold; text-align: center; }';
+    echo '.badge-pending { background-color: #fef9c3; color: #854d0e; text-align: center; }';
+    echo '</style>';
+    echo '</head>';
+    echo '<body>';
+
+    echo '<table>';
+    echo '<tr><td colspan="17" class="title-kop">PALANG MERAH INDONESIA KABUPATEN PEMALANG</td></tr>';
+    echo '<tr><td colspan="17" class="subtitle-kop">JUMBARA PMR KABUPATEN PEMALANG TAHUN 2026</td></tr>';
+    echo '<tr><td colspan="17" style="text-align: center; font-size: 11pt; padding-bottom: 12px;">DAFTAR REKAPITULASI PESERTA & PEMBINA PENDAMPING KONTINGEN</td></tr>';
+    echo '<tr><td colspan="17" style="border: none;"></td></tr>';
+
+    // Kontingen Details
+    echo '<tr class="meta-box"><td colspan="3" style="font-weight: bold;">Nama Kontingen / Unit:</td><td colspan="6" style="font-weight: bold; font-size: 12pt; color: #b91c1c;">' . htmlspecialchars($unitName) . '</td><td colspan="3" style="font-weight: bold;">Tanggal Export:</td><td colspan="5">' . date('d F Y, H:i') . ' WIB</td></tr>';
+    if ($unitInfo) {
+        echo '<tr class="meta-box"><td colspan="3" style="font-weight: bold;">Tingkat Kategori:</td><td colspan="6">' . htmlspecialchars($unitInfo['level_category'] ?? '-') . '</td><td colspan="3" style="font-weight: bold;">Pembina / Pendamping:</td><td colspan="5">' . htmlspecialchars($unitInfo['lead_name'] ?? '-') . ' (' . htmlspecialchars($unitInfo['lead_phone'] ?? '-') . ')</td></tr>';
+        echo '<tr class="meta-box"><td colspan="3" style="font-weight: bold;">Alamat Pangkalan / Sekolah:</td><td colspan="14">' . htmlspecialchars($unitInfo['address'] ?? '-') . '</td></tr>';
+    }
+    echo '<tr class="meta-box"><td colspan="3" style="font-weight: bold;">Statistik Kontingen:</td><td colspan="14">Total: <strong>' . $totalCount . ' Orang</strong> | Mula: <strong>' . $mulaCount . '</strong> | Madya: <strong>' . $madyaCount . '</strong> | Wira: <strong>' . $wiraCount . '</strong> | Pembina: <strong>' . $pdpCount . '</strong> | L: <strong>' . $maleCount . '</strong>, P: <strong>' . $femaleCount . '</strong> | Verifikasi Kab: <strong>' . $verifiedKabCount . ' Disetujui</strong></td></tr>';
+    echo '<tr><td colspan="17" style="border: none;"></td></tr>';
+
+    // Header Table
+    echo '<thead>';
+    echo '<tr>';
+    echo '<th style="width: 40px;">No</th>';
+    echo '<th style="width: 120px;">Kode Peserta</th>';
+    echo '<th style="width: 130px;">NIK / NISN</th>';
+    echo '<th style="width: 220px;">Nama Lengkap</th>';
+    echo '<th style="width: 120px;">Kategori</th>';
+    echo '<th style="width: 80px;">Tingkat</th>';
+    echo '<th style="width: 130px;">Kelas / Pend.</th>';
+    echo '<th style="width: 50px;">JK</th>';
+    echo '<th style="width: 60px;">Gol. Darah</th>';
+    echo '<th style="width: 180px;">Tempat, Tgl Lahir</th>';
+    echo '<th style="width: 80px;">Agama</th>';
+    echo '<th style="width: 130px;">No. WhatsApp</th>';
+    echo '<th style="width: 130px;">Kontak Darurat</th>';
+    echo '<th style="width: 180px;">Nama Orang Tua / Wali</th>';
+    echo '<th style="width: 250px;">Alamat Domisili</th>';
+    echo '<th style="width: 140px;">Status Verifikasi</th>';
+    echo '<th style="width: 180px;">Unit / Kontingen</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    if (empty($participants)) {
+        echo '<tr><td colspan="17" class="text-center" style="padding: 20px; font-style: italic; color: #64748b;">Belum ada data peserta yang terdaftar pada kontingen ini.</td></tr>';
+    } else {
+        $no = 1;
+        foreach ($participants as $idx => $p) {
+            $rowClass = ($idx % 2 === 0) ? 'row-even' : 'row-odd';
+            $isPdp = ($p['registration_type'] === 'Pendamping');
+            $catLabel = $isPdp ? 'Pembina Pendamping' : ($p['registration_type'] ?? 'Peserta');
+            $eduOrClass = $isPdp ? ($p['last_education'] ?? '-') : ($p['class_name'] ? ('Kelas ' . $p['class_name']) : '-');
+            
+            $statusBadgeClass = ($p['status'] === 'verified_kabupaten') ? 'badge-verified' : 'badge-pending';
+            $statusLabel = [
+                'pending_unit' => 'Menunggu Unit',
+                'verified_unit' => 'Disetujui Unit',
+                'verified_kabupaten' => 'Terverifikasi Kab',
+                'revision' => 'Revisi',
+                'rejected' => 'Ditolak'
+            ][$p['status'] ?? ''] ?? ($p['status'] ?? '-');
+
+            $ttl = trim(($p['birth_place'] ?? '') . ', ' . ($p['birth_date'] ?? ''));
+            if ($ttl === ',') $ttl = '-';
+
+            echo '<tr class="' . $rowClass . '">';
+            echo '<td class="text-center">' . $no++ . '</td>';
+            echo '<td class="text-num" style="font-weight: bold; color: #0284c7;">' . htmlspecialchars($p['code'] ?? '-') . '</td>';
+            echo '<td class="text-num">' . htmlspecialchars($p['nisn'] ?? '-') . '</td>';
+            echo '<td class="text-left" style="font-weight: bold;">' . htmlspecialchars($p['full_name'] ?? '-') . '</td>';
+            echo '<td class="text-center">' . htmlspecialchars($catLabel) . '</td>';
+            echo '<td class="text-center">' . htmlspecialchars($p['level'] ?? '-') . '</td>';
+            echo '<td class="text-left">' . htmlspecialchars($eduOrClass) . '</td>';
+            echo '<td class="text-center">' . htmlspecialchars($p['gender'] ?? '-') . '</td>';
+            echo '<td class="text-center" style="font-weight: bold;">' . htmlspecialchars($p['blood_type'] ?? '-') . '</td>';
+            echo '<td class="text-left">' . htmlspecialchars($ttl) . '</td>';
+            echo '<td class="text-center">' . htmlspecialchars($p['religion'] ?? '-') . '</td>';
+            echo '<td class="text-telp">' . htmlspecialchars($p['phone'] ?? '-') . '</td>';
+            echo '<td class="text-telp">' . htmlspecialchars($p['emergency_contact'] ?? '-') . '</td>';
+            echo '<td class="text-left">' . htmlspecialchars($p['parent_name'] ?? '-') . '</td>';
+            echo '<td class="text-left">' . htmlspecialchars($p['address'] ?? '-') . '</td>';
+            echo '<td class="' . $statusBadgeClass . '">' . htmlspecialchars($statusLabel) . '</td>';
+            echo '<td class="text-left">' . htmlspecialchars($p['unit_name'] ?? '-') . '</td>';
+            echo '</tr>';
+        }
+    }
+
+    echo '</tbody>';
+    echo '</table>';
+
+    // Signature Area
+    echo '<br /><br />';
+    echo '<table>';
+    echo '<tr>';
+    echo '<td colspan="8" style="border: none; text-align: center; vertical-align: top; width: 50%;">';
+    echo 'Mengetahui,<br /><strong>Pembina / Pendamping Kontingen</strong><br /><br /><br /><br /><br />';
+    echo '<strong>(' . htmlspecialchars($unitInfo['lead_name'] ?? '.........................................') . ')</strong><br />';
+    echo 'NIP/NRP: .......................................';
+    echo '</td>';
+    echo '<td colspan="9" style="border: none; text-align: center; vertical-align: top; width: 50%;">';
+    echo 'Pemalang, ' . date('d F Y') . '<br /><strong>Panitia Pelaksana Jumbara PMR 2026<br />PMI Kabupaten Pemalang</strong><br /><br /><br /><br /><br />';
+    echo '<strong>( .................................................... )</strong><br />';
+    echo 'Bidang Registrasi & Verifikasi';
+    echo '</td>';
+    echo '</tr>';
+    echo '</table>';
+
+    echo '</body>';
+    echo '</html>';
+    exit;
+}
+
 // GET /api/participants.php (Protected with Multi-Tenant & Role Authorization)
 if ($method === 'GET') {
     $user = getCurrentUser();
@@ -206,17 +565,7 @@ if ($method === 'GET') {
     $stmtCount->execute($params);
     $totalRecords = (int)$stmtCount->fetchColumn();
 
-    $columns = "
-        p.id, p.code, p.user_id, p.unit_id, p.full_name, p.nisn, p.level, p.class_name,
-        p.last_education, p.organizations,
-        p.birth_place, p.birth_date, p.religion, p.address,
-        p.school_address, p.school_phone,
-        p.parent_name, p.parent_address, p.parent_phone, p.parent_job,
-        p.is_disabled, p.disability_type,
-        p.gender, p.blood_type, p.phone, p.emergency_contact, p.photo_url, p.status, p.created_at, 
-        p.assignment_letter_url, p.registration_type, p.reject_reason,
-        un.name AS unit_name, un.code AS unit_code, un.address AS unit_address, un.phone AS unit_phone
-    ";
+    $columns = getParticipantSelectColumns($pdo);
 
     if ($noPaginate) {
         // Safe cap to prevent memory exhaustion on huge datasets (100k+ records)
@@ -471,26 +820,58 @@ if (($method === 'POST' || $method === 'PUT') && $action === 'admin_update') {
         if ($uploadedLetter) $assignmentLetterUrl = $uploadedLetter;
     }
 
-    $stmtUpdate = $pdo->prepare("
-        UPDATE participants SET 
-            full_name = ?, nisn = ?, registration_type = ?, level = ?, class_name = ?, gender = ?, blood_type = ?,
-            phone = ?, emergency_contact = ?, status = ?, photo_url = ?, assignment_letter_url = ?,
-            birth_place = ?, birth_date = ?, religion = ?, is_disabled = ?, disability_type = ?,
-            address = ?, email = ?, school_address = ?, school_phone = ?,
-            parent_name = ?, parent_address = ?, parent_phone = ?, parent_job = ?,
-            last_education = ?, organizations = ?,
-            sub_categories = ?
-        WHERE id = ?
-    ");
-    $stmtUpdate->execute([
-        $fullName, $nisn, $registrationType, $level, $className ?: null, $gender, $bloodType,
-        $phone, $emergencyContact, $status, $photoUrl, $assignmentLetterUrl,
-        $birthPlace, $birthDate, $religion, $isDisabled, $disabilityType,
-        $address, $email, $schoolAddress ?: null, $schoolPhone ?: null,
-        $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null, $parentJob ?: null,
-        $lastEducation ?: null, $organizations ?: null,
-        $subCategories, $id
-    ]);
+    // Dynamically filter update columns to match existing table schema safely
+    try {
+        $existingCols = $pdo->query("SHOW COLUMNS FROM participants")->fetchAll(PDO::FETCH_COLUMN);
+        $existingMap = array_flip($existingCols);
+    } catch (Exception $e) {
+        $existingMap = [];
+    }
+
+    $fields = [
+        'full_name' => $fullName,
+        'nisn' => $nisn,
+        'registration_type' => $registrationType,
+        'level' => $level,
+        'class_name' => $className ?: null,
+        'gender' => $gender,
+        'blood_type' => $bloodType,
+        'phone' => $phone,
+        'emergency_contact' => $emergencyContact,
+        'status' => $status,
+        'photo_url' => $photoUrl,
+        'assignment_letter_url' => $assignmentLetterUrl,
+        'birth_place' => $birthPlace,
+        'birth_date' => $birthDate,
+        'religion' => $religion,
+        'is_disabled' => $isDisabled,
+        'disability_type' => $disabilityType,
+        'address' => $address,
+        'email' => $email,
+        'school_address' => $schoolAddress ?: null,
+        'school_phone' => $schoolPhone ?: null,
+        'parent_name' => $parentName ?: null,
+        'parent_address' => $parentAddress ?: null,
+        'parent_phone' => $parentPhone ?: null,
+        'parent_job' => $parentJob ?: null,
+        'last_education' => $lastEducation ?: null,
+        'organizations' => $organizations ?: null,
+        'sub_categories' => $subCategories
+    ];
+
+    $setSql = [];
+    $updateParams = [];
+    foreach ($fields as $colName => $val) {
+        if (empty($existingMap) || isset($existingMap[$colName])) {
+            $setSql[] = "`$colName` = ?";
+            $updateParams[] = $val;
+        }
+    }
+    $updateParams[] = $id;
+
+    $stmtUpdate = $pdo->prepare("UPDATE participants SET " . implode(', ', $setSql) . " WHERE id = ?");
+    $stmtUpdate->execute($updateParams);
+
 
     // Keep users table in sync with participant's contact, name and email
     if (!empty($part['user_id'])) {
