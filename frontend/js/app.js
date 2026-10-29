@@ -15,7 +15,7 @@ const App = {
     event_dates: '15 - 17 Oktober 2026',
     event_location: 'Buperta Utama PMI Kabupaten',
     event_location_address: 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-    event_map_embed: 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    event_map_embed: 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
     event_map_url: 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
     contact_phone: '(021) 555-PMR-2026',
     contact_email: 'sekretariat@jumbara-pmi.or.id',
@@ -2859,7 +2859,7 @@ const App = {
                 <!-- EMBED MAPS IFRAME RESPONSIVE MOBILE -->
                 <div style="border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 0.85rem;">
                   <iframe 
-                    src="${this.appSettings.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed'}"
+                    src="${Utils.sanitizeMapEmbedUrl(this.appSettings.event_map_embed)}"
                     style="width: 100%; height: 200px; border: 0; display: block;"
                     allowfullscreen="" 
                     loading="lazy" 
@@ -9558,9 +9558,9 @@ const App = {
                 </div>
 
                 <div class="form-group" style="grid-column: 1 / -1;">
-                  <label class="form-label">URL Embed Google Maps (iframe src) *</label>
-                  <input type="url" id="setEventMapEmbed" value="${Utils.escapeHtml(s.event_map_embed || 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed')}" required style="width: 100%;">
-                  <span class="form-help">URL Google Maps interaktif (format embed). Contoh: <code>https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed</code></span>
+                  <label class="form-label">URL Embed Peta Lokasi (iframe src) *</label>
+                  <input type="url" id="setEventMapEmbed" value="${Utils.escapeHtml(s.event_map_embed || 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437')}" required style="width: 100%;">
+                  <span class="form-help">URL Embed Peta interaktif (OpenStreetMap atau Google Maps Embed resmi format <code>/maps/embed?pb=...</code>). Bebas penolakan koneksi / SAMEORIGIN.</span>
                 </div>
 
                 <div class="form-group" style="grid-column: 1 / -1;">

@@ -91,7 +91,7 @@ function getAppSettings($forceRefresh = false) {
             'event_dates' => '15 - 17 Oktober 2026',
             'event_location' => 'Buperta Utama PMI Kabupaten',
             'event_location_address' => 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-            'event_map_embed' => 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed',
+            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
             'event_map_url' => 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
             'contact_phone' => '(021) 555-PMR-2026',
             'contact_email' => 'sekretariat@jumbara-pmi.or.id',
@@ -161,7 +161,17 @@ function getAppSettings($forceRefresh = false) {
             'piagam_show_qr' => '1'
         ];
         foreach ($rows as $r) {
-            $settings[$r['key']] = $r['value'];
+            $val = $r['value'];
+            if ($r['key'] === 'event_map_embed') {
+                $isGoogleRefused = (
+                    (strpos($val, 'google.com') !== false || strpos($val, 'goo.gl') !== false) &&
+                    (strpos($val, '/maps/embed') === false || strpos($val, 'output=embed') !== false || strpos($val, 'iwloc=') !== false || strpos($val, 'q=') !== false)
+                );
+                if ($isGoogleRefused) {
+                    $val = 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+                }
+            }
+            $settings[$r['key']] = $val;
         }
         $cachedSettings = $settings;
         return $settings;
@@ -180,7 +190,7 @@ function getAppSettings($forceRefresh = false) {
             'event_dates' => '15 - 17 Oktober 2026',
             'event_location' => 'Buperta Utama PMI Kabupaten',
             'event_location_address' => 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-            'event_map_embed' => 'https://maps.google.com/maps?q=Markas+PMI+Kabupaten+Pemalang&t=&z=15&ie=UTF8&iwloc=&output=embed',
+            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
             'event_map_url' => 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
             'contact_phone' => '(021) 555-PMR-2026',
             'contact_email' => 'sekretariat@jumbara-pmi.or.id',

@@ -341,17 +341,35 @@ ${rows.map((row, idx) => `
   },
 
   sanitizeMapEmbedUrl(url) {
+    const defaultOsm = 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
     if (!url || typeof url !== 'string') {
-      return 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+      return defaultOsm;
     }
     let clean = url.trim();
     if (clean.includes('<iframe')) {
       const match = clean.match(/src=["']([^"']+)["']/i);
       if (match && match[1]) clean = match[1];
     }
-    if (clean.includes('maps.google.com/maps') && clean.includes('output=embed')) {
-      return 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+
+    // Tangani link Google Maps yang diblokir oleh header SAMEORIGIN (refused to connect):
+    // Format yang refused to connect jika di-embed dalam iframe:
+    // 1. maps.google.com/maps?...
+    // 2. www.google.com/maps?...
+    // 3. google.com/maps/place/...
+    // 4. goo.gl / maps.app.goo.gl
+    // 5. Sembarang URL Google Maps selain format resmi /maps/embed?pb=
+    const isGoogle = clean.includes('google.com') || clean.includes('goo.gl');
+    if (isGoogle) {
+      const isOfficialEmbed = clean.includes('/maps/embed');
+      if (!isOfficialEmbed || clean.includes('output=embed') || clean.includes('iwloc=') || clean.includes('q=')) {
+        return defaultOsm;
+      }
     }
+
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+      return defaultOsm;
+    }
+
     return clean;
   }
 };
