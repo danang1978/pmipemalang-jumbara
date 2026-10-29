@@ -1299,11 +1299,16 @@ $settings = getAppSettings();
   <!-- JavaScript Scripts -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
   <?php
+    $appJsPath = __DIR__ . '/../frontend/js/app.js';
+    $appBackupPath = __DIR__ . '/../frontend/js/app.backup.js';
+    if (file_exists($appJsPath) && filesize($appJsPath) === 0 && file_exists($appBackupPath) && filesize($appBackupPath) > 0) {
+        @copy($appBackupPath, $appJsPath);
+    }
     $jsQrVer = file_exists(__DIR__ . '/../frontend/js/qrcode.min.js') ? filemtime(__DIR__ . '/../frontend/js/qrcode.min.js') : '2.0.0';
     $jsIconsVer = file_exists(__DIR__ . '/../frontend/js/icons.js') ? filemtime(__DIR__ . '/../frontend/js/icons.js') : '2.0.0';
     $jsApiVer = file_exists(__DIR__ . '/../frontend/js/api.js') ? filemtime(__DIR__ . '/../frontend/js/api.js') : '2.0.0';
     $jsUtilsVer = file_exists(__DIR__ . '/../frontend/js/utils.js') ? filemtime(__DIR__ . '/../frontend/js/utils.js') : '2.0.0';
-    $jsAppVer = file_exists(__DIR__ . '/../frontend/js/app.js') ? filemtime(__DIR__ . '/../frontend/js/app.js') : '2.0.0';
+    $jsAppVer = file_exists($appJsPath) ? filemtime($appJsPath) : '2.0.0';
   ?>
   <script src="<?php echo $baseUrl; ?>frontend/js/qrcode.min.js?v=<?php echo $jsQrVer; ?>"></script>
   <script src="<?php echo $baseUrl; ?>frontend/js/icons.js?v=<?php echo $jsIconsVer; ?>"></script>
