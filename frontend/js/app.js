@@ -725,11 +725,11 @@ const App = {
         <div class="landing-section-inner">
           <div class="sec-header-modern">
             <div class="sec-header-left">
-              <span class="sec-kicker sec-kicker-gold"><i class="fa-solid fa-trophy"></i> LEADERBOARD</span>
+              <span class="sec-kicker sec-kicker-gold"><i class="fa-solid fa-trophy"></i> LEADERBOARD JUMBARA</span>
               <h2 class="sec-title">Klasemen Perolehan Medali</h2>
             </div>
             <div class="sec-header-right">
-              <span class="sec-meta-badge"><i class="fa-solid fa-medal"></i> Juara Umum Kontingen Jumbara</span>
+              <span class="sec-meta-badge"><i class="fa-solid fa-medal"></i> Juara Umum PMR (Mula • Madya • Wira)</span>
             </div>
           </div>
           <div id="publicStandingsList">
@@ -738,20 +738,20 @@ const App = {
         </div>
       </section>
 
-      <!-- SECTION 5: DAFTAR KONTINGEN UNIT -->
+      <!-- SECTION 5: DAFTAR KONTINGEN PMR -->
       <section class="landing-section section-alt" id="unit">
         <div class="landing-section-inner">
           <div class="sec-header-modern">
             <div class="sec-header-left">
-              <span class="sec-kicker sec-kicker-green"><i class="fa-solid fa-layer-group"></i> KONTINGEN JUMBARA</span>
-              <h2 class="sec-title">Daftar Kontingen & Unit</h2>
+              <span class="sec-kicker sec-kicker-green"><i class="fa-solid fa-layer-group"></i> KONTINGEN SEKOLAH</span>
+              <h2 class="sec-title">Daftar Kontingen PMR</h2>
             </div>
             <div class="sec-header-right">
-              <span class="sec-meta-badge"><i class="fa-solid fa-users"></i> PMR • KSR • TSR • PMI Kab</span>
+              <span class="sec-meta-badge"><i class="fa-solid fa-school"></i> PMR Mula • PMR Madya • PMR Wira</span>
             </div>
           </div>
           <div id="publicUnitsList">
-            <p style="color: var(--text-muted); text-align: center;">Memuat daftar unit...</p>
+            <p style="color: var(--text-muted); text-align: center;">Memuat daftar kontingen...</p>
           </div>
         </div>
       </section>
@@ -923,7 +923,8 @@ const App = {
       const units = await API.getUnits();
       const events = await API.getEvents();
       const announcements = await API.getAnnouncements();
-      const standings = await API.getStandings();
+      const rawStandings = await API.getStandings();
+      const standings = (rawStandings || []).filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name || s.name }));
       const participantsRes = await API.getParticipants({ limit: 1 });
       const totalParticipants = participantsRes.pagination ? participantsRes.pagination.total : (Array.isArray(participantsRes) ? participantsRes.length : 0);
 
@@ -1092,19 +1093,21 @@ const App = {
     this.activePublicStandingsCategory = activeCategory;
     this.publicStandingsSearchKeyword = searchKeyword;
 
-    const allStandings = this.publicStandings || [];
+    const rawStandings = this.publicStandings || [];
 
-    // Kelompokkan per kategori unit menggunakan helper Utils.getUnitCategory
-    const pmrStandings = allStandings.filter(s => Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name }) === 'PMR');
-    const ksrStandings = allStandings.filter(s => Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name }) === 'KSR');
-    const tsrStandings = allStandings.filter(s => Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name }) === 'TSR');
-    const pmiKabStandings = allStandings.filter(s => Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name }) === 'PMI Kab');
+    // HANYA Kontingen PMR (Unit Sekolah): Mula, Madya, Wira.
+    // KSR, TSR, PMI Kab / Markas BUKAN kontingen peserta lomba Jumbara.
+    const allStandings = rawStandings.filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name }));
+
+    // Kelompokkan kontingen sekolah PMR berdasarkan jenjang resmi
+    const wiraStandings = allStandings.filter(s => (s.level_category || '').toLowerCase().includes('wira'));
+    const madyaStandings = allStandings.filter(s => (s.level_category || '').toLowerCase().includes('madya'));
+    const mulaStandings = allStandings.filter(s => (s.level_category || '').toLowerCase().includes('mula'));
 
     let filtered = allStandings;
-    if (activeCategory === 'PMR') filtered = pmrStandings;
-    else if (activeCategory === 'KSR') filtered = ksrStandings;
-    else if (activeCategory === 'TSR') filtered = tsrStandings;
-    else if (activeCategory === 'PMI Kab') filtered = pmiKabStandings;
+    if (activeCategory === 'Wira') filtered = wiraStandings;
+    else if (activeCategory === 'Madya') filtered = madyaStandings;
+    else if (activeCategory === 'Mula') filtered = mulaStandings;
 
     // Filter search keyword jika ada
     const term = (searchKeyword || '').trim().toLowerCase();
@@ -1115,51 +1118,44 @@ const App = {
       );
     }
 
-    // Tabs filter kategori klasemen
+    // Tabs filter kategori jenjang PMR
     const tabsHtml = `
       <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.15rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             <button type="button" 
               onclick="App.filterPublicStandings('ALL')" 
-              style="cursor: pointer; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid ${activeCategory === 'ALL' ? '#0f172a' : '#cbd5e1'}; background: ${activeCategory === 'ALL' ? '#0f172a' : '#ffffff'}; color: ${activeCategory === 'ALL' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
-              <i class="fa-solid fa-trophy"></i> Semua Kontingen
+              style="cursor: pointer; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'ALL' ? '#0f172a' : '#cbd5e1'}; background: ${activeCategory === 'ALL' ? '#0f172a' : '#ffffff'}; color: ${activeCategory === 'ALL' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
+              <i class="fa-solid fa-trophy" style="color: #eab308;"></i> Semua Tingkat PMR
               <span style="background: ${activeCategory === 'ALL' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'ALL' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${allStandings.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicStandings('PMR')" 
-              style="cursor: pointer; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMR' ? 'var(--primary)' : '#cbd5e1'}; background: ${activeCategory === 'PMR' ? 'var(--primary)' : '#ffffff'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
-              <i class="fa-solid fa-school"></i> Unit Sekolah (PMR)
-              <span style="background: ${activeCategory === 'PMR' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${pmrStandings.length}</span>
+              onclick="App.filterPublicStandings('Wira')" 
+              style="cursor: pointer; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Wira' ? '#dc2626' : '#cbd5e1'}; background: ${activeCategory === 'Wira' ? '#dc2626' : '#ffffff'}; color: ${activeCategory === 'Wira' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
+              <i class="fa-solid fa-graduation-cap"></i> PMR Wira (SMA/SMK/MA)
+              <span style="background: ${activeCategory === 'Wira' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'Wira' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${wiraStandings.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicStandings('KSR')" 
-              style="cursor: pointer; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid ${activeCategory === 'KSR' ? '#dc2626' : '#cbd5e1'}; background: ${activeCategory === 'KSR' ? '#dc2626' : '#ffffff'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
-              <i class="fa-solid fa-hand-holding-medical"></i> KSR
-              <span style="background: ${activeCategory === 'KSR' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${ksrStandings.length}</span>
+              onclick="App.filterPublicStandings('Madya')" 
+              style="cursor: pointer; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Madya' ? '#0284c7' : '#cbd5e1'}; background: ${activeCategory === 'Madya' ? '#0284c7' : '#ffffff'}; color: ${activeCategory === 'Madya' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
+              <i class="fa-solid fa-school"></i> PMR Madya (SMP/MTs)
+              <span style="background: ${activeCategory === 'Madya' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'Madya' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${madyaStandings.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicStandings('TSR')" 
-              style="cursor: pointer; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid ${activeCategory === 'TSR' ? '#ea580c' : '#cbd5e1'}; background: ${activeCategory === 'TSR' ? '#ea580c' : '#ffffff'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
-              <i class="fa-solid fa-heart-pulse"></i> TSR
-              <span style="background: ${activeCategory === 'TSR' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${tsrStandings.length}</span>
-            </button>
-
-            <button type="button" 
-              onclick="App.filterPublicStandings('PMI Kab')" 
-              style="cursor: pointer; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#cbd5e1'}; background: ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#ffffff'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
-              <i class="fa-solid fa-building-flag"></i> PMI Kab
-              <span style="background: ${activeCategory === 'PMI Kab' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${pmiKabStandings.length}</span>
+              onclick="App.filterPublicStandings('Mula')" 
+              style="cursor: pointer; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Mula' ? '#16a34a' : '#cbd5e1'}; background: ${activeCategory === 'Mula' ? '#16a34a' : '#ffffff'}; color: ${activeCategory === 'Mula' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
+              <i class="fa-solid fa-child"></i> PMR Mula (SD/MI)
+              <span style="background: ${activeCategory === 'Mula' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${activeCategory === 'Mula' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${mulaStandings.length}</span>
             </button>
           </div>
 
           <div style="position: relative; min-width: 220px; flex-grow: 1; max-width: 320px;">
             <input 
               type="text" 
-              placeholder="Cari kontingen di klasemen..." 
+              placeholder="Cari kontingen sekolah di klasemen..." 
               value="${Utils.escapeHtml(searchKeyword)}"
               oninput="App.handlePublicStandingsSearch(this.value)"
               style="width: 100%; box-sizing: border-box; padding: 0.45rem 0.85rem 0.45rem 2.2rem; border-radius: 999px; border: 1px solid #cbd5e1; font-size: 0.82rem; outline: none;">
@@ -1173,12 +1169,17 @@ const App = {
       stContainer.innerHTML = tabsHtml + `
         <div style="text-align: center; padding: 2.5rem 1rem; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
           <i class="fa-solid fa-award" style="font-size: 2.2rem; color: #cbd5e1; margin-bottom: 0.75rem;"></i>
-          <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 0.25rem;">Tidak ada kontingen ditemukan pada kategori ini.</p>
-          <span style="font-size: 0.82rem; color: #94a3b8;">Coba ganti pilihan kategori atau bersihkan kata kunci pencarian.</span>
+          <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 0.25rem;">Tidak ada kontingen PMR ditemukan pada kategori ini.</p>
+          <span style="font-size: 0.82rem; color: #94a3b8;">Coba pilih tingkat PMR lain atau bersihkan kata kunci pencarian.</span>
         </div>
       `;
       return;
     }
+
+    let rankCategoryLabel = 'KLASEMEN PMR';
+    if (activeCategory === 'Wira') rankCategoryLabel = 'PMR WIRA';
+    else if (activeCategory === 'Madya') rankCategoryLabel = 'PMR MADYA';
+    else if (activeCategory === 'Mula') rankCategoryLabel = 'PMR MULA';
 
     const top3 = filtered.slice(0, 3);
     const podiumHtml = top3.length ? `
@@ -1188,9 +1189,9 @@ const App = {
             <div class="podium-badge podium-gold-badge">🥇</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[0].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #b45309; font-weight: 700; margin-bottom: 0.25rem;">
-              <span class="badge" style="background: rgba(217,119,6,0.15); color: #b45309; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[0].level_category || 'Kontingen')}</span>
+              <span class="badge" style="background: rgba(217,119,6,0.15); color: #b45309; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[0].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #d97706; font-weight: 800; margin-bottom: 0.5rem;">JUARA I KLASEMEN</div>
+            <div style="font-size: 0.8rem; color: #d97706; font-weight: 800; margin-bottom: 0.5rem;">JUARA I ${rankCategoryLabel}</div>
             <div class="podium-scores">
               <span class="medal-badge medal-emas">🥇 ${top3[0].emas || 0}</span>
               <span class="medal-badge medal-perak">🥈 ${top3[0].perak || 0}</span>
@@ -1207,9 +1208,9 @@ const App = {
             <div class="podium-badge podium-silver-badge">🥈</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[1].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #475569; font-weight: 700; margin-bottom: 0.25rem;">
-              <span class="badge" style="background: rgba(100,116,139,0.15); color: #475569; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[1].level_category || 'Kontingen')}</span>
+              <span class="badge" style="background: rgba(100,116,139,0.15); color: #475569; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[1].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #64748b; font-weight: 800; margin-bottom: 0.5rem;">JUARA II KLASEMEN</div>
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 800; margin-bottom: 0.5rem;">JUARA II ${rankCategoryLabel}</div>
             <div class="podium-scores">
               <span class="medal-badge medal-emas">🥇 ${top3[1].emas || 0}</span>
               <span class="medal-badge medal-perak">🥈 ${top3[1].perak || 0}</span>
@@ -1226,9 +1227,9 @@ const App = {
             <div class="podium-badge podium-bronze-badge">🥉</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[2].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #9a3412; font-weight: 700; margin-bottom: 0.25rem;">
-              <span class="badge" style="background: rgba(234,88,12,0.15); color: #9a3412; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[2].level_category || 'Kontingen')}</span>
+              <span class="badge" style="background: rgba(234,88,12,0.15); color: #9a3412; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[2].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #b45309; font-weight: 800; margin-bottom: 0.5rem;">JUARA III KLASEMEN</div>
+            <div style="font-size: 0.8rem; color: #b45309; font-weight: 800; margin-bottom: 0.5rem;">JUARA III ${rankCategoryLabel}</div>
             <div class="podium-scores">
               <span class="medal-badge medal-emas">🥇 ${top3[2].emas || 0}</span>
               <span class="medal-badge medal-perak">🥈 ${top3[2].perak || 0}</span>
@@ -1243,12 +1244,10 @@ const App = {
     ` : '';
 
     const tableRows = filtered.map((s, idx) => {
-      const uCat = Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name });
-      let badgeStyle = 'background: #f1f5f9; color: #475569;';
-      if (uCat === 'PMR') badgeStyle = 'background: #fee2e2; color: #991b1b;';
-      else if (uCat === 'KSR') badgeStyle = 'background: #ffedd5; color: #9a3412;';
-      else if (uCat === 'TSR') badgeStyle = 'background: #fef3c7; color: #92400e;';
-      else if (uCat === 'PMI Kab') badgeStyle = 'background: #ede9fe; color: #5b21b6;';
+      const lvl = (s.level_category || '').toLowerCase();
+      let badgeStyle = 'background: #fee2e2; color: #991b1b;';
+      if (lvl.includes('madya')) badgeStyle = 'background: #e0f2fe; color: #0369a1;';
+      else if (lvl.includes('mula')) badgeStyle = 'background: #dcfce7; color: #15803d;';
 
       const totalMedal = Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0);
 
@@ -1257,12 +1256,11 @@ const App = {
           <td><strong style="color: ${idx < 3 ? '#b45309' : '#0f172a'};">#${idx + 1}</strong></td>
           <td>
             <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">${Utils.escapeHtml(s.unit_name)}</div>
-            <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-              <span class="badge" style="${badgeStyle} font-size: 0.7rem; padding: 1px 6px; border-radius: 4px;">${Utils.escapeHtml(s.level_category || uCat)}</span>
-            </div>
           </td>
           <td>
-            <span class="badge" style="${badgeStyle} font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; font-weight: 700;">${uCat}</span>
+            <span class="badge" style="${badgeStyle} font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
+              ${Utils.escapeHtml(s.level_category || 'PMR')}
+            </span>
           </td>
           <td><span class="medal-badge medal-emas">🥇 ${s.emas || 0}</span></td>
           <td><span class="medal-badge medal-perak">🥈 ${s.perak || 0}</span></td>
@@ -1282,8 +1280,8 @@ const App = {
           <thead>
             <tr>
               <th style="width: 70px;">Rank</th>
-              <th>Kontingen / Unit</th>
-              <th style="width: 120px;">Kategori</th>
+              <th>Kontingen Unit Sekolah (PMR)</th>
+              <th style="width: 140px;">Tingkat PMR</th>
               <th style="width: 90px;">🥇 Emas</th>
               <th style="width: 90px;">🥈 Perak</th>
               <th style="width: 90px;">🥉 Perunggu</th>
@@ -1301,12 +1299,10 @@ const App = {
     const standingsMobileCards = `
       <div class="standings-mobile-cards">
         ${filtered.map((s, idx) => {
-          const uCat = Utils.getUnitCategory({ level_category: s.level_category, name: s.unit_name });
-          let badgeStyle = 'background: #f1f5f9; color: #475569;';
-          if (uCat === 'PMR') badgeStyle = 'background: #fee2e2; color: #991b1b;';
-          else if (uCat === 'KSR') badgeStyle = 'background: #ffedd5; color: #9a3412;';
-          else if (uCat === 'TSR') badgeStyle = 'background: #fef3c7; color: #92400e;';
-          else if (uCat === 'PMI Kab') badgeStyle = 'background: #ede9fe; color: #5b21b6;';
+          const lvl = (s.level_category || '').toLowerCase();
+          let badgeStyle = 'background: #fee2e2; color: #991b1b;';
+          if (lvl.includes('madya')) badgeStyle = 'background: #e0f2fe; color: #0369a1;';
+          else if (lvl.includes('mula')) badgeStyle = 'background: #dcfce7; color: #15803d;';
 
           const totalMedal = Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0);
 
@@ -1316,7 +1312,7 @@ const App = {
                 <div>
                   <strong style="font-size: 0.95rem; color: var(--secondary);">#${idx + 1} ${Utils.escapeHtml(s.unit_name)}</strong>
                   <div style="margin-top: 2px;">
-                    <span class="badge" style="${badgeStyle} font-size: 0.7rem; padding: 1px 6px;">${Utils.escapeHtml(s.level_category || uCat)}</span>
+                    <span class="badge" style="${badgeStyle} font-size: 0.7rem; padding: 1px 6px;">${Utils.escapeHtml(s.level_category || 'PMR')}</span>
                   </div>
                 </div>
                 <div style="text-align: right; flex-shrink: 0;">
@@ -1360,17 +1356,19 @@ const App = {
     this.publicUnitSearchKeyword = searchKeyword;
 
     const units = this.publicUnits;
-    const pmrUnits = units.filter(u => Utils.getUnitCategory(u) === 'PMR');
-    const ksrUnits = units.filter(u => Utils.getUnitCategory(u) === 'KSR');
-    const tsrUnits = units.filter(u => Utils.getUnitCategory(u) === 'TSR');
-    const pmiKabUnits = units.filter(u => Utils.getUnitCategory(u) === 'PMI Kab');
+    const pmrUnits = units.filter(u => Utils.isPmrUnit(u));
+    const wiraUnits = pmrUnits.filter(u => (u.level_category || '').toLowerCase().includes('wira'));
+    const madyaUnits = pmrUnits.filter(u => (u.level_category || '').toLowerCase().includes('madya'));
+    const mulaUnits = pmrUnits.filter(u => (u.level_category || '').toLowerCase().includes('mula'));
+    const relawanUnits = units.filter(u => !Utils.isPmrUnit(u));
 
     // Filter based on active category tab
-    let filtered = units;
-    if (activeCategory === 'PMR') filtered = pmrUnits;
-    else if (activeCategory === 'KSR') filtered = ksrUnits;
-    else if (activeCategory === 'TSR') filtered = tsrUnits;
-    else if (activeCategory === 'PMI Kab') filtered = pmiKabUnits;
+    let filtered = pmrUnits;
+    if (activeCategory === 'PMR' || activeCategory === 'ALL') filtered = pmrUnits;
+    else if (activeCategory === 'Wira') filtered = wiraUnits;
+    else if (activeCategory === 'Madya') filtered = madyaUnits;
+    else if (activeCategory === 'Mula') filtered = mulaUnits;
+    else if (activeCategory === 'RELAWAN' || activeCategory === 'KSR' || activeCategory === 'TSR') filtered = relawanUnits;
 
     // Filter based on search term
     const term = (searchKeyword || '').trim().toLowerCase();
@@ -1385,46 +1383,34 @@ const App = {
     }
 
     // Dynamic headers based on category
-    let categoryTitle = 'Unit Sekolah (PMR)';
+    let categoryTitle = 'Semua Kontingen PMR';
     let categoryIcon = 'fa-school';
-    let categoryDesc = 'Daftar kontingen PMR tingkat Mula (SD), Madya (SMP), dan Wira (SMA)';
+    let categoryDesc = 'Daftar seluruh kontingen PMR tingkat Mula (SD), Madya (SMP), dan Wira (SMA)';
     let col2Title = 'Nama Unit Sekolah';
     let col3Title = 'Tingkat PMR';
     let col4Title = 'Pembina PMR';
     let col6Title = 'Alamat Sekolah';
 
-    if (activeCategory === 'KSR') {
-      categoryTitle = 'Korps Sukarela (KSR)';
+    if (activeCategory === 'Wira') {
+      categoryTitle = 'Kontingen PMR Wira';
+      categoryIcon = 'fa-graduation-cap';
+      categoryDesc = 'Daftar kontingen PMR tingkat SMA / SMK / MA se-Kabupaten';
+    } else if (activeCategory === 'Madya') {
+      categoryTitle = 'Kontingen PMR Madya';
+      categoryIcon = 'fa-school';
+      categoryDesc = 'Daftar kontingen PMR tingkat SMP / MTs se-Kabupaten';
+    } else if (activeCategory === 'Mula') {
+      categoryTitle = 'Kontingen PMR Mula';
+      categoryIcon = 'fa-child';
+      categoryDesc = 'Daftar kontingen PMR tingkat SD / MI se-Kabupaten';
+    } else if (activeCategory === 'RELAWAN' || activeCategory === 'KSR' || activeCategory === 'TSR') {
+      categoryTitle = 'Fasilitator & Relawan PMI (KSR / TSR / Markas)';
       categoryIcon = 'fa-hand-holding-medical';
-      categoryDesc = 'Daftar unit KSR (Korps Sukarela PMI) terdaftar';
-      col2Title = 'Nama Unit KSR';
-      col3Title = 'Kategori';
-      col4Title = 'Penanggung Jawab / Pembina';
-      col6Title = 'Markas / Pangkalan';
-    } else if (activeCategory === 'TSR') {
-      categoryTitle = 'Tenaga Sukarela (TSR)';
-      categoryIcon = 'fa-heart-pulse';
-      categoryDesc = 'Daftar unit TSR (Tenaga Sukarela PMI) terdaftar';
-      col2Title = 'Nama Unit TSR';
-      col3Title = 'Kategori';
-      col4Title = 'Koordinator / Pembina';
-      col6Title = 'Lokasi / Pangkalan';
-    } else if (activeCategory === 'PMI Kab') {
-      categoryTitle = 'PMI Kabupaten / Markas';
-      categoryIcon = 'fa-building-flag';
-      categoryDesc = 'Daftar Markas dan Staf PMI Kabupaten';
-      col2Title = 'Nama Unit / Markas';
-      col3Title = 'Kategori';
-      col4Title = 'Pimpinan / Kepala Markas';
-      col6Title = 'Alamat Markas';
-    } else if (activeCategory === 'ALL') {
-      categoryTitle = 'Semua Kontingen & Unit';
-      categoryIcon = 'fa-globe';
-      categoryDesc = 'Seluruh kontingen PMR, KSR, TSR, dan PMI Kabupaten';
-      col2Title = 'Nama Unit / Kontingen';
-      col3Title = 'Kategori / Tingkat';
-      col4Title = 'Pembina / Pimpinan';
-      col6Title = 'Alamat / Pangkalan';
+      categoryDesc = 'Daftar pangkalan KSR, TSR, dan Markas pendukung kegiatan (Non-Kontingen)';
+      col2Title = 'Nama Pangkalan / Unit';
+      col3Title = 'Kategori Unsur';
+      col4Title = 'Penanggung Jawab';
+      col6Title = 'Alamat / Markas';
     }
 
     const tabsHtml = `
@@ -1434,36 +1420,38 @@ const App = {
             <button type="button" 
               onclick="App.filterPublicUnits('PMR')" 
               style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMR' ? 'var(--primary)' : '#cbd5e1'}; background: ${activeCategory === 'PMR' ? 'var(--primary)' : '#ffffff'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'PMR' ? '0 3px 10px rgba(201,42,42,0.25)' : 'none'};">
-              <i class="fa-solid fa-school"></i> Unit Sekolah (PMR)
+              <i class="fa-solid fa-school"></i> Semua PMR
               <span style="background: ${activeCategory === 'PMR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'PMR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${pmrUnits.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicUnits('KSR')" 
-              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'KSR' ? '#dc2626' : '#cbd5e1'}; background: ${activeCategory === 'KSR' ? '#dc2626' : '#ffffff'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'KSR' ? '0 3px 10px rgba(220,38,38,0.25)' : 'none'};">
-              <i class="fa-solid fa-hand-holding-medical"></i> KSR
-              <span style="background: ${activeCategory === 'KSR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'KSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${ksrUnits.length}</span>
+              onclick="App.filterPublicUnits('Wira')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Wira' ? '#dc2626' : '#cbd5e1'}; background: ${activeCategory === 'Wira' ? '#dc2626' : '#ffffff'}; color: ${activeCategory === 'Wira' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'Wira' ? '0 3px 10px rgba(220,38,38,0.25)' : 'none'};">
+              <i class="fa-solid fa-graduation-cap"></i> PMR Wira
+              <span style="background: ${activeCategory === 'Wira' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'Wira' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${wiraUnits.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicUnits('TSR')" 
-              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'TSR' ? '#ea580c' : '#cbd5e1'}; background: ${activeCategory === 'TSR' ? '#ea580c' : '#ffffff'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'TSR' ? '0 3px 10px rgba(234,88,12,0.25)' : 'none'};">
-              <i class="fa-solid fa-heart-pulse"></i> TSR
-              <span style="background: ${activeCategory === 'TSR' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'TSR' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${tsrUnits.length}</span>
+              onclick="App.filterPublicUnits('Madya')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Madya' ? '#0284c7' : '#cbd5e1'}; background: ${activeCategory === 'Madya' ? '#0284c7' : '#ffffff'}; color: ${activeCategory === 'Madya' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'Madya' ? '0 3px 10px rgba(2,132,199,0.25)' : 'none'};">
+              <i class="fa-solid fa-school"></i> PMR Madya
+              <span style="background: ${activeCategory === 'Madya' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'Madya' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${madyaUnits.length}</span>
             </button>
 
             <button type="button" 
-              onclick="App.filterPublicUnits('PMI Kab')" 
-              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#cbd5e1'}; background: ${activeCategory === 'PMI Kab' ? '#7c3aed' : '#ffffff'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'PMI Kab' ? '0 3px 10px rgba(124,58,237,0.25)' : 'none'};">
-              <i class="fa-solid fa-building-flag"></i> PMI Kab
-              <span style="background: ${activeCategory === 'PMI Kab' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'PMI Kab' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${pmiKabUnits.length}</span>
+              onclick="App.filterPublicUnits('Mula')" 
+              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'Mula' ? '#16a34a' : '#cbd5e1'}; background: ${activeCategory === 'Mula' ? '#16a34a' : '#ffffff'}; color: ${activeCategory === 'Mula' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'Mula' ? '0 3px 10px rgba(22,163,74,0.25)' : 'none'};">
+              <i class="fa-solid fa-child"></i> PMR Mula
+              <span style="background: ${activeCategory === 'Mula' ? 'rgba(255,255,255,0.3)' : '#f1f5f9'}; color: ${activeCategory === 'Mula' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.75rem;">${mulaUnits.length}</span>
             </button>
 
-            <button type="button" 
-              onclick="App.filterPublicUnits('ALL')" 
-              style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'ALL' ? '#0f172a' : '#cbd5e1'}; background: ${activeCategory === 'ALL' ? '#0f172a' : '#ffffff'}; color: ${activeCategory === 'ALL' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'ALL' ? '0 3px 10px rgba(15,23,42,0.25)' : 'none'};">
-              <i class="fa-solid fa-globe"></i> Semua (${units.length})
-            </button>
+            ${relawanUnits.length ? `
+              <button type="button" 
+                onclick="App.filterPublicUnits('RELAWAN')" 
+                style="cursor: pointer; padding: 0.5rem 0.95rem; border-radius: 999px; border: 1px solid ${activeCategory === 'RELAWAN' ? '#475569' : '#cbd5e1'}; background: ${activeCategory === 'RELAWAN' ? '#475569' : '#ffffff'}; color: ${activeCategory === 'RELAWAN' ? '#ffffff' : '#334155'}; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s; box-shadow: ${activeCategory === 'RELAWAN' ? '0 3px 10px rgba(71,85,105,0.25)' : 'none'};">
+                <i class="fa-solid fa-hand-holding-medical"></i> Fasilitator (${relawanUnits.length})
+              </button>
+            ` : ''}
           </div>
         </div>
 
@@ -2958,7 +2946,8 @@ const App = {
     `;
 
     try {
-      const standings = await API.getStandings();
+      const rawStandings = await API.getStandings();
+      const standings = (rawStandings || []).filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name || s.name }));
       if (!standings || !standings.length) {
         container.innerHTML = `
           <div style="text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem;">
@@ -7978,7 +7967,8 @@ const App = {
     const scoresContainer = document.getElementById('scoresLogTableContainer');
 
     try {
-      const standings = await API.getStandings();
+      const rawStandings = await API.getStandings();
+      const standings = (rawStandings || []).filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name || s.name }));
       const scores = await API.getScores();
       this.cachedScores = scores || [];
 
@@ -14655,7 +14645,8 @@ const App = {
 
   async exportStandingsXLS() {
     try {
-      const standings = await API.getStandings();
+      const rawStandings = await API.getStandings();
+      const standings = (rawStandings || []).filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name || s.name }));
       const rows = (Array.isArray(standings) ? standings : []).map((s, idx) => ({
         'Peringkat': idx + 1,
         'Nama Unit Kontingen': s.unit_name || '-',

@@ -104,35 +104,26 @@ if ($method === 'GET' && $action === 'lookup_target') {
 }
 
 // --------------------------------------------------------------------------
-// 4. GET: Klasemen Juara Umum (Mencakup Seluruh Unit: Sekolah PMR, KSR, TSR, PMI Kab, dll.)
+// 4. GET: Klasemen Juara Umum PMR (Hanya Kontingen Unit Sekolah: Mula, Madya, Wira)
+// Catatan: KSR, TSR, PMI Kab / Markas BUKAN kontingen peserta lomba Jumbara.
 // --------------------------------------------------------------------------
 if ($method === 'GET' && $action === 'standings') {
-    $category = trim($_GET['category'] ?? '');
-    $level = trim($_GET['level'] ?? '');
+    $level = trim($_GET['level'] ?? $_GET['category'] ?? '');
 
-    $where = [];
+    // Default filter: Hanya kontingen PMR unit sekolah, kecualikan non-kontingen (KSR, TSR, PMI Kab, dll.)
+    $where = [
+        "(un.level_category LIKE '%Wira%' OR un.level_category LIKE '%Madya%' OR un.level_category LIKE '%Mula%' OR un.level_category LIKE '%PMR%')",
+        "(un.name NOT LIKE '%KSR%' AND un.name NOT LIKE '%TSR%' AND un.name NOT LIKE '%PMI Kab%' AND un.name NOT LIKE '%MARKAS%')",
+        "(un.level_category NOT LIKE '%KSR%' AND un.level_category NOT LIKE '%TSR%' AND un.level_category NOT LIKE '%PMI%')"
+    ];
     $params = [];
 
-    if ($category !== '') {
-        if (strtoupper($category) === 'PMR') {
-            $where[] = "(un.level_category LIKE '%Wira%' OR un.level_category LIKE '%Madya%' OR un.level_category LIKE '%Mula%')";
-        } else if (strtoupper($category) === 'NON_PMR' || strtoupper($category) === 'NON_SEKOLAH') {
-            $where[] = "(un.level_category NOT LIKE '%Wira%' AND un.level_category NOT LIKE '%Madya%' AND un.level_category NOT LIKE '%Mula%')";
-        } else if (strtoupper($category) === 'KSR') {
-            $where[] = "(un.level_category LIKE '%KSR%' OR un.name LIKE '%KSR%')";
-        } else if (strtoupper($category) === 'TSR') {
-            $where[] = "(un.level_category LIKE '%TSR%' OR un.name LIKE '%TSR%')";
-        } else if (strtoupper($category) === 'PMI KAB' || strtoupper($category) === 'PMI_KAB') {
-            $where[] = "(un.level_category LIKE '%PMI Kab%' OR un.name LIKE '%PMI%')";
-        }
-    }
-
-    if ($level !== '') {
+    if ($level !== '' && strtoupper($level) !== 'ALL' && strtoupper($level) !== 'PMR') {
         $where[] = "un.level_category LIKE ?";
         $params[] = '%' . $level . '%';
     }
 
-    $whereSql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+    $whereSql = 'WHERE ' . implode(' AND ', $where);
 
     $sql = "
         SELECT 

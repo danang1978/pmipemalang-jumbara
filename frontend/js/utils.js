@@ -323,11 +323,23 @@ ${rows.map((row, idx) => `
     return `${prefix}-••••-${suffix}`;
   },
 
+  // Check if a unit is an official PMR School Contingent (not KSR / TSR / PMI Headquarters)
+  isPmrUnit(u) {
+    if (!u) return false;
+    const cat = (u.level_category || '').toUpperCase().trim();
+    const name = (u.name || u.unit_name || '').toUpperCase().trim();
+    if (cat.includes('KSR') || cat.includes('TSR') || cat.includes('PMI KAB') || cat.includes('MARKAS') ||
+        name.includes('KSR') || name.includes('TSR') || name.startsWith('PMI ') || name.includes('MARKAS PMI') || name.includes('PMI KABUPATEN')) {
+      return false;
+    }
+    return true;
+  },
+
   // Identify unit category: 'PMR', 'KSR', 'TSR', or 'PMI Kab'
   getUnitCategory(u) {
     if (!u) return 'PMR';
     const cat = (u.level_category || '').toUpperCase().trim();
-    const name = (u.name || '').toUpperCase().trim();
+    const name = (u.name || u.unit_name || '').toUpperCase().trim();
     if (cat === 'KSR' || cat.includes('KSR') || name.startsWith('KSR') || name.includes(' KSR ') || name.includes('KSR-') || name.includes('KORPS SUKARELA')) {
       return 'KSR';
     }
