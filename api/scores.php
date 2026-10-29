@@ -104,9 +104,36 @@ if ($method === 'GET' && $action === 'lookup_target') {
 }
 
 // --------------------------------------------------------------------------
-// 4. GET: Klasemen Juara Umum
+// 4. GET: Klasemen Juara Umum (Mencakup Seluruh Unit: Sekolah PMR, KSR, TSR, PMI Kab, dll.)
 // --------------------------------------------------------------------------
 if ($method === 'GET' && $action === 'standings') {
+    $category = trim($_GET['category'] ?? '');
+    $level = trim($_GET['level'] ?? '');
+
+    $where = [];
+    $params = [];
+
+    if ($category !== '') {
+        if (strtoupper($category) === 'PMR') {
+            $where[] = "(un.level_category LIKE '%Wira%' OR un.level_category LIKE '%Madya%' OR un.level_category LIKE '%Mula%')";
+        } else if (strtoupper($category) === 'NON_PMR' || strtoupper($category) === 'NON_SEKOLAH') {
+            $where[] = "(un.level_category NOT LIKE '%Wira%' AND un.level_category NOT LIKE '%Madya%' AND un.level_category NOT LIKE '%Mula%')";
+        } else if (strtoupper($category) === 'KSR') {
+            $where[] = "(un.level_category LIKE '%KSR%' OR un.name LIKE '%KSR%')";
+        } else if (strtoupper($category) === 'TSR') {
+            $where[] = "(un.level_category LIKE '%TSR%' OR un.name LIKE '%TSR%')";
+        } else if (strtoupper($category) === 'PMI KAB' || strtoupper($category) === 'PMI_KAB') {
+            $where[] = "(un.level_category LIKE '%PMI Kab%' OR un.name LIKE '%PMI%')";
+        }
+    }
+
+    if ($level !== '') {
+        $where[] = "un.level_category LIKE ?";
+        $params[] = '%' . $level . '%';
+    }
+
+    $whereSql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
     $sql = "
         SELECT 
             un.id AS unit_id,
@@ -115,13 +142,17 @@ if ($method === 'GET' && $action === 'standings') {
             SUM(CASE WHEN s.grade = 'Emas' THEN 1 ELSE 0 END) AS emas,
             SUM(CASE WHEN s.grade = 'Perak' THEN 1 ELSE 0 END) AS perak,
             SUM(CASE WHEN s.grade = 'Perunggu' THEN 1 ELSE 0 END) AS perunggu,
-            COUNT(s.id) AS total_lomba
+            COUNT(s.id) AS total_lomba,
+            COALESCE(ROUND(AVG(s.score_val), 1), 0) AS avg_score,
+            COALESCE(ROUND(SUM(s.score_val), 1), 0) AS total_score
         FROM units un
-        LEFT JOIN scores s ON un.id = s.unit_id
+        LEFT JOIN scores s ON (un.id = s.unit_id OR (s.unit_id IS NULL AND s.participant_id IN (SELECT id FROM participants WHERE unit_id = un.id)))
+        $whereSql
         GROUP BY un.id, un.name, un.level_category
-        ORDER BY emas DESC, perak DESC, perunggu DESC, total_lomba DESC
+        ORDER BY emas DESC, perak DESC, perunggu DESC, total_score DESC, avg_score DESC, un.name ASC
     ";
-    $stmt = $pdo->query($sql);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     jsonResponse($stmt->fetchAll());
 }
 

@@ -338,5 +338,20 @@ ${rows.map((row, idx) => `
       return 'PMI Kab';
     }
     return 'PMR';
+  },
+
+  sanitizeMapEmbedUrl(url) {
+    if (!url || typeof url !== 'string') {
+      return 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+    }
+    let clean = url.trim();
+    if (clean.includes('<iframe')) {
+      const match = clean.match(/src=["']([^"']+)["']/i);
+      if (match && match[1]) clean = match[1];
+    }
+    if (clean.includes('maps.google.com/maps') && clean.includes('output=embed')) {
+      return 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+    }
+    return clean;
   }
 };
