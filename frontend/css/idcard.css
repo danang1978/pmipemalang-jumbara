@@ -417,6 +417,131 @@
   height: 520px;
 }
 
+/* ==========================================================================
+   FORMAT FISIK PRESISI SEUKURAN KARTU ATM / CR80 (54 mm x 86 mm)
+   ========================================================================== */
+
+/* Frame Pembungkus Kartu ATM Fisik Presisi (54 mm x 86 mm, Corner Radius 3.18 mm) */
+.idcard-atm-frame {
+  width: 54mm !important;
+  height: 86mm !important;
+  max-width: 54mm !important;
+  max-height: 86mm !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  border-radius: 3.18mm !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  margin: 0 auto !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Reset wrapper di dalam frame ATM */
+.idcard-atm-frame .idcard-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block !important;
+  width: 54mm !important;
+  height: 86mm !important;
+  max-width: none !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Skala elemen dasar kartu (350 x 557.4px) secara presisi ke 54 x 86 mm (skala 0.583127) */
+.idcard-atm-frame .pmi-template-card {
+  width: 350px !important;
+  height: 557.4px !important;
+  min-height: 557.4px !important;
+  max-height: 557.4px !important;
+  transform: scale(0.583127) !important;
+  transform-origin: top left !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Item Kartu Lembar Cetak Kertas A4/F4 dengan Garis Potong (Cutting Guide) */
+.idcard-atm-sheet-item {
+  width: 54mm !important;
+  height: 86mm !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  display: inline-block !important;
+  vertical-align: top !important;
+  margin: 3mm !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* Garis putus-putus panduan potong gunting/cutter */
+.idcard-atm-sheet-item .cutting-guide {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  border: 0.5px dashed #94a3b8 !important;
+  border-radius: 3.18mm !important;
+  pointer-events: none !important;
+  z-index: 40 !important;
+}
+
+/* Crop marks di 4 sudut luar untuk panduan pisau potong/cutter */
+.idcard-atm-sheet-item .crop-corner {
+  position: absolute !important;
+  width: 3.5mm !important;
+  height: 3.5mm !important;
+  pointer-events: none !important;
+  z-index: 45 !important;
+}
+.idcard-atm-sheet-item .crop-corner.tl { top: -1.5mm; left: -1.5mm; border-right: 0.5px solid #64748b; border-bottom: 0.5px solid #64748b; }
+.idcard-atm-sheet-item .crop-corner.tr { top: -1.5mm; right: -1.5mm; border-left: 0.5px solid #64748b; border-bottom: 0.5px solid #64748b; }
+.idcard-atm-sheet-item .crop-corner.bl { bottom: -1.5mm; left: -1.5mm; border-right: 0.5px solid #64748b; border-top: 0.5px solid #64748b; }
+.idcard-atm-sheet-item .crop-corner.br { bottom: -1.5mm; right: -1.5mm; border-left: 0.5px solid #64748b; border-top: 0.5px solid #64748b; }
+
+/* Grid Cetak Batch untuk Kertas A4 / F4 (3 Kolom Pas untuk Ukuran ATM 54mm) */
+.idcard-batch-grid.size-atm-grid,
+.printable-area.size-atm-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 54mm) !important;
+  justify-content: center !important;
+  gap: 5mm 6mm !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  page-break-inside: auto !important;
+}
+
+@media print {
+  body.printing-batch-atm .printable-area {
+    display: grid !important;
+    grid-template-columns: repeat(3, 54mm) !important;
+    justify-content: center !important;
+    gap: 5mm 6mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+
+  body.printing-batch-atm .idcard-atm-sheet-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 2mm !important;
+  }
+}
+
 /* Print Sheet & Paper Size Styling */
 @media print {
   body * {

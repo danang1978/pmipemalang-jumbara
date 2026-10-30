@@ -1945,44 +1945,11 @@ const App = {
   },
 
   printCurrentParticipantIDCard() {
-    if (!this.currentParticipantCardData) {
-      window.print();
+    if (this.currentParticipantCardData && this.currentParticipantCardData.id) {
+      this.openIDCardModal(this.currentParticipantCardData.id);
       return;
     }
-    const cardHtml = this.generateIDCardHtml(this.currentParticipantCardData);
-    const printWin = window.open('', '_blank', 'width=800,height=900');
-    if (!printWin) {
-      window.print();
-      return;
-    }
-    printWin.document.open();
-    printWin.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Cetak ID Card Peserta Jumbara</title>
-        <link rel="stylesheet" href="frontend/css/style.css">
-        <link rel="stylesheet" href="frontend/css/idcard.css">
-        <style>
-          body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; font-family: sans-serif; }
-          .no-print { margin-bottom: 20px; }
-          @media print {
-            body { background: #ffffff; padding: 0; }
-            .no-print { display: none !important; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="no-print">
-          <button onclick="window.print()" style="padding: 10px 20px; background: #0284c7; color: white; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1rem;">
-            🖨️ Cetak Kartu / Simpan PDF
-          </button>
-        </div>
-        ${cardHtml}
-      </body>
-      </html>
-    `);
-    printWin.document.close();
+    window.print();
   },
 
   async loadPesertaMobileMaterials() {
@@ -6135,8 +6102,8 @@ const App = {
     const qrX = s.idcard_qr_x || '0';
     const qrY = s.idcard_qr_y || '0';
     const qrSize = s.idcard_qr_size || '55';
-    const paperSize = s.idcard_paper_size || 'a4';
-    const gridCols = s.idcard_grid_cols || '2';
+    const paperSize = s.idcard_paper_size || 'a4_atm';
+    const gridCols = s.idcard_grid_cols || (paperSize.includes('atm') ? '3' : '2');
 
     container.innerHTML = `
       <div class="panel-card">
@@ -6147,7 +6114,7 @@ const App = {
           </div>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button class="btn btn-outline btn-sm" onclick="App.toggleIDCardConfigPanel()"><i class="fa-solid fa-sliders"></i> Panel Editor Layout & Kertas</button>
-            <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF Lembar ID Card</button>
+            <button class="btn btn-primary btn-sm" onclick="App.printIDCardBatch()"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF Lembar ID Card</button>
           </div>
         </div>
 
@@ -6171,18 +6138,19 @@ const App = {
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                     <div class="form-group">
                       <label class="form-label" style="font-size: 0.8rem; font-weight: 700;">Ukuran Kertas Cetak:</label>
-                      <select id="selectPaperSize" class="form-control" style="font-size: 0.85rem;" onchange="App.updateLiveIDCardPreview()">
-                        <option value="a4" ${paperSize === 'a4' ? 'selected' : ''}>A4 (210 x 297 mm)</option>
-                        <option value="f4" ${paperSize === 'f4' ? 'selected' : ''}>F4 / Folio (215 x 330 mm)</option>
-                        <option value="letter" ${paperSize === 'letter' ? 'selected' : ''}>Letter (215.9 x 279.4 mm)</option>
-                        <option value="cr80" ${paperSize === 'cr80' ? 'selected' : ''}>CR80 Kartu Tunggal (54 x 86 mm)</option>
+                      <select id="selectPaperSize" class="form-control" style="font-size: 0.85rem;" onchange="App.handlePaperSizeChange(this.value)">
+                        <option value="a4_atm" ${paperSize === 'a4_atm' || paperSize === 'cr80' ? 'selected' : ''}>📄 Kertas A4 - Seukuran Kartu ATM (54 x 86 mm) [Rekomendasi 9 Kartu/Lembar]</option>
+                        <option value="f4_atm" ${paperSize === 'f4_atm' ? 'selected' : ''}>📑 Kertas F4 / Folio - Seukuran Kartu ATM (54 x 86 mm)</option>
+                        <option value="cr80" ${paperSize === 'cr80' ? 'selected' : ''}>💳 Kartu Tunggal CR80 / ATM (54 x 86 mm - Direct to Card / PVC)</option>
+                        <option value="a4" ${paperSize === 'a4' ? 'selected' : ''}>🪪 Kertas A4 - Ukuran Standar Badge Panitia Besar (70 x 100 mm / B2)</option>
+                        <option value="f4" ${paperSize === 'f4' ? 'selected' : ''}>📑 Kertas F4 - Ukuran Standar Badge Panitia Besar (70 x 100 mm / B2)</option>
                       </select>
                     </div>
                     <div class="form-group">
                       <label class="form-label" style="font-size: 0.8rem; font-weight: 700;">Kolom per Halaman Cetak:</label>
                       <select id="selectGridCols" class="form-control" style="font-size: 0.85rem;" onchange="App.updateLiveIDCardPreview()">
-                        <option value="2" ${gridCols === '2' ? 'selected' : ''}>2 Kolom (Standar A4/F4)</option>
-                        <option value="3" ${gridCols === '3' ? 'selected' : ''}>3 Kolom (Hemat Kertas)</option>
+                        <option value="3" ${gridCols === '3' ? 'selected' : ''}>3 Kolom (Pas untuk Ukuran Kartu ATM di A4)</option>
+                        <option value="2" ${gridCols === '2' ? 'selected' : ''}>2 Kolom (Standar Badge Besar)</option>
                         <option value="1" ${gridCols === '1' ? 'selected' : ''}>1 Kolom (Large / Kartu Tunggal)</option>
                       </select>
                     </div>
@@ -6383,7 +6351,7 @@ const App = {
                     <span class="badge badge-success" style="font-size: 0.7rem;"><i class="fa-solid fa-bolt"></i> Live Real-Time</span>
                   </div>
 
-                  <div id="idCardLivePreviewCard" style="display: flex; justify-content: center; transform: scale(0.88); transform-origin: top center; margin-bottom: -40px;">
+                  <div id="idCardLivePreviewCard" style="display: flex; justify-content: center; min-height: 330px; align-items: center;">
                     <!-- Live Card content will be injected by updateLiveIDCardPreview() -->
                   </div>
 
@@ -6411,34 +6379,85 @@ const App = {
     try {
       const res = await API.getParticipants({ status: 'verified_kabupaten', all: 'true' });
       const verifiedParticipants = Array.isArray(res) ? res : (res.data || []);
-      const batchContainer = document.getElementById('idCardBatchContainer');
-
-      if (!verifiedParticipants.length) {
-        batchContainer.innerHTML = '<p style="color: var(--text-muted);">Belum ada peserta yang disetujui Kabupaten untuk dicetak ID Card-nya.</p>';
-        return;
-      }
-
-      // Limit DOM preview rendering to prevent browser freeze on huge datasets (100k+)
-      const displayCards = verifiedParticipants.slice(0, 100);
-      const cardsHtml = displayCards.map(p => this.generateIDCardHtml(p));
-      const moreNote = verifiedParticipants.length > 100 
-        ? `<div style="grid-column: 1/-1; text-align: center; padding: 1.5rem; color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; margin: 1rem 0;">
-            <i class="fa-solid fa-layer-group" style="font-size: 1.5rem; color: #64748b; margin-bottom: 0.5rem; display: block;"></i>
-            <strong>Menampilkan 100 dari ${verifiedParticipants.length.toLocaleString('id-ID')} ID Card untuk pratinjau.</strong>
-            <p style="font-size: 0.85rem; margin: 0.35rem 0 0 0; color: #64748b;">Gunakan filter Kontingen atau Jenjang di atas untuk mencetak batch secara spesifik agar printer tidak kehabisan memori.</p>
-           </div>`
-        : '';
-      batchContainer.innerHTML = cardsHtml.join('') + moreNote;
+      this.cachedVerifiedParticipants = verifiedParticipants;
+      this.renderBatchCardsList();
     } catch (err) {
       console.error('ID Card batch error:', err);
     }
   },
 
-  updateLiveIDCardPreview() {
-    const previewBox = document.getElementById('idCardLivePreviewCard');
-    if (!previewBox) return;
+  handlePaperSizeChange(newPaperSize) {
+    const gridColsSelect = document.getElementById('selectGridCols');
+    if (gridColsSelect) {
+      if (newPaperSize === 'a4_atm' || newPaperSize === 'f4_atm') {
+        gridColsSelect.value = '3';
+      } else if (newPaperSize === 'cr80') {
+        gridColsSelect.value = '1';
+      } else {
+        gridColsSelect.value = '2';
+      }
+    }
+    this.updateLiveIDCardPreview();
+    this.renderBatchCardsList();
+  },
 
-    const currentFormSettings = {
+  renderBatchCardsList() {
+    const batchContainer = document.getElementById('idCardBatchContainer');
+    if (!batchContainer) return;
+
+    const verifiedParticipants = this.cachedVerifiedParticipants || [];
+    if (!verifiedParticipants.length) {
+      batchContainer.innerHTML = '<p style="color: var(--text-muted);">Belum ada peserta yang disetujui Kabupaten untuk dicetak ID Card-nya.</p>';
+      return;
+    }
+
+    const currentFormSettings = this.getCurrentIDCardFormSettings();
+    const isAtm = currentFormSettings.idcard_paper_size === 'a4_atm' || currentFormSettings.idcard_paper_size === 'f4_atm' || currentFormSettings.idcard_paper_size === 'cr80';
+
+    if (isAtm) {
+      batchContainer.classList.add('size-atm-grid');
+    } else {
+      batchContainer.classList.remove('size-atm-grid');
+    }
+
+    // Limit DOM preview rendering to prevent browser freeze on huge datasets (100k+)
+    const displayCards = verifiedParticipants.slice(0, 100);
+    const cardsHtml = displayCards.map(p => {
+      if (currentFormSettings.idcard_paper_size === 'a4_atm' || currentFormSettings.idcard_paper_size === 'f4_atm') {
+        return `
+          <div class="idcard-atm-sheet-item">
+            <div class="cutting-guide"></div>
+            <div class="crop-corner tl"></div>
+            <div class="crop-corner tr"></div>
+            <div class="crop-corner bl"></div>
+            <div class="crop-corner br"></div>
+            <div class="idcard-atm-frame" style="box-shadow: none; margin: 0;">
+              ${this.generateIDCardHtml(p, currentFormSettings)}
+            </div>
+          </div>
+        `;
+      } else if (currentFormSettings.idcard_paper_size === 'cr80') {
+        return `
+          <div class="idcard-atm-frame" style="page-break-after: always; break-after: page; margin: 0 auto; box-shadow: none;">
+            ${this.generateIDCardHtml(p, currentFormSettings)}
+          </div>
+        `;
+      }
+      return this.generateIDCardHtml(p, currentFormSettings);
+    });
+
+    const moreNote = verifiedParticipants.length > 100 
+      ? `<div style="grid-column: 1/-1; text-align: center; padding: 1.5rem; color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; margin: 1rem 0;">
+          <i class="fa-solid fa-layer-group" style="font-size: 1.5rem; color: #64748b; margin-bottom: 0.5rem; display: block;"></i>
+          <strong>Menampilkan 100 dari ${verifiedParticipants.length.toLocaleString('id-ID')} ID Card untuk pratinjau.</strong>
+          <p style="font-size: 0.85rem; margin: 0.35rem 0 0 0; color: #64748b;">Gunakan filter Kontingen atau Jenjang di atas untuk mencetak batch secara spesifik agar printer tidak kehabisan memori.</p>
+         </div>`
+      : '';
+    batchContainer.innerHTML = cardsHtml.join('') + moreNote;
+  },
+
+  getCurrentIDCardFormSettings() {
+    return {
       ...this.appSettings,
       idcard_template: this.transientTemplateDataUrl || this.appSettings?.idcard_template || '',
       idcard_cat_y: document.getElementById('sliderCatY')?.value || '138',
@@ -6453,13 +6472,20 @@ const App = {
       idcard_qr_x: document.getElementById('sliderQrX')?.value || '0',
       idcard_qr_y: document.getElementById('sliderQrY')?.value || '0',
       idcard_qr_size: document.getElementById('sliderQrSize')?.value || '55',
-      idcard_paper_size: document.getElementById('selectPaperSize')?.value || 'a4',
-      idcard_grid_cols: document.getElementById('selectGridCols')?.value || '2',
+      idcard_paper_size: document.getElementById('selectPaperSize')?.value || 'a4_atm',
+      idcard_grid_cols: document.getElementById('selectGridCols')?.value || '3',
       idcard_event_title: document.getElementById('idCardEventTitleInput')?.value || 'JUMBARA & TEMU KARYA',
       idcard_event_subtitle: document.getElementById('idCardEventSubtitleInput')?.value || 'PMI DAERAH ISTIMEWA YOGYAKARTA TAHUN 2025',
       idcard_motto: document.getElementById('idCardMottoInput')?.value || '#JUMTEKPMIDIY2025',
       idcard_date: document.getElementById('idCardDateInput')?.value || 'SLEMAN, 27-29 September 2025'
     };
+  },
+
+  updateLiveIDCardPreview() {
+    const previewBox = document.getElementById('idCardLivePreviewCard');
+    if (!previewBox) return;
+
+    const currentFormSettings = this.getCurrentIDCardFormSettings();
 
     // Update badge text values
     document.querySelectorAll('.slider-val-badge').forEach(badge => {
@@ -6484,13 +6510,15 @@ const App = {
       document.head.appendChild(dynamicStyle);
     }
 
-    let paperSizeRule = '@page { size: A4 portrait; margin: 10mm; }';
-    if (currentFormSettings.idcard_paper_size === 'f4') {
-      paperSizeRule = '@page { size: 215mm 330mm; margin: 10mm; }';
-    } else if (currentFormSettings.idcard_paper_size === 'letter') {
-      paperSizeRule = '@page { size: letter portrait; margin: 10mm; }';
+    let paperSizeRule = '@page { size: A4 portrait; margin: 8mm 6mm; }';
+    if (currentFormSettings.idcard_paper_size === 'f4_atm') {
+      paperSizeRule = '@page { size: 215mm 330mm; margin: 8mm 6mm; }';
     } else if (currentFormSettings.idcard_paper_size === 'cr80') {
       paperSizeRule = '@page { size: 54mm 86mm; margin: 0; }';
+    } else if (currentFormSettings.idcard_paper_size === 'f4') {
+      paperSizeRule = '@page { size: 215mm 330mm; margin: 10mm; }';
+    } else if (currentFormSettings.idcard_paper_size === 'a4') {
+      paperSizeRule = '@page { size: A4 portrait; margin: 10mm; }';
     }
 
     dynamicStyle.textContent = `@media print { ${paperSizeRule} }`;
@@ -6506,7 +6534,39 @@ const App = {
       qr_code_base64: Utils.getQRCodeUrl('JMB-2026-0001', 180)
     };
 
-    previewBox.innerHTML = this.generateIDCardHtml(sampleData, currentFormSettings);
+    const isAtm = currentFormSettings.idcard_paper_size === 'a4_atm' || currentFormSettings.idcard_paper_size === 'f4_atm' || currentFormSettings.idcard_paper_size === 'cr80';
+    if (isAtm) {
+      previewBox.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div class="idcard-atm-frame">
+            ${this.generateIDCardHtml(sampleData, currentFormSettings)}
+          </div>
+          <div style="margin-top: 10px; font-size: 0.72rem; color: #475569; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 2px 10px; border-radius: 12px; border: 1px solid #bae6fd;">
+            💳 Ukuran Fisik: 54 × 86 mm (Kartu ATM/KTP)
+          </div>
+        </div>
+      `;
+    } else {
+      previewBox.innerHTML = `
+        <div style="display: flex; justify-content: center; transform: scale(0.88); transform-origin: top center; margin-bottom: -40px;">
+          ${this.generateIDCardHtml(sampleData, currentFormSettings)}
+        </div>
+      `;
+    }
+  },
+
+  printIDCardBatch() {
+    const currentSettings = this.getCurrentIDCardFormSettings();
+    const isAtm = currentSettings.idcard_paper_size === 'a4_atm' || currentSettings.idcard_paper_size === 'f4_atm';
+    if (isAtm) {
+      document.body.classList.add('printing-batch-atm');
+    }
+    const cleanup = () => {
+      document.body.classList.remove('printing-batch-atm');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
   },
 
   toggleIDCardConfigPanel() {
@@ -12444,17 +12504,263 @@ const App = {
     }
   },
 
+  currentModalCardData: null,
+
   async openIDCardModal(id) {
     const modalContent = document.getElementById('idCardModalContent');
-    modalContent.innerHTML = '<p style="text-align: center;">Memuat Kartu Peserta...</p>';
+    if (modalContent) {
+      modalContent.innerHTML = '<div style="text-align: center; padding: 2.5rem; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--primary); margin-bottom: 0.75rem; display: block;"></i><p style="font-size: 0.9rem; font-weight: 600; margin: 0;">Memuat Kartu Peserta...</p></div>';
+    }
     this.openModal('idCardModal');
 
     try {
       const data = await API.getParticipantIDCard(id);
-      modalContent.innerHTML = this.generateIDCardHtml(data);
+      this.currentModalCardData = data;
+      const sizeSelect = document.getElementById('modalIdCardSizeSelect');
+      const selectedSize = sizeSelect ? sizeSelect.value : 'atm_single';
+      this.renderModalIDCardContent(selectedSize);
     } catch (err) {
-      modalContent.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
+      if (modalContent) {
+        modalContent.innerHTML = `<div style="padding: 1.5rem; color: #dc2626; text-align: center;"><i class="fa-solid fa-triangle-exclamation fa-2x" style="margin-bottom: 0.5rem; display: block;"></i><strong>Gagal memuat kartu:</strong><br>${Utils.escapeHtml(err.message)}</div>`;
+      }
     }
+  },
+
+  changeModalIDCardSize(size) {
+    this.renderModalIDCardContent(size);
+  },
+
+  renderModalIDCardContent(size = 'atm_single') {
+    const modalContent = document.getElementById('idCardModalContent');
+    if (!modalContent || !this.currentModalCardData) return;
+
+    const data = this.currentModalCardData;
+    const badgeEl = document.getElementById('modalIdCardSizeBadge');
+    const helpEl = document.getElementById('modalIdCardSizeHelp');
+
+    const cardInnerHtml = this.generateIDCardHtml(data);
+
+    if (size === 'atm_single') {
+      if (badgeEl) badgeEl.textContent = '54 × 86 mm (Ukuran Kartu ATM/KTP)';
+      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu fisik standar ATM (CR80) berukuran 54 × 86 mm. Pas dimasukkan ke dompet, card holder standar ATM, atau dicetak langsung ke printer kartu PVC.';
+      modalContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+          <div class="idcard-atm-frame">
+            ${cardInnerHtml}
+          </div>
+          <div style="margin-top: 12px; font-size: 0.75rem; color: #475569; font-weight: 700; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; border: 1px solid #cbd5e1;">
+            💳 Dimensi Fisik Presisi: <strong>54 mm × 86 mm</strong> (Standar Kartu ATM/KTP)
+          </div>
+        </div>
+      `;
+    } else if (size === 'a4_atm') {
+      if (badgeEl) badgeEl.textContent = 'Kertas A4 - Seukuran Kartu ATM (54 × 86 mm)';
+      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak di lembar kertas A4 dengan garis potong putus-putus (*cutting guide*). Gunting sesuai garis putus-putus untuk mendapatkan kartu seukuran kartu ATM/KTP (54 × 86 mm).';
+      modalContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+          <div style="background: #ffffff; padding: 18px; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block;">
+            <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center;">
+              <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas A4 dengan Garis Potong (54 × 86 mm):
+            </div>
+            <div class="idcard-atm-sheet-item" style="margin: 0;">
+              <div class="cutting-guide"></div>
+              <div class="crop-corner tl"></div>
+              <div class="crop-corner tr"></div>
+              <div class="crop-corner bl"></div>
+              <div class="crop-corner br"></div>
+              <div class="idcard-atm-frame" style="box-shadow: none; margin: 0;">
+                ${cardInnerHtml}
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; font-size: 0.74rem; color: #475569; font-weight: 600;">
+            ✂️ Garis putus-putus abu-abu adalah garis panduan memotong rapi.
+          </div>
+        </div>
+      `;
+    } else if (size === 'f4_atm') {
+      if (badgeEl) badgeEl.textContent = 'Kertas F4 - Seukuran Kartu ATM (54 × 86 mm)';
+      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak di lembar kertas F4 / Folio dengan garis potong (*cutting guide*). Ukuran kartu hasil potong adalah 54 × 86 mm (seukuran kartu ATM).';
+      modalContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+          <div style="background: #ffffff; padding: 18px; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block;">
+            <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center;">
+              <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas F4 dengan Garis Potong (54 × 86 mm):
+            </div>
+            <div class="idcard-atm-sheet-item" style="margin: 0;">
+              <div class="cutting-guide"></div>
+              <div class="crop-corner tl"></div>
+              <div class="crop-corner tr"></div>
+              <div class="crop-corner bl"></div>
+              <div class="crop-corner br"></div>
+              <div class="idcard-atm-frame" style="box-shadow: none; margin: 0;">
+                ${cardInnerHtml}
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; font-size: 0.74rem; color: #475569; font-weight: 600;">
+            ✂️ Garis putus-putus abu-abu adalah garis panduan memotong rapi.
+          </div>
+        </div>
+      `;
+    } else {
+      // a4_standard (Badge Besar Panitia)
+      if (badgeEl) badgeEl.textContent = 'Kertas A4 - Badge Besar (70 × 100 mm / B2)';
+      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tanda pengenal standar besar panitia (lanyard badge B2 / 70 × 100 mm).';
+      modalContent.innerHTML = `
+        <div style="display: flex; justify-content: center; transform: scale(0.85); transform-origin: top center; margin-bottom: -45px;">
+          ${cardInnerHtml}
+        </div>
+      `;
+    }
+  },
+
+  printSingleIDCard() {
+    if (!this.currentModalCardData) {
+      window.print();
+      return;
+    }
+
+    const sizeSelect = document.getElementById('modalIdCardSizeSelect');
+    const size = sizeSelect ? sizeSelect.value : 'atm_single';
+    const data = this.currentModalCardData;
+    const cardHtml = this.generateIDCardHtml(data);
+
+    let pageRule = '@page { size: 54mm 86mm; margin: 0; }';
+    let bodyStyle = 'margin: 0; padding: 0; background: #ffffff; width: 54mm; height: 86mm; overflow: hidden;';
+    let contentHtml = '';
+
+    if (size === 'atm_single') {
+      pageRule = '@page { size: 54mm 86mm; margin: 0; }';
+      bodyStyle = 'margin: 0; padding: 0; background: #ffffff; width: 54mm; height: 86mm; overflow: hidden;';
+      contentHtml = `
+        <div class="idcard-atm-frame" style="margin: 0; border: none; border-radius: 3.18mm; box-shadow: none;">
+          ${cardHtml}
+        </div>
+      `;
+    } else if (size === 'a4_atm') {
+      pageRule = '@page { size: A4 portrait; margin: 10mm; }';
+      bodyStyle = 'margin: 0; padding: 10mm; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;';
+      contentHtml = `
+        <div class="no-print" style="margin-bottom: 12px; font-family: sans-serif; font-size: 12px; color: #475569; text-align: center;">
+          ✂️ Garis putus-putus di bawah adalah <strong>panduan potong presisi seukuran Kartu ATM (54 × 86 mm)</strong>.
+        </div>
+        <div class="idcard-atm-sheet-item" style="margin: 0;">
+          <div class="cutting-guide"></div>
+          <div class="crop-corner tl"></div>
+          <div class="crop-corner tr"></div>
+          <div class="crop-corner bl"></div>
+          <div class="crop-corner br"></div>
+          <div class="idcard-atm-frame" style="margin: 0; box-shadow: none;">
+            ${cardHtml}
+          </div>
+        </div>
+      `;
+    } else if (size === 'f4_atm') {
+      pageRule = '@page { size: 215mm 330mm; margin: 10mm; }';
+      bodyStyle = 'margin: 0; padding: 10mm; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;';
+      contentHtml = `
+        <div class="no-print" style="margin-bottom: 12px; font-family: sans-serif; font-size: 12px; color: #475569; text-align: center;">
+          ✂️ Garis putus-putus di bawah adalah <strong>panduan potong presisi seukuran Kartu ATM (54 × 86 mm)</strong>.
+        </div>
+        <div class="idcard-atm-sheet-item" style="margin: 0;">
+          <div class="cutting-guide"></div>
+          <div class="crop-corner tl"></div>
+          <div class="crop-corner tr"></div>
+          <div class="crop-corner bl"></div>
+          <div class="crop-corner br"></div>
+          <div class="idcard-atm-frame" style="margin: 0; box-shadow: none;">
+            ${cardHtml}
+          </div>
+        </div>
+      `;
+    } else {
+      // a4_standard (Badge Besar)
+      pageRule = '@page { size: A4 portrait; margin: 10mm; }';
+      bodyStyle = 'margin: 0; padding: 10mm; background: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh;';
+      contentHtml = cardHtml;
+    }
+
+    const printWin = window.open('', '_blank', 'width=850,height=950');
+    if (!printWin) {
+      this.printSingleIDCardInPlace(size);
+      return;
+    }
+
+    printWin.document.open();
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>ID Card - ${Utils.escapeHtml(data.full_name || 'Peserta')}</title>
+        <link rel="stylesheet" href="frontend/css/style.css">
+        <link rel="stylesheet" href="frontend/css/idcard.css">
+        <style>
+          ${pageRule}
+          body {
+            ${bodyStyle}
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .no-print {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          @media print {
+            .no-print { display: none !important; }
+            body { padding: 0 !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; width: 100%; box-sizing: border-box; display: flex; justify-content: center; gap: 10px;">
+          <button onclick="window.print()" style="padding: 8px 18px; background: #0284c7; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px;">
+            🖨️ Cetak Sekarang / Simpan PDF
+          </button>
+          <button onclick="window.close()" style="padding: 8px 14px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+            Tutup
+          </button>
+        </div>
+        ${contentHtml}
+        <script>
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              window.print();
+            }, 350);
+          });
+        </script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  },
+
+  printSingleIDCardInPlace(size) {
+    let dynamicStyle = document.getElementById('dynamicIDCardPrintStyle');
+    if (!dynamicStyle) {
+      dynamicStyle = document.createElement('style');
+      dynamicStyle.id = 'dynamicIDCardPrintStyle';
+      document.head.appendChild(dynamicStyle);
+    }
+
+    let pageRule = '@page { size: 54mm 86mm; margin: 0; }';
+    if (size === 'a4_atm' || size === 'a4_standard') {
+      pageRule = '@page { size: A4 portrait; margin: 10mm; }';
+    } else if (size === 'f4_atm') {
+      pageRule = '@page { size: 215mm 330mm; margin: 10mm; }';
+    }
+
+    dynamicStyle.textContent = `@media print { ${pageRule} }`;
+    document.body.classList.add('printing-idcard-atm');
+
+    const cleanup = () => {
+      document.body.classList.remove('printing-idcard-atm');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+
+    window.print();
   },
 
   async openBiodataModal(id) {

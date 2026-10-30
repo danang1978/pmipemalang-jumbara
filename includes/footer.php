@@ -434,17 +434,39 @@ $settings = getAppSettings();
 
   <!-- Modal 4: Kartu Peserta ID Card Modal -->
   <div class="modal" id="idCardModal">
-    <div class="modal-dialog" style="max-width: 480px;">
+    <div class="modal-dialog" style="max-width: 520px;">
       <div class="modal-header">
         <h3 class="modal-title"><i class="fa-solid fa-id-card"></i> Pratinjau Kartu Peserta JUMBARA</h3>
         <button class="modal-close" onclick="App.closeModal('idCardModal')">&times;</button>
       </div>
-      <div class="modal-body" id="idCardModalContent" style="background: #f8fafc; padding: 1.5rem; text-align: center;">
+      
+      <!-- Toolbar Pilihan Ukuran & Format Cetak ID Card -->
+      <div class="no-print" style="background: #ffffff; padding: 0.85rem 1.25rem; border-bottom: 1px solid #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label for="modalIdCardSizeSelect" style="font-weight: 700; font-size: 0.82rem; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i> Pilihan Ukuran Cetak:
+          </label>
+          <span class="badge" id="modalIdCardSizeBadge" style="font-size: 0.72rem; font-weight: 700; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 8px; border-radius: 6px;">
+            54 × 86 mm (Ukuran Kartu ATM/KTP)
+          </span>
+        </div>
+        <select id="modalIdCardSizeSelect" class="form-control" style="font-size: 0.85rem; font-weight: 600; padding: 0.45rem 0.75rem; border-color: #cbd5e1;" onchange="App.changeModalIDCardSize(this.value)">
+          <option value="atm_single" selected>💳 Seukuran Kartu ATM / KTP / CR80 (54 x 86 mm) - Pas di Dompet / PVC</option>
+          <option value="a4_atm">📄 Kertas A4 - Seukuran Kartu ATM (54 x 86 mm dengan Garis Potong)</option>
+          <option value="f4_atm">📑 Kertas F4 / Folio - Seukuran Kartu ATM (54 x 86 mm dengan Garis Potong)</option>
+          <option value="a4_standard">🪪 Kertas A4 - Ukuran Standar Badge Panitia Besar (70 x 100 mm / B2)</option>
+        </select>
+        <div id="modalIdCardSizeHelp" style="font-size: 0.73rem; color: #64748b; margin-top: 5px; line-height: 1.35;">
+          <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu fisik standar ATM (CR80) berukuran 54 × 86 mm. Pas dimasukkan ke dompet, card holder standar ATM, atau dicetak langsung ke printer kartu PVC.
+        </div>
+      </div>
+
+      <div class="modal-body" id="idCardModalContent" style="background: #f8fafc; padding: 1.25rem; text-align: center; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <!-- ID Card dynamically rendered -->
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('idCardModal')">Tutup</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="App.printSingleIDCard()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
       </div>
     </div>
   </div>
