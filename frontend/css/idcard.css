@@ -389,7 +389,7 @@
   margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: flex-start;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -397,18 +397,10 @@
 }
 
 .pmi-qr-img-only {
-  width: 55px;
-  height: 55px;
+  max-width: 100%;
   object-fit: contain;
   background: transparent;
-}
-
-.pmi-qr-code-text {
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  font-size: 0.72rem;
-  color: #000000;
-  letter-spacing: 0.5px;
+  display: block;
 }
 
 /* Legacy fallback classes for backwards compatibility */

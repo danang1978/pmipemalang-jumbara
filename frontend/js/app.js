@@ -6101,7 +6101,7 @@ const App = {
     const unitSize = s.idcard_unit_size || '13';
     const qrX = s.idcard_qr_x || '0';
     const qrY = s.idcard_qr_y || '0';
-    const qrSize = s.idcard_qr_size || '55';
+    const qrSize = s.idcard_qr_size || '95';
     const paperSize = s.idcard_paper_size || 'a4_atm';
     const gridCols = s.idcard_grid_cols || (paperSize.includes('atm') ? '3' : '2');
 
@@ -6328,7 +6328,7 @@ const App = {
                         <label>Ukuran QR:</label>
                         <span class="slider-val-badge" data-for="sliderQrSize">${qrSize}px</span>
                       </div>
-                      <input type="range" id="sliderQrSize" min="35" max="120" value="${qrSize}" class="form-control-range" oninput="App.updateLiveIDCardPreview()">
+                      <input type="range" id="sliderQrSize" min="40" max="160" value="${qrSize}" class="form-control-range" oninput="App.updateLiveIDCardPreview()">
                     </div>
                   </div>
                 </div>
@@ -6471,7 +6471,7 @@ const App = {
       idcard_unit_size: document.getElementById('sliderUnitSize')?.value || '13',
       idcard_qr_x: document.getElementById('sliderQrX')?.value || '0',
       idcard_qr_y: document.getElementById('sliderQrY')?.value || '0',
-      idcard_qr_size: document.getElementById('sliderQrSize')?.value || '55',
+      idcard_qr_size: document.getElementById('sliderQrSize')?.value || '95',
       idcard_paper_size: document.getElementById('selectPaperSize')?.value || 'a4_atm',
       idcard_grid_cols: document.getElementById('selectGridCols')?.value || '3',
       idcard_event_title: document.getElementById('idCardEventTitleInput')?.value || 'JUMBARA & TEMU KARYA',
@@ -6691,7 +6691,7 @@ const App = {
         idcard_unit_size: '13',
         idcard_qr_x: '0',
         idcard_qr_y: '0',
-        idcard_qr_size: '55',
+        idcard_qr_size: '95',
         idcard_paper_size: 'a4',
         idcard_grid_cols: '2'
       });
@@ -13027,9 +13027,8 @@ const App = {
     .pmi-field-underline { width: 100%; height: 1px; background: #cbd5e1; margin: 3px 0 2px 0; }
     .pmi-field-label { font-size: 0.6rem; color: #94a3b8; font-style: italic; text-align: right; line-height: 1; }
 
-    .pmi-qrcode-only-box { margin-top: 6px; display: flex; align-items: center; gap: 0.4rem; }
-    .pmi-qr-img-only { width: 55px; height: 55px; object-fit: contain; }
-    .pmi-qr-code-text { font-family: 'Courier New', Courier, monospace; font-weight: 700; font-size: 0.72rem; color: #000000; letter-spacing: 0.5px; }
+    .pmi-qrcode-only-box { margin-top: 6px; display: flex; align-items: center; justify-content: flex-start; }
+    .pmi-qr-img-only { max-width: 100%; object-fit: contain; display: block; border-radius: 4px; }
 
     .pmi-card-footer { height: 75px; background: #ffffff; position: relative; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; }
     .pmi-footer-color-strip { display: flex; height: 5px; width: 100%; }
@@ -13931,7 +13930,7 @@ const App = {
     const unitSize = parseInt(s.idcard_unit_size ?? 13, 10);
     const qrX = parseInt(s.idcard_qr_x ?? 0, 10);
     const qrY = parseInt(s.idcard_qr_y ?? 0, 10);
-    const qrSize = parseInt(s.idcard_qr_size ?? 55, 10);
+    const qrSize = Math.max(parseInt(s.idcard_qr_size ?? 95, 10), 90);
 
     const isNonPeserta = data.registration_type && data.registration_type !== 'Peserta';
     let categoryTitle = isNonPeserta ? data.registration_type : 'PESERTA';
@@ -13966,14 +13965,14 @@ const App = {
 
     const barcodeCode = data.nik || data.code || '3401074802830002';
     const barcodeSvg = this.generateBarcodeSVG(barcodeCode);
-    const qrImgSrc = data.qr_code_base64 || Utils.getQRCodeUrl(data.code || barcodeCode || 'JMB-2026-0001', 180);
+    const qrImgSrc = data.qr_code_base64 || Utils.getQRCodeUrl(data.code || barcodeCode || 'JMB-2026-0001', 300);
 
     const hasCustomTemplate = Boolean(s.idcard_template);
     const customTemplateBgStyle = hasCustomTemplate
       ? `background-image: url('${s.idcard_template}'); background-size: cover; background-position: center;`
       : '';
 
-    // MODE UPLOAD TEMPLATE KUSTOM: Pita Kategori Full-Width (Menutup sempurna) + Foto 3x4, Nama, Asal/Unit, & QR Code (Tanpa Logo Tambahan, Tanpa Barcode 1D)
+    // MODE UPLOAD TEMPLATE KUSTOM: Pita Kategori Full-Width (Menutup sempurna) + Foto 3x4, Nama, Asal/Unit, & QR Code (Tanpa Logo Tambahan, Tanpa Barcode 1D, Tanpa Nomor ID)
     if (hasCustomTemplate) {
       return `
         <div class="idcard-wrapper">
@@ -13996,7 +13995,7 @@ const App = {
                 </div>
               </div>
 
-              <!-- Nama, Asal/Unit, & QR Code (Tanpa Barcode 1D) -->
+              <!-- Nama, Asal/Unit, & QR Code (Tanpa Barcode 1D, Tanpa Nomor ID) -->
               <div class="pmi-detail-column">
                 <!-- Nama -->
                 <div class="pmi-field-group" style="transform: translateY(${nameY}px);">
@@ -14012,10 +14011,9 @@ const App = {
                   <div class="pmi-field-label">Asal / Unit / Kontingen</div>
                 </div>
 
-                <!-- QR Code (Tanpa Barcode 1D & Tanpa Box Putih) -->
-                <div class="pmi-qrcode-only-box" style="transform: translate(${qrX}px, ${qrY}px);">
-                  <img src="${qrImgSrc}" alt="QR ${Utils.escapeHtml(data.code || 'JMB-2026-0001')}" class="pmi-qr-img-only" style="width: ${qrSize}px; height: ${qrSize}px;">
-                  <span class="pmi-qr-code-text">ID: ${Utils.escapeHtml(barcodeCode)}</span>
+                <!-- QR Code (Besar & Jelas, Tanpa Nomor ID) -->
+                <div class="pmi-qrcode-only-box" style="transform: translate(${qrX}px, ${qrY}px); display: flex; align-items: center; justify-content: flex-start;">
+                  <img src="${qrImgSrc}" alt="QR Presensi ${Utils.escapeHtml(data.code || 'JMB-2026-0001')}" class="pmi-qr-img-only" style="width: ${qrSize}px !important; height: ${qrSize}px !important; max-width: ${qrSize}px !important; max-height: ${qrSize}px !important; object-fit: contain; display: block; border-radius: 4px;">
                 </div>
               </div>
             </div>
@@ -14098,17 +14096,9 @@ const App = {
                 <div class="pmi-field-label">Kontingen / Unit</div>
               </div>
 
-              <!-- 1D Barcode & QR Code -->
-              <div class="pmi-barcode-group" style="transform: translate(${qrX}px, ${qrY}px); display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 4px;">
-                <div style="flex: 1; text-align: center;">
-                  <div class="pmi-barcode-svg">
-                    ${barcodeSvg}
-                  </div>
-                  <div class="pmi-barcode-number">${Utils.escapeHtml(barcodeCode)}</div>
-                </div>
-                <div style="width: 48px; height: 48px; flex-shrink: 0; background: #ffffff; padding: 2px; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-                  <img src="${qrImgSrc}" alt="QR ${Utils.escapeHtml(data.code || 'JMB-2026-0001')}" style="width: 100%; height: 100%; object-fit: contain;">
-                </div>
+              <!-- QR Code Presensi (Besar & Jelas, Tanpa Nomor ID) -->
+              <div class="pmi-qrcode-only-box" style="transform: translate(${qrX}px, ${qrY}px); display: flex; align-items: center; justify-content: flex-start; margin-top: auto; padding-top: 4px;">
+                <img src="${qrImgSrc}" alt="QR Presensi ${Utils.escapeHtml(data.code || 'JMB-2026-0001')}" class="pmi-qr-img-only" style="width: ${qrSize}px !important; height: ${qrSize}px !important; max-width: ${qrSize}px !important; max-height: ${qrSize}px !important; object-fit: contain; display: block; border-radius: 4px;">
               </div>
 
               <!-- Tanggal & Lokasi Event -->
