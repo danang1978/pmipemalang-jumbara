@@ -544,14 +544,27 @@
 
 /* Print Sheet & Paper Size Styling */
 @media print {
-  body * {
-    visibility: hidden !important;
+  /* Sembunyikan elemen latar dashboard saat print, KECUALI jika mode standalone atau elemen cetak */
+  body:not(.idcard-standalone-print):not(.printing-idcard-atm) * {
+    visibility: hidden;
   }
+
+  body.idcard-standalone-print,
+  body.idcard-standalone-print *,
   .printable-area, .printable-area *,
-  #idCardModalContent, #idCardModalContent * {
+  #idCardModal, #idCardModal *,
+  #idCardModalContent, #idCardModalContent *,
+  .idcard-atm-frame, .idcard-atm-frame *,
+  .idcard-atm-sheet-item, .idcard-atm-sheet-item *,
+  .idcard-wrapper, .idcard-wrapper *,
+  .pmi-template-card, .pmi-template-card * {
     visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
-  .printable-area, #idCardModalContent {
+
+  .printable-area {
     position: absolute !important;
     left: 50% !important;
     top: 20px !important;
@@ -561,6 +574,30 @@
     box-shadow: none !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Saat print single kartu ATM dari modal in-place */
+  body.printing-idcard-atm #idCardModalContent {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
+  }
+
+  body.printing-idcard-atm #idCardModalContent .no-print,
+  body.printing-idcard-atm #idCardModal .no-print,
+  body.printing-idcard-atm #idCardModal .modal-header,
+  body.printing-idcard-atm #idCardModal .modal-footer,
+  body.printing-idcard-atm #idCardModal .modal-close {
+    display: none !important;
   }
   .modal, .modal-dialog {
     background: transparent !important;
@@ -925,11 +962,6 @@ table.biodata-sheet-table td {
 }
 
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 8mm 12mm 8mm 12mm;
-  }
-
   body.printing-biodata {
     background: #ffffff !important;
     margin: 0 !important;

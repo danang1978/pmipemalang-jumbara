@@ -464,9 +464,12 @@ $settings = getAppSettings();
       <div class="modal-body" id="idCardModalContent" style="background: #f8fafc; padding: 1.25rem; text-align: center; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <!-- ID Card dynamically rendered -->
       </div>
-      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
         <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('idCardModal')">Tutup</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="App.printSingleIDCard()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.printSingleIDCardInPlace()" title="Cetak langsung di tab ini tanpa popup window"><i class="fa-solid fa-desktop"></i> Cetak Langsung</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.printSingleIDCard()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
+        </div>
       </div>
     </div>
   </div>

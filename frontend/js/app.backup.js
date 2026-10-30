@@ -6556,6 +6556,7 @@ const App = {
   },
 
   printIDCardBatch() {
+    this.updateLiveIDCardPreview();
     const currentSettings = this.getCurrentIDCardFormSettings();
     const isAtm = currentSettings.idcard_paper_size === 'a4_atm' || currentSettings.idcard_paper_size === 'f4_atm';
     if (isAtm) {
@@ -6566,7 +6567,9 @@ const App = {
       window.removeEventListener('afterprint', cleanup);
     };
     window.addEventListener('afterprint', cleanup);
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 150);
   },
 
   toggleIDCardConfigPanel() {
@@ -12632,7 +12635,7 @@ const App = {
 
     if (size === 'atm_single') {
       pageRule = '@page { size: 54mm 86mm; margin: 0; }';
-      bodyStyle = 'margin: 0; padding: 0; background: #ffffff; width: 54mm; height: 86mm; overflow: hidden;';
+      bodyStyle = 'margin: 0; padding: 0; background: #ffffff; width: 54mm; height: 86mm; overflow: hidden; display: flex; justify-content: center; align-items: center;';
       contentHtml = `
         <div class="idcard-atm-frame" style="margin: 0; border: none; border-radius: 3.18mm; box-shadow: none;">
           ${cardHtml}
@@ -12690,53 +12693,93 @@ const App = {
     printWin.document.open();
     printWin.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="id">
       <head>
         <meta charset="UTF-8">
         <title>ID Card - ${Utils.escapeHtml(data.full_name || 'Peserta')}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="frontend/css/style.css">
         <link rel="stylesheet" href="frontend/css/idcard.css">
         <style>
           ${pageRule}
-          body {
-            ${bodyStyle}
+
+          * {
+            box-sizing: border-box !important;
+            visibility: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
+
+          body.idcard-standalone-print {
+            ${bodyStyle}
+            margin: 0 !important;
+            background: #ffffff !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+          }
+
           .no-print {
             text-align: center;
             margin-bottom: 15px;
           }
+
           @media print {
-            .no-print { display: none !important; }
-            body { padding: 0 !important; }
+            .no-print {
+              display: none !important;
+            }
+            body.idcard-standalone-print {
+              padding: 0 !important;
+              margin: 0 !important;
+              background: transparent !important;
+            }
           }
         </style>
       </head>
-      <body>
-        <div class="no-print" style="padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; width: 100%; box-sizing: border-box; display: flex; justify-content: center; gap: 10px;">
-          <button onclick="window.print()" style="padding: 8px 18px; background: #0284c7; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px;">
+      <body class="idcard-standalone-print">
+        <div class="no-print" style="position: sticky; top: 0; z-index: 1000; padding: 12px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; display: flex; justify-content: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <button onclick="window.print()" style="padding: 9px 20px; background: #0284c7; color: #ffffff; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.3);">
             🖨️ Cetak Sekarang / Simpan PDF
           </button>
-          <button onclick="window.close()" style="padding: 8px 14px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
-            Tutup
+          <button onclick="window.close()" style="padding: 9px 16px; background: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+            ✕ Tutup
           </button>
         </div>
         ${contentHtml}
         <script>
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              window.print();
-            }, 350);
-          });
+          function triggerPrint() {
+            const imgs = Array.from(document.images);
+            const promises = imgs.map(img => {
+              if (img.complete) return Promise.resolve();
+              return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+              });
+            });
+            Promise.all(promises).then(() => {
+              setTimeout(() => {
+                window.focus();
+                window.print();
+              }, 250);
+            });
+          }
+          if (document.readyState === 'complete') {
+            triggerPrint();
+          } else {
+            window.addEventListener('load', triggerPrint);
+            setTimeout(triggerPrint, 1500);
+          }
         </script>
       </body>
       </html>
     `);
     printWin.document.close();
+    printWin.focus();
   },
 
   printSingleIDCardInPlace(size) {
+    const currentSize = size || document.getElementById('modalIdCardSizeSelect')?.value || 'atm_single';
     let dynamicStyle = document.getElementById('dynamicIDCardPrintStyle');
     if (!dynamicStyle) {
       dynamicStyle = document.createElement('style');
@@ -12745,9 +12788,9 @@ const App = {
     }
 
     let pageRule = '@page { size: 54mm 86mm; margin: 0; }';
-    if (size === 'a4_atm' || size === 'a4_standard') {
+    if (currentSize === 'a4_atm' || currentSize === 'a4_standard') {
       pageRule = '@page { size: A4 portrait; margin: 10mm; }';
-    } else if (size === 'f4_atm') {
+    } else if (currentSize === 'f4_atm') {
       pageRule = '@page { size: 215mm 330mm; margin: 10mm; }';
     }
 
@@ -12760,7 +12803,9 @@ const App = {
     };
     window.addEventListener('afterprint', cleanup);
 
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 150);
   },
 
   async openBiodataModal(id) {
@@ -13550,15 +13595,18 @@ const App = {
     if (hasCustomTemplate) {
       return `
         <div class="idcard-wrapper">
-          <div class="pmi-template-card has-custom-template" style="${customTemplateBgStyle}">
+          <div class="pmi-template-card has-custom-template" style="${customTemplateBgStyle}; position: relative; overflow: hidden;">
             
+            <!-- Background Image Asli (IMG tag agar PASTI TERCETAK di semua browser tanpa tergantung setting background graphics) -->
+            <img src="${s.idcard_template}" class="pmi-card-bg-img" alt="Background ID Card" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none;" crossorigin="anonymous">
+
             <!-- Category Band Bar Full Width (Position Absolute so slider Y moves it freely anywhere on the card) -->
             <div class="pmi-category-band-yellow" style="position: absolute; top: ${catY}px; left: 0; width: 100%; z-index: 10; background: ${catBg}; color: ${catTextColor};">
               ${categoryTitle.toUpperCase()}
             </div>
 
             <!-- Overlay Body: Foto Kiri, Nama & Asal & QR Code Kanan -->
-            <div class="pmi-custom-template-overlay" style="margin-top: 175px;">
+            <div class="pmi-custom-template-overlay" style="margin-top: 175px; position: relative; z-index: 5;">
               <!-- Foto 3x4 -->
               <div class="pmi-photo-column" style="transform: translate(${photoX}px, ${photoY}px);">
                 <div class="pmi-photo-frame" style="width: ${photoW}px; height: ${photoH}px;">
