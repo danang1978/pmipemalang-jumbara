@@ -13021,9 +13021,9 @@ const App = {
 
     .pmi-detail-column { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
     .pmi-field-group { margin-bottom: 0.4rem; }
-    .pmi-field-value { font-family: 'Outfit', sans-serif; font-weight: 800; text-transform: uppercase; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pmi-field-name { font-size: 1.05rem; letter-spacing: 0.2px; line-height: 1.15; }
-    .pmi-field-unit { font-size: 0.78rem; font-weight: 700; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .pmi-field-value { font-family: 'Outfit', sans-serif; font-weight: 800; text-transform: uppercase; color: #0f172a; }
+    .pmi-field-name { font-size: 1.05rem; letter-spacing: 0.2px; line-height: 1.15; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; text-overflow: clip !important; }
+    .pmi-field-unit { font-size: 0.78rem; font-weight: 700; line-height: 1.2; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; text-overflow: clip !important; }
     .pmi-field-underline { width: 100%; height: 1px; background: #cbd5e1; margin: 3px 0 2px 0; }
     .pmi-field-label { font-size: 0.6rem; color: #94a3b8; font-style: italic; text-align: right; line-height: 1; }
 
@@ -13932,6 +13932,27 @@ const App = {
     const qrY = parseInt(s.idcard_qr_y ?? 0, 10);
     const qrSize = Math.max(parseInt(s.idcard_qr_size ?? 95, 10), 90);
 
+    // Auto-scale font nama & unit menyesuaikan panjang karakter agar tidak terpotong dan muat rapi hingga 2 baris
+    const rawName = (data.full_name || '').trim();
+    const nameLen = rawName.length;
+    let calcNameSize = nameSize;
+    if (nameLen > 35) {
+      calcNameSize = Math.max(10.5, Math.round(nameSize * 0.68));
+    } else if (nameLen > 25) {
+      calcNameSize = Math.max(12, Math.round(nameSize * 0.78));
+    } else if (nameLen > 18) {
+      calcNameSize = Math.max(13.5, Math.round(nameSize * 0.88));
+    }
+
+    const rawUnit = (data.unit_name || 'PMI KABUPATEN PEMALANG').trim();
+    const unitLen = rawUnit.length;
+    let calcUnitSize = unitSize;
+    if (unitLen > 35) {
+      calcUnitSize = Math.max(9.5, Math.round(unitSize * 0.75));
+    } else if (unitLen > 24) {
+      calcUnitSize = Math.max(11, Math.round(unitSize * 0.85));
+    }
+
     const isNonPeserta = data.registration_type && data.registration_type !== 'Peserta';
     let categoryTitle = isNonPeserta ? data.registration_type : 'PESERTA';
     if (categoryTitle.toUpperCase() === 'TAMU') {
@@ -13997,16 +14018,16 @@ const App = {
 
               <!-- Nama, Asal/Unit, & QR Code (Tanpa Barcode 1D, Tanpa Nomor ID) -->
               <div class="pmi-detail-column">
-                <!-- Nama -->
+                <!-- Nama (Auto-scale & 2 Baris Tanpa Terpotong) -->
                 <div class="pmi-field-group" style="transform: translateY(${nameY}px);">
-                  <div class="pmi-field-value pmi-field-name" style="font-size: ${nameSize}px; line-height: 1.2;">${Utils.escapeHtml(data.full_name)}</div>
+                  <div class="pmi-field-value pmi-field-name" style="font-size: ${calcNameSize}px; line-height: 1.15; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;">${Utils.escapeHtml(rawName || 'NAMA PESERTA')}</div>
                   <div class="pmi-field-underline"></div>
                   <div class="pmi-field-label">Nama / Name</div>
                 </div>
 
-                <!-- Asal / Unit -->
+                <!-- Asal / Unit (Auto-scale & 2 Baris) -->
                 <div class="pmi-field-group" style="transform: translateY(${unitY}px);">
-                  <div class="pmi-field-value pmi-field-unit" style="font-size: ${unitSize}px; line-height: 1.2;">${Utils.escapeHtml(data.unit_name || 'PMI KABUPATEN KULON PROGO')}</div>
+                  <div class="pmi-field-value pmi-field-unit" style="font-size: ${calcUnitSize}px; line-height: 1.15; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;">${Utils.escapeHtml(rawUnit)}</div>
                   <div class="pmi-field-underline"></div>
                   <div class="pmi-field-label">Asal / Unit / Kontingen</div>
                 </div>
@@ -14082,16 +14103,16 @@ const App = {
 
             <!-- Kolom Kanan: Nama, Utusan, Barcode, Tanggal -->
             <div class="pmi-detail-column">
-              <!-- Nama -->
+              <!-- Nama (Auto-scale & 2 Baris Tanpa Terpotong) -->
               <div class="pmi-field-group" style="transform: translateY(${nameY}px);">
-                <div class="pmi-field-value pmi-field-name" style="font-size: ${nameSize}px; line-height: 1.2;">${Utils.escapeHtml(data.full_name)}</div>
+                <div class="pmi-field-value pmi-field-name" style="font-size: ${calcNameSize}px; line-height: 1.15; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;">${Utils.escapeHtml(rawName || 'NAMA PESERTA')}</div>
                 <div class="pmi-field-underline"></div>
                 <div class="pmi-field-label">Nama / Name</div>
               </div>
 
-              <!-- Utusan / Unit -->
+              <!-- Utusan / Unit (Auto-scale & 2 Baris) -->
               <div class="pmi-field-group" style="transform: translateY(${unitY}px);">
-                <div class="pmi-field-value pmi-field-unit" style="font-size: ${unitSize}px; line-height: 1.2;">${Utils.escapeHtml(data.unit_name || 'PMI KABUPATEN KULON PROGO')}</div>
+                <div class="pmi-field-value pmi-field-unit" style="font-size: ${calcUnitSize}px; line-height: 1.15; white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important;">${Utils.escapeHtml(rawUnit)}</div>
                 <div class="pmi-field-underline"></div>
                 <div class="pmi-field-label">Kontingen / Unit</div>
               </div>
