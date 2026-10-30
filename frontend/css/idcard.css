@@ -616,6 +616,72 @@
   }
 }
 
+/* ID Card Studio Modal Layout (2-Column Studio View) */
+#idCardModal .modal-dialog {
+  max-width: 860px !important;
+  width: 95% !important;
+  max-height: min(90vh, 550px) !important;
+  height: min(90vh, 550px) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: auto !important;
+}
+
+.idcard-modal-grid {
+  display: grid !important;
+  grid-template-columns: 310px 1fr !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+  height: calc(100% - 52px) !important;
+}
+
+.idcard-modal-sidebar {
+  background: #f8fafc !important;
+  padding: 1.1rem !important;
+  border-right: 1px solid #e2e8f0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  overflow-y: auto !important;
+}
+
+.idcard-modal-preview-pane {
+  background: #f1f5f9 !important;
+  padding: 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+@media (max-width: 768px) {
+  #idCardModal .modal-dialog {
+    max-height: 95vh !important;
+    height: 95vh !important;
+    width: 96% !important;
+    border-radius: 14px !important;
+  }
+  .idcard-modal-grid {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto !important;
+    height: calc(95vh - 52px) !important;
+  }
+  .idcard-modal-sidebar {
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+}
+
 /* Print Sheet & Paper Size Styling */
 @media print {
   /* Sembunyikan elemen latar dashboard saat print, KECUALI jika mode standalone atau elemen cetak */

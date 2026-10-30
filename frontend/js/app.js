@@ -12547,6 +12547,13 @@ const App = {
     try {
       const data = await API.getParticipantIDCard(id);
       this.currentModalCardData = data;
+
+      const subTitleEl = document.getElementById('modalIdCardParticipantSub');
+      if (subTitleEl) {
+        const unitName = data.unit_name || (data.registration_type ? data.registration_type.toUpperCase() : 'Peserta');
+        subTitleEl.textContent = `${data.full_name || 'Peserta'} • ${unitName}`;
+      }
+
       const sizeSelect = document.getElementById('modalIdCardSizeSelect');
       const selectedSize = sizeSelect ? sizeSelect.value : 'a4_event_large';
       this.currentModalCardSize = selectedSize;
@@ -12662,39 +12669,53 @@ const App = {
 
     if (size === 'atm_single') {
       modalContent.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-          <div class="idcard-atm-frame" style="box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+          <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-credit-card" style="color: #0284c7;"></i> Pratinjau Kartu Tunggal (Ukuran Fisik: ${info.dimText}):
+          </div>
+          <div class="idcard-atm-frame" style="box-shadow: 0 10px 30px rgba(0,0,0,0.18); border-radius: 12px; overflow: hidden;">
             ${cardInnerHtml}
           </div>
-          <div style="margin-top: 12px; font-size: 0.75rem; color: #475569; font-weight: 700; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; border: 1px solid #cbd5e1;">
-            💳 Dimensi Fisik: <strong>5.4 cm × 8.6 cm</strong> (Standar Kartu ATM / PVC)
+          <div style="margin-top: 10px; font-size: 0.73rem; color: #475569; font-weight: 700; background: #ffffff; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            💳 Dimensi Fisik: <strong style="color: #0284c7;">${info.dimText}</strong> (Standar Kartu ATM / PVC)
           </div>
         </div>
       `;
       return;
     }
 
+    // Hitung rasio preview fit agar kartu muat sempurna di dalam kolom tanpa overflow vertikal
+    const cardPxH = info.hMm * 3.779527559;
+    const cardPxW = info.wMm * 3.779527559;
+    const previewFitScale = Math.min(1.0, 345 / cardPxH);
+    const boxW = Math.round(cardPxW * previewFitScale);
+    const boxH = Math.round(cardPxH * previewFitScale);
+
     modalContent.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-        <div style="background: #ffffff; padding: 18px 22px; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block; max-width: 100%; box-sizing: border-box;">
-          <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas dengan Garis Potong (Ukuran Fisik: ${info.dimText}):
-          </div>
-          <div class="idcard-sheet-item" style="width: ${info.wMm}mm; height: ${info.hMm}mm; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <div class="cutting-guide"></div>
-            <div class="crop-corner tl"></div>
-            <div class="crop-corner tr"></div>
-            <div class="crop-corner bl"></div>
-            <div class="crop-corner br"></div>
-            <div class="idcard-sheet-frame" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
-              <div class="idcard-scale-wrapper" style="width: 350px; height: ${info.baseH}px; transform: scale(${info.scale}); transform-origin: top left;">
-                ${cardInnerHtml}
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas dengan Garis Potong (Ukuran Fisik: ${info.dimText}):
+        </div>
+        <div style="background: #ffffff; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: inline-flex; flex-direction: column; align-items: center; justify-content: center; max-width: 100%; box-sizing: border-box;">
+          <div style="width: ${boxW}px; height: ${boxH}px; position: relative; margin: 0 auto;">
+            <div style="transform: scale(${previewFitScale}); transform-origin: top left; width: ${info.wMm}mm; height: ${info.hMm}mm; position: absolute; top: 0; left: 0;">
+              <div class="idcard-sheet-item" style="width: ${info.wMm}mm; height: ${info.hMm}mm; margin: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
+                <div class="cutting-guide"></div>
+                <div class="crop-corner tl"></div>
+                <div class="crop-corner tr"></div>
+                <div class="crop-corner bl"></div>
+                <div class="crop-corner br"></div>
+                <div class="idcard-sheet-frame" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
+                  <div class="idcard-scale-wrapper" style="width: 350px; height: ${info.baseH}px; transform: scale(${info.scale}); transform-origin: top left;">
+                    ${cardInnerHtml}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div style="margin-top: 12px; font-size: 0.75rem; color: #334155; font-weight: 700; background: #f1f5f9; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px;">
-          🖨️ Hasil Cetak Kertas: <strong>${info.dimText}</strong> (Skala: ${info.scalePercent}%)
+        <div style="margin-top: 10px; font-size: 0.73rem; color: #475569; font-weight: 700; background: #ffffff; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          🖨️ Hasil Cetak Kertas: <strong style="color: #0284c7;">${info.dimText}</strong> (Skala: ${info.scalePercent}%)
         </div>
       </div>
     `;
