@@ -434,7 +434,7 @@ $settings = getAppSettings();
 
   <!-- Modal 4: Kartu Peserta ID Card Modal -->
   <div class="modal" id="idCardModal">
-    <div class="modal-dialog" style="max-width: 520px;">
+    <div class="modal-dialog" style="max-width: 560px;">
       <div class="modal-header">
         <h3 class="modal-title"><i class="fa-solid fa-id-card"></i> Pratinjau Kartu Peserta JUMBARA</h3>
         <button class="modal-close" onclick="App.closeModal('idCardModal')">&times;</button>
@@ -444,20 +444,39 @@ $settings = getAppSettings();
       <div class="no-print" style="background: #ffffff; padding: 0.85rem 1.25rem; border-bottom: 1px solid #e2e8f0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <label for="modalIdCardSizeSelect" style="font-weight: 700; font-size: 0.82rem; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i> Pilihan Ukuran Cetak:
+            <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i> Ukuran Cetak ID Card:
           </label>
           <span class="badge" id="modalIdCardSizeBadge" style="font-size: 0.72rem; font-weight: 700; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 8px; border-radius: 6px;">
-            54 × 86 mm (Ukuran Kartu ATM/KTP)
+            9.3 × 13.8 cm (Standar Lanyard / B3-B4)
           </span>
         </div>
         <select id="modalIdCardSizeSelect" class="form-control" style="font-size: 0.85rem; font-weight: 600; padding: 0.45rem 0.75rem; border-color: #cbd5e1;" onchange="App.changeModalIDCardSize(this.value)">
-          <option value="a4_atm" selected>📄 Kertas A4 - Seukuran Kartu ATM (54 x 86 mm) [Rekomendasi Printer Biasa / Epson]</option>
-          <option value="f4_atm">📑 Kertas F4 / Folio - Seukuran Kartu ATM (54 x 86 mm)</option>
-          <option value="atm_single">💳 Kartu Tunggal CR80 / ATM (54 x 86 mm) [Khusus Printer Kartu PVC / PDF]</option>
-          <option value="a4_standard">🪪 Kertas A4 - Ukuran Standar Badge Panitia Besar (70 x 100 mm / B2)</option>
+          <option value="a4_event_large" selected>🪪 Standar Event / Lanyard (Besar 9.3 × 13.8 cm) [Rekomendasi Panitia & Peserta]</option>
+          <option value="a4_event_jumbo">📄 Jumbo A6 (10.5 × 15.6 cm) [1/4 Kertas A4 - Ekstra Jelas]</option>
+          <option value="a4_event_medium">🪪 Sedang B2 (7.5 × 11.1 cm) [Pas Plastik Mika B2]</option>
+          <option value="a4_atm">💳 Seukuran Kartu ATM / KTP (5.4 × 8.6 cm) [Pas di Dompet]</option>
+          <option value="f4_event_large">📑 Kertas F4 / Folio - Standar Event (9.3 × 13.8 cm)</option>
+          <option value="atm_single">💳 Kartu Tunggal CR80 (5.4 × 8.6 cm) [Khusus Printer Kartu PVC]</option>
         </select>
-        <div id="modalIdCardSizeHelp" style="font-size: 0.73rem; color: #64748b; margin-top: 5px; line-height: 1.35;">
-          <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak pada kertas A4 dengan garis potong putus-putus presisi seukuran Kartu ATM (54 × 86 mm). Sangat cocok untuk printer Epson, Canon, HP, atau printer kantor biasa.
+
+        <!-- Pengatur Skala Manual & Dimensi Nyata -->
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.74rem; font-weight: 700; color: #475569;">Ubah Ukuran:</span>
+            <div class="btn-group" style="display: inline-flex; gap: 2px;">
+              <button type="button" class="btn btn-outline btn-xs" onclick="App.stepModalIDCardScale(-5)" title="Perkecil 5%" style="padding: 2px 7px; font-size: 0.72rem;"><i class="fa-solid fa-minus"></i></button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="App.resetModalIDCardScale()" title="Kembali ke 100% Normal" style="padding: 2px 8px; font-size: 0.72rem; font-weight: 700;"><span id="modalIdCardScaleBtnText">100%</span></button>
+              <button type="button" class="btn btn-outline btn-xs" onclick="App.stepModalIDCardScale(5)" title="Perbesar 5%" style="padding: 2px 7px; font-size: 0.72rem;"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <input type="range" id="modalIdCardScaleSlider" min="50" max="135" value="100" step="5" style="width: 85px; cursor: pointer; accent-color: var(--primary);" oninput="App.onModalIDCardScaleChange(this.value)">
+          </div>
+          <div style="font-size: 0.74rem; color: #0284c7; font-weight: 700; background: #f0f9ff; padding: 2px 8px; border-radius: 6px; border: 1px solid #e0f2fe;">
+            📏 Hasil Cetak: <span id="modalIdCardDimensionText">9.3 × 13.8 cm</span>
+          </div>
+        </div>
+
+        <div id="modalIdCardSizeHelp" style="font-size: 0.73rem; color: #64748b; margin-top: 6px; line-height: 1.35;">
+          <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tanda pengenal standar besar resmi panitia & peserta (lanyard B3/B4). Nama, pasfoto, dan kontingen tercetak besar & terbaca jelas dari jarak jauh.
         </div>
       </div>
 

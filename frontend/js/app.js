@@ -12508,6 +12508,34 @@ const App = {
   },
 
   currentModalCardData: null,
+  currentModalCardSize: 'a4_event_large',
+  currentModalCardScale: 100,
+
+  getCardDimensionInfo(size, scalePercent) {
+    const scale = (scalePercent || 100) / 100;
+    const isAtm = (size === 'a4_atm' || size === 'atm_single');
+    const baseW = 350;
+    const baseH = isAtm ? 557.4 : 520;
+
+    // Dimensions in mm at 96 DPI (350px = 92.6mm, 520px = 137.6mm, 557.4px = 147.5mm)
+    const wMm = Number((baseW / 96 * 25.4 * scale).toFixed(1));
+    const hMm = Number((baseH / 96 * 25.4 * scale).toFixed(1));
+    const wCm = (wMm / 10).toFixed(1);
+    const hCm = (hMm / 10).toFixed(1);
+
+    return {
+      scale,
+      scalePercent: Math.round(scale * 100),
+      isAtm,
+      baseW,
+      baseH,
+      wMm,
+      hMm,
+      wCm,
+      hCm,
+      dimText: `${wCm} × ${hCm} cm`
+    };
+  },
 
   async openIDCardModal(id) {
     const modalContent = document.getElementById('idCardModalContent');
@@ -12520,8 +12548,21 @@ const App = {
       const data = await API.getParticipantIDCard(id);
       this.currentModalCardData = data;
       const sizeSelect = document.getElementById('modalIdCardSizeSelect');
-      const selectedSize = sizeSelect ? sizeSelect.value : 'a4_atm';
-      this.renderModalIDCardContent(selectedSize);
+      const selectedSize = sizeSelect ? sizeSelect.value : 'a4_event_large';
+      this.currentModalCardSize = selectedSize;
+      
+      if (selectedSize === 'a4_atm' || selectedSize === 'atm_single') {
+        this.currentModalCardScale = 58;
+      } else if (selectedSize === 'a4_event_jumbo') {
+        this.currentModalCardScale = 113;
+      } else if (selectedSize === 'a4_event_medium') {
+        this.currentModalCardScale = 80;
+      } else {
+        this.currentModalCardScale = 100;
+      }
+
+      this.syncModalIDCardControls();
+      this.renderModalIDCardContent();
     } catch (err) {
       if (modalContent) {
         modalContent.innerHTML = `<div style="padding: 1.5rem; color: #dc2626; text-align: center;"><i class="fa-solid fa-triangle-exclamation fa-2x" style="margin-bottom: 0.5rem; display: block;"></i><strong>Gagal memuat kartu:</strong><br>${Utils.escapeHtml(err.message)}</div>`;
@@ -12530,153 +12571,175 @@ const App = {
   },
 
   changeModalIDCardSize(size) {
-    this.renderModalIDCardContent(size);
+    this.currentModalCardSize = size;
+    if (size === 'a4_event_large' || size === 'f4_event_large') {
+      this.currentModalCardScale = 100;
+    } else if (size === 'a4_event_jumbo') {
+      this.currentModalCardScale = 113;
+    } else if (size === 'a4_event_medium') {
+      this.currentModalCardScale = 80;
+    } else if (size === 'a4_atm' || size === 'atm_single') {
+      this.currentModalCardScale = 58;
+    }
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
   },
 
-  renderModalIDCardContent(size = 'a4_atm') {
+  onModalIDCardScaleChange(val) {
+    this.currentModalCardScale = parseInt(val, 10) || 100;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  stepModalIDCardScale(step) {
+    let next = (this.currentModalCardScale || 100) + step;
+    if (next < 50) next = 50;
+    if (next > 135) next = 135;
+    this.currentModalCardScale = next;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  resetModalIDCardScale() {
+    this.currentModalCardScale = 100;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  syncModalIDCardControls() {
+    const size = this.currentModalCardSize || 'a4_event_large';
+    const scale = this.currentModalCardScale || 100;
+    const info = this.getCardDimensionInfo(size, scale);
+
+    const slider = document.getElementById('modalIdCardScaleSlider');
+    if (slider) slider.value = scale;
+
+    const btnText = document.getElementById('modalIdCardScaleBtnText');
+    if (btnText) btnText.textContent = `${scale}%`;
+
+    const dimText = document.getElementById('modalIdCardDimensionText');
+    if (dimText) dimText.textContent = info.dimText;
+
+    const badgeEl = document.getElementById('modalIdCardSizeBadge');
+    if (badgeEl) {
+      if (size === 'a4_event_large') badgeEl.textContent = `${info.dimText} (Standar Lanyard / B3-B4)`;
+      else if (size === 'a4_event_jumbo') badgeEl.textContent = `${info.dimText} (Jumbo A6 / 1/4 A4)`;
+      else if (size === 'a4_event_medium') badgeEl.textContent = `${info.dimText} (Sedang / Card Case B2)`;
+      else if (size === 'a4_atm') badgeEl.textContent = `${info.dimText} (Ukuran Kartu ATM/KTP)`;
+      else if (size === 'f4_event_large') badgeEl.textContent = `${info.dimText} (Kertas Folio / F4)`;
+      else if (size === 'atm_single') badgeEl.textContent = `${info.dimText} (Kartu Tunggal PVC)`;
+      else badgeEl.textContent = info.dimText;
+    }
+
+    const helpEl = document.getElementById('modalIdCardSizeHelp');
+    if (helpEl) {
+      if (size === 'a4_event_large') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tanda pengenal standar besar resmi panitia & peserta (lanyard B3/B4). Nama, pasfoto, dan kontingen tercetak besar & terbaca jelas dari jarak jauh.';
+      } else if (size === 'a4_event_jumbo') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format ekstra besar 1/4 kertas A4 (A6). Sangat jelas untuk juri lapangan, panitia inti, atau peserta yang membutuhkan visibilitas maksimal.';
+      } else if (size === 'a4_event_medium') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format sedang pas untuk card case plastik mika B2 (80 × 126 mm).';
+      } else if (size === 'a4_atm') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format seukuran kartu ATM/KTP (5.4 × 8.6 cm). Pas dimasukkan ke dompet atau card holder standar ATM.';
+      } else if (size === 'f4_event_large') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak pada kertas panjang F4 / Folio dengan kartu standar besar.';
+      } else if (size === 'atm_single') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tunggal khusus mesin cetak kartu plastik PVC direct-to-card atau simpan file 1 kartu.';
+      }
+    }
+  },
+
+  renderModalIDCardContent() {
     const modalContent = document.getElementById('idCardModalContent');
     if (!modalContent || !this.currentModalCardData) return;
 
     const data = this.currentModalCardData;
-    const badgeEl = document.getElementById('modalIdCardSizeBadge');
-    const helpEl = document.getElementById('modalIdCardSizeHelp');
+    const size = this.currentModalCardSize || 'a4_event_large';
+    const scale = this.currentModalCardScale || 100;
+    const info = this.getCardDimensionInfo(size, scale);
 
     const cardInnerHtml = this.generateIDCardHtml(data);
 
-    if (size === 'a4_atm') {
-      if (badgeEl) badgeEl.textContent = 'Kertas A4 - Seukuran Kartu ATM (54 × 86 mm)';
-      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak pada kertas A4 dengan garis potong putus-putus presisi seukuran Kartu ATM (54 × 86 mm). Sangat cocok untuk printer Epson, Canon, HP, atau printer biasa.';
+    if (size === 'atm_single') {
       modalContent.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-          <div style="background: #ffffff; padding: 18px; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block;">
-            <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center;">
-              <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas A4 dengan Garis Potong (54 × 86 mm):
-            </div>
-            <div class="idcard-atm-sheet-item" style="margin: 0;">
-              <div class="cutting-guide"></div>
-              <div class="crop-corner tl"></div>
-              <div class="crop-corner tr"></div>
-              <div class="crop-corner bl"></div>
-              <div class="crop-corner br"></div>
-              <div class="idcard-atm-frame" style="box-shadow: none; margin: 0;">
-                ${cardInnerHtml}
-              </div>
-            </div>
-          </div>
-          <div style="margin-top: 10px; font-size: 0.74rem; color: #475569; font-weight: 600;">
-            ✂️ Garis putus-putus abu-abu adalah garis panduan memotong rapi.
-          </div>
-        </div>
-      `;
-    } else if (size === 'f4_atm') {
-      if (badgeEl) badgeEl.textContent = 'Kertas F4 - Seukuran Kartu ATM (54 × 86 mm)';
-      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak di lembar kertas F4 / Folio dengan garis potong (*cutting guide*). Ukuran kartu hasil potong adalah 54 × 86 mm (seukuran kartu ATM).';
-      modalContent.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-          <div style="background: #ffffff; padding: 18px; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block;">
-            <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center;">
-              <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas F4 dengan Garis Potong (54 × 86 mm):
-            </div>
-            <div class="idcard-atm-sheet-item" style="margin: 0;">
-              <div class="cutting-guide"></div>
-              <div class="crop-corner tl"></div>
-              <div class="crop-corner tr"></div>
-              <div class="crop-corner bl"></div>
-              <div class="crop-corner br"></div>
-              <div class="idcard-atm-frame" style="box-shadow: none; margin: 0;">
-                ${cardInnerHtml}
-              </div>
-            </div>
-          </div>
-          <div style="margin-top: 10px; font-size: 0.74rem; color: #475569; font-weight: 600;">
-            ✂️ Garis putus-putus abu-abu adalah garis panduan memotong rapi.
-          </div>
-        </div>
-      `;
-    } else if (size === 'atm_single') {
-      if (badgeEl) badgeEl.textContent = '54 × 86 mm (Kartu Tunggal PVC / CR80)';
-      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu fisik standar ATM (CR80) berukuran 54 × 86 mm. Khusus printer kartu PVC (Direct-to-Card) atau simpan file PDF 1 kartu.';
-      modalContent.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
-          <div class="idcard-atm-frame">
+          <div class="idcard-atm-frame" style="box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
             ${cardInnerHtml}
           </div>
           <div style="margin-top: 12px; font-size: 0.75rem; color: #475569; font-weight: 700; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; border: 1px solid #cbd5e1;">
-            💳 Dimensi Fisik Presisi: <strong>54 mm × 86 mm</strong> (Standar Kartu ATM/KTP)
+            💳 Dimensi Fisik: <strong>5.4 cm × 8.6 cm</strong> (Standar Kartu ATM / PVC)
           </div>
         </div>
       `;
-    } else {
-      // a4_standard (Badge Besar Panitia)
-      if (badgeEl) badgeEl.textContent = 'Kertas A4 - Badge Besar (70 × 100 mm / B2)';
-      if (helpEl) helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tanda pengenal standar besar panitia (lanyard badge B2 / 70 × 100 mm).';
-      modalContent.innerHTML = `
-        <div style="display: flex; justify-content: center; transform: scale(0.85); transform-origin: top center; margin-bottom: -45px;">
-          ${cardInnerHtml}
-        </div>
-      `;
+      return;
     }
+
+    modalContent.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+        <div style="background: #ffffff; padding: 18px 22px; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); display: inline-block; max-width: 100%; box-sizing: border-box;">
+          <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas dengan Garis Potong (Ukuran Fisik: ${info.dimText}):
+          </div>
+          <div class="idcard-sheet-item" style="width: ${info.wMm}mm; height: ${info.hMm}mm; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div class="cutting-guide"></div>
+            <div class="crop-corner tl"></div>
+            <div class="crop-corner tr"></div>
+            <div class="crop-corner bl"></div>
+            <div class="crop-corner br"></div>
+            <div class="idcard-sheet-frame" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
+              <div class="idcard-scale-wrapper" style="width: 350px; height: ${info.baseH}px; transform: scale(${info.scale}); transform-origin: top left;">
+                ${cardInnerHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 12px; font-size: 0.75rem; color: #334155; font-weight: 700; background: #f1f5f9; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px;">
+          🖨️ Hasil Cetak Kertas: <strong>${info.dimText}</strong> (Skala: ${info.scalePercent}%)
+        </div>
+      </div>
+    `;
   },
 
-  getPrintableIDCardDocument(data, size = 'a4_atm', isNewWindow = false) {
+  getPrintableIDCardDocument(data, size = (this.currentModalCardSize || 'a4_event_large'), isNewWindow = false) {
+    const scalePercent = this.currentModalCardScale || 100;
+    const info = this.getCardDimensionInfo(size, scalePercent);
     const cardHtml = this.generateIDCardHtml(data);
+
     let pageRule = '@page { size: A4 portrait; margin: 10mm; }';
     let contentHtml = '';
 
-    if (size === 'a4_atm') {
-      pageRule = '@page { size: A4 portrait; margin: 10mm; }';
-      contentHtml = `
-        <div class="sheet-container">
-          <div class="cutting-instruction no-print">
-            ✂️ <strong>Panduan Pemotongan ID Card:</strong> Cetak pada kertas A4, lalu potong mengikuti garis putus-putus atau tanda siku sudut untuk mendapatkan ukuran fisik presisi <strong>Kartu ATM (54 × 86 mm)</strong>.
-          </div>
-          <div class="idcard-atm-sheet-item">
-            <div class="cutting-guide"></div>
-            <div class="crop-corner tl"></div>
-            <div class="crop-corner tr"></div>
-            <div class="crop-corner bl"></div>
-            <div class="crop-corner br"></div>
-            <div class="idcard-atm-frame">
-              ${cardHtml}
-            </div>
-          </div>
-        </div>
-      `;
-    } else if (size === 'f4_atm') {
-      pageRule = '@page { size: 215mm 330mm; margin: 10mm; }';
-      contentHtml = `
-        <div class="sheet-container">
-          <div class="cutting-instruction no-print">
-            ✂️ <strong>Panduan Pemotongan ID Card:</strong> Cetak pada kertas F4 / Folio, lalu potong mengikuti garis putus-putus atau tanda siku sudut untuk mendapatkan ukuran fisik presisi <strong>Kartu ATM (54 × 86 mm)</strong>.
-          </div>
-          <div class="idcard-atm-sheet-item">
-            <div class="cutting-guide"></div>
-            <div class="crop-corner tl"></div>
-            <div class="crop-corner tr"></div>
-            <div class="crop-corner bl"></div>
-            <div class="crop-corner br"></div>
-            <div class="idcard-atm-frame">
-              ${cardHtml}
-            </div>
-          </div>
-        </div>
-      `;
-    } else if (size === 'atm_single') {
+    if (size === 'atm_single') {
       pageRule = '@page { size: 54mm 86mm; margin: 0; }';
       contentHtml = `
-        <div style="width: 54mm; height: 86mm; margin: 0 auto; overflow: hidden;">
+        <div style="width: 54mm; height: 86mm; margin: 0 auto; overflow: hidden; display: flex; justify-content: center; align-items: center;">
           <div class="idcard-atm-frame" style="margin: 0; box-shadow: none;">
             ${cardHtml}
           </div>
         </div>
       `;
     } else {
-      // a4_standard
-      pageRule = '@page { size: A4 portrait; margin: 10mm; }';
+      if (size === 'f4_event_large') {
+        pageRule = '@page { size: 215mm 330mm; margin: 10mm; }';
+      } else {
+        pageRule = '@page { size: A4 portrait; margin: 10mm; }';
+      }
+
       contentHtml = `
         <div class="sheet-container">
-          <div style="display: flex; justify-content: center; align-items: center;">
-            ${cardHtml}
+          <div class="cutting-instruction no-print">
+            ✂️ <strong>Panduan Pemotongan ID Card:</strong> Cetak pada kertas ${size === 'f4_event_large' ? 'F4 / Folio' : 'A4'} (Skala 100% / Actual Size), lalu potong mengikuti garis putus-putus atau tanda siku sudut untuk mendapatkan ukuran fisik presisi <strong>${info.dimText}</strong>.
+          </div>
+          <div class="idcard-sheet-item" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
+            <div class="cutting-guide"></div>
+            <div class="crop-corner tl"></div>
+            <div class="crop-corner tr"></div>
+            <div class="crop-corner bl"></div>
+            <div class="crop-corner br"></div>
+            <div class="idcard-sheet-frame" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
+              <div class="idcard-scale-wrapper" style="width: 350px; height: ${info.baseH}px; transform: scale(${info.scale}); transform-origin: top left;">
+                ${cardHtml}
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -12743,6 +12806,77 @@ const App = {
       font-weight: 600 !important;
     }
 
+    /* Dynamic sheet item & cutting guide */
+    .idcard-sheet-item {
+      position: relative !important;
+      box-sizing: border-box !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      display: inline-block !important;
+      margin: 0 auto !important;
+    }
+
+    .idcard-sheet-item .cutting-guide {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      border: 0.75px dashed #475569 !important;
+      border-radius: 4px !important;
+      pointer-events: none !important;
+      z-index: 40 !important;
+    }
+
+    .idcard-sheet-item .crop-corner {
+      position: absolute !important;
+      width: 4mm !important;
+      height: 4mm !important;
+      pointer-events: none !important;
+      z-index: 45 !important;
+    }
+    .idcard-sheet-item .crop-corner.tl { top: -2mm; left: -2mm; border-right: 0.75px solid #0f172a; border-bottom: 0.75px solid #0f172a; }
+    .idcard-sheet-item .crop-corner.tr { top: -2mm; right: -2mm; border-left: 0.75px solid #0f172a; border-bottom: 0.75px solid #0f172a; }
+    .idcard-sheet-item .crop-corner.bl { bottom: -2mm; left: -2mm; border-right: 0.75px solid #0f172a; border-top: 0.75px solid #0f172a; }
+    .idcard-sheet-item .crop-corner.br { bottom: -2mm; right: -2mm; border-left: 0.75px solid #0f172a; border-top: 0.75px solid #0f172a; }
+
+    .idcard-sheet-frame {
+      position: relative !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      background: #ffffff !important;
+      border-radius: 4px !important;
+      margin: 0 auto !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-shadow: none !important;
+    }
+
+    .idcard-scale-wrapper {
+      position: relative !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .idcard-scale-wrapper .idcard-wrapper {
+      padding: 0 !important;
+      margin: 0 !important;
+      display: block !important;
+      width: 350px !important;
+      max-width: none !important;
+      transform: none !important;
+    }
+
+    .idcard-scale-wrapper .pmi-template-card {
+      width: 350px !important;
+      margin: 0 !important;
+      position: relative !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+
     /* Container Kartu ATM 54mm x 86mm */
     .idcard-atm-frame {
       width: 54mm !important;
@@ -12785,7 +12919,7 @@ const App = {
       overflow: hidden !important;
     }
 
-    /* Garis Potong dan Crop Mark */
+    /* Garis Potong dan Crop Mark ATM */
     .idcard-atm-sheet-item {
       width: 54mm !important;
       height: 86mm !important;
@@ -12957,12 +13091,13 @@ const App = {
       return;
     }
     const sizeSelect = document.getElementById('modalIdCardSizeSelect');
-    const size = sizeSelect ? sizeSelect.value : 'a4_atm';
+    const size = sizeSelect ? sizeSelect.value : (this.currentModalCardSize || 'a4_event_large');
+    this.currentModalCardSize = size;
     const data = this.currentModalCardData;
     this.printIDCardInIsolatedIframe(data, size);
   },
 
-  printIDCardInIsolatedIframe(data, size = 'a4_atm') {
+  printIDCardInIsolatedIframe(data, size = (this.currentModalCardSize || 'a4_event_large')) {
     let iframe = document.getElementById('idcardPrintIframe');
     if (!iframe) {
       iframe = document.createElement('iframe');
@@ -13029,7 +13164,8 @@ const App = {
   openIDCardInNewWindow() {
     if (!this.currentModalCardData) return;
     const sizeSelect = document.getElementById('modalIdCardSizeSelect');
-    const size = sizeSelect ? sizeSelect.value : 'a4_atm';
+    const size = sizeSelect ? sizeSelect.value : (this.currentModalCardSize || 'a4_event_large');
+    this.currentModalCardSize = size;
     const data = this.currentModalCardData;
     const fullHtml = this.getPrintableIDCardDocument(data, size, true);
 
