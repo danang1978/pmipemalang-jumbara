@@ -451,13 +451,13 @@ $settings = getAppSettings();
           </span>
         </div>
         <select id="modalIdCardSizeSelect" class="form-control" style="font-size: 0.85rem; font-weight: 600; padding: 0.45rem 0.75rem; border-color: #cbd5e1;" onchange="App.changeModalIDCardSize(this.value)">
-          <option value="atm_single" selected>💳 Seukuran Kartu ATM / KTP / CR80 (54 x 86 mm) - Pas di Dompet / PVC</option>
-          <option value="a4_atm">📄 Kertas A4 - Seukuran Kartu ATM (54 x 86 mm dengan Garis Potong)</option>
-          <option value="f4_atm">📑 Kertas F4 / Folio - Seukuran Kartu ATM (54 x 86 mm dengan Garis Potong)</option>
+          <option value="a4_atm" selected>📄 Kertas A4 - Seukuran Kartu ATM (54 x 86 mm) [Rekomendasi Printer Biasa / Epson]</option>
+          <option value="f4_atm">📑 Kertas F4 / Folio - Seukuran Kartu ATM (54 x 86 mm)</option>
+          <option value="atm_single">💳 Kartu Tunggal CR80 / ATM (54 x 86 mm) [Khusus Printer Kartu PVC / PDF]</option>
           <option value="a4_standard">🪪 Kertas A4 - Ukuran Standar Badge Panitia Besar (70 x 100 mm / B2)</option>
         </select>
         <div id="modalIdCardSizeHelp" style="font-size: 0.73rem; color: #64748b; margin-top: 5px; line-height: 1.35;">
-          <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu fisik standar ATM (CR80) berukuran 54 × 86 mm. Pas dimasukkan ke dompet, card holder standar ATM, atau dicetak langsung ke printer kartu PVC.
+          <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak pada kertas A4 dengan garis potong putus-putus presisi seukuran Kartu ATM (54 × 86 mm). Sangat cocok untuk printer Epson, Canon, HP, atau printer kantor biasa.
         </div>
       </div>
 
@@ -467,8 +467,8 @@ $settings = getAppSettings();
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
         <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('idCardModal')">Tutup</button>
         <div style="display: flex; gap: 0.5rem;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="App.printSingleIDCardInPlace()" title="Cetak langsung di tab ini tanpa popup window"><i class="fa-solid fa-desktop"></i> Cetak Langsung</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="App.printSingleIDCard()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardInNewWindow()" title="Buka pratinjau di tab / jendela baru"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Tab Baru</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="App.triggerPrintIDCard()"><i class="fa-solid fa-print"></i> Cetak ID Card (PDF)</button>
         </div>
       </div>
     </div>
