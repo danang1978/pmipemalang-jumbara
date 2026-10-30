@@ -5,3 +5,4 @@ $stmt = $pdo->query("SELECT `key`, `value` FROM settings WHERE `key` LIKE '%idca
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
     echo $r['key'] . " => " . $r['value'] . "\n";
 }
+
