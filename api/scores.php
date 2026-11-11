@@ -135,16 +135,40 @@ if ($method === 'GET' && $action === 'standings') {
             SUM(CASE WHEN s.grade = 'Perunggu' THEN 1 ELSE 0 END) AS perunggu,
             COUNT(s.id) AS total_lomba,
             COALESCE(ROUND(AVG(s.score_val), 1), 0) AS avg_score,
-            COALESCE(ROUND(SUM(s.score_val), 1), 0) AS total_score
+            COALESCE(ROUND(SUM(s.score_val), 1), 0) AS total_score,
+            COALESCE(GROUP_CONCAT(CONCAT(COALESCE(s.branch_name, e.title, 'Kegiatan'), '::', s.score_val, '::', COALESCE(s.category_type, 'Umum')) ORDER BY s.score_val DESC SEPARATOR '||'), '') AS raw_activities
         FROM units un
         LEFT JOIN scores s ON (un.id = s.unit_id OR (s.unit_id IS NULL AND s.participant_id IN (SELECT id FROM participants WHERE unit_id = un.id)))
+        LEFT JOIN events e ON s.event_id = e.id
         $whereSql
         GROUP BY un.id, un.name, un.level_category
-        ORDER BY emas DESC, perak DESC, perunggu DESC, total_score DESC, avg_score DESC, un.name ASC
+        ORDER BY total_score DESC, avg_score DESC, total_lomba DESC, un.name ASC
     ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    jsonResponse($stmt->fetchAll());
+    $standings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($standings as &$st) {
+        $acts = [];
+        if (!empty($st['raw_activities'])) {
+            $items = explode('||', $st['raw_activities']);
+            foreach ($items as $item) {
+                $parts = explode('::', $item);
+                if (count($parts) >= 2) {
+                    $acts[] = [
+                        'name' => $parts[0],
+                        'score' => (float)$parts[1],
+                        'category' => $parts[2] ?? 'Umum'
+                    ];
+                }
+            }
+        }
+        $st['activities'] = $acts;
+        unset($st['raw_activities']);
+    }
+    unset($st);
+
+    jsonResponse($standings);
 }
 
 // --------------------------------------------------------------------------

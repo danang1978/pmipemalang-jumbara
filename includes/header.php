@@ -121,7 +121,7 @@ else if ($favExt === 'png') $favType = 'image/png';
           <a href="#kegiatan" class="nav-link" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Agenda</a>
           <a href="#materi" class="nav-link" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Materi</a>
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
-          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Medali</a>
+          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-ranking-star"></i> Klasemen</a>
           <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen</a>
           <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
         </nav>

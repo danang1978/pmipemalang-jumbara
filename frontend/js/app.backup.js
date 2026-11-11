@@ -345,7 +345,7 @@ const App = {
           <a href="#kegiatan" class="nav-link" onclick="App.scrollToSection('kegiatan', event)"><i class="fa-solid fa-calendar-days"></i> Agenda</a>
           <a href="#materi" class="nav-link" onclick="App.scrollToSection('materi', event)"><i class="fa-solid fa-book-bookmark"></i> Materi</a>
           <a href="#pengumuman" class="nav-link" onclick="App.scrollToSection('pengumuman', event)"><i class="fa-solid fa-bullhorn"></i> Pengumuman</a>
-          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-trophy"></i> Medali</a>
+          <a href="#klasemen" class="nav-link" onclick="App.scrollToSection('klasemen', event)"><i class="fa-solid fa-ranking-star"></i> Klasemen</a>
           <a href="#unit" class="nav-link" onclick="App.scrollToSection('unit', event)"><i class="fa-solid fa-school"></i> Kontingen</a>
           <a href="#lokasi" class="nav-link" onclick="App.scrollToSection('lokasi', event)"><i class="fa-solid fa-map-location-dot"></i> Lokasi</a>
         `;
@@ -720,16 +720,16 @@ const App = {
         </div>
       </section>
 
-      <!-- SECTION 4: KLASEMEN MEDALI -->
+      <!-- SECTION 4: KLASEMEN SKOR KONTINGEN -->
       <section class="landing-section" id="klasemen">
         <div class="landing-section-inner">
           <div class="sec-header-modern">
             <div class="sec-header-left">
-              <span class="sec-kicker sec-kicker-gold"><i class="fa-solid fa-trophy"></i> LEADERBOARD JUMBARA</span>
-              <h2 class="sec-title">Klasemen Perolehan Medali</h2>
+              <span class="sec-kicker sec-kicker-gold"><i class="fa-solid fa-ranking-star"></i> LEADERBOARD JUMBARA</span>
+              <h2 class="sec-title">Klasemen Skor Kontingen PMR</h2>
             </div>
             <div class="sec-header-right">
-              <span class="sec-meta-badge"><i class="fa-solid fa-medal"></i> Juara Umum PMR (Mula • Madya • Wira)</span>
+              <span class="sec-meta-badge"><i class="fa-solid fa-award"></i> Akumulasi Skor Kegiatan PMR (Mula • Madya • Wira)</span>
             </div>
           </div>
           <div id="publicStandingsList">
@@ -1181,62 +1181,87 @@ const App = {
     else if (activeCategory === 'Madya') rankCategoryLabel = 'PMR MADYA';
     else if (activeCategory === 'Mula') rankCategoryLabel = 'PMR MULA';
 
+    const renderActivityChips = (activities) => {
+      if (!activities || !activities.length) {
+        return '<span style="font-size: 0.72rem; color: #94a3b8; font-style: italic;">Belum ada skor kegiatan</span>';
+      }
+      return `
+        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+          ${activities.map(act => `
+            <span style="font-size: 0.72rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+              <span style="color: #15803d; font-weight: 600;">${Utils.escapeHtml(act.name)}:</span>
+              <strong style="color: #0f172a; font-weight: 800;">${act.score}</strong>
+            </span>
+          `).join('')}
+        </div>
+      `;
+    };
+
     const top3 = filtered.slice(0, 3);
     const podiumHtml = top3.length ? `
       <div class="podium-grid">
         ${top3[0] ? `
           <div class="podium-card gold">
-            <div class="podium-badge podium-gold-badge">🥇</div>
+            <div class="podium-badge podium-gold-badge">🏆 1</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[0].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #b45309; font-weight: 700; margin-bottom: 0.25rem;">
               <span class="badge" style="background: rgba(217,119,6,0.15); color: #b45309; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[0].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #d97706; font-weight: 800; margin-bottom: 0.5rem;">JUARA I ${rankCategoryLabel}</div>
-            <div class="podium-scores">
-              <span class="medal-badge medal-emas">🥇 ${top3[0].emas || 0}</span>
-              <span class="medal-badge medal-perak">🥈 ${top3[0].perak || 0}</span>
-              <span class="medal-badge medal-perunggu">🥉 ${top3[0].perunggu || 0}</span>
+            <div style="font-size: 0.8rem; color: #d97706; font-weight: 800; margin-bottom: 0.35rem;">JUARA I ${rankCategoryLabel}</div>
+            <div style="margin-bottom: 0.4rem;">
+              <div style="font-size: 1.65rem; font-weight: 900; color: #b45309; line-height: 1.1;">
+                ${top3[0].total_score || 0} <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total Poin</span>
+              </div>
             </div>
-            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #78350f; font-weight: 600;">
-              Total Skor: <strong>${top3[0].total_score || 0}</strong> • Avg: <strong>${top3[0].avg_score ? parseFloat(top3[0].avg_score).toFixed(1) : '-'}</strong>
+            <div style="margin-bottom: 0.5rem; text-align: left; max-height: 80px; overflow-y: auto;">
+              ${renderActivityChips(top3[0].activities)}
+            </div>
+            <div style="font-size: 0.75rem; color: #78350f; font-weight: 600; border-top: 1px dashed rgba(217,119,6,0.3); padding-top: 0.4rem;">
+              Kegiatan Dinilai: <strong>${top3[0].total_lomba || (top3[0].activities ? top3[0].activities.length : 0)}</strong> • Avg: <strong>${top3[0].avg_score ? parseFloat(top3[0].avg_score).toFixed(1) : '-'}</strong>
             </div>
           </div>
         ` : ''}
 
         ${top3[1] ? `
           <div class="podium-card silver">
-            <div class="podium-badge podium-silver-badge">🥈</div>
+            <div class="podium-badge podium-silver-badge">🥈 2</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[1].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #475569; font-weight: 700; margin-bottom: 0.25rem;">
               <span class="badge" style="background: rgba(100,116,139,0.15); color: #475569; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[1].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #64748b; font-weight: 800; margin-bottom: 0.5rem;">JUARA II ${rankCategoryLabel}</div>
-            <div class="podium-scores">
-              <span class="medal-badge medal-emas">🥇 ${top3[1].emas || 0}</span>
-              <span class="medal-badge medal-perak">🥈 ${top3[1].perak || 0}</span>
-              <span class="medal-badge medal-perunggu">🥉 ${top3[1].perunggu || 0}</span>
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 800; margin-bottom: 0.35rem;">JUARA II ${rankCategoryLabel}</div>
+            <div style="margin-bottom: 0.4rem;">
+              <div style="font-size: 1.65rem; font-weight: 900; color: #334155; line-height: 1.1;">
+                ${top3[1].total_score || 0} <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total Poin</span>
+              </div>
             </div>
-            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #334155; font-weight: 600;">
-              Total Skor: <strong>${top3[1].total_score || 0}</strong> • Avg: <strong>${top3[1].avg_score ? parseFloat(top3[1].avg_score).toFixed(1) : '-'}</strong>
+            <div style="margin-bottom: 0.5rem; text-align: left; max-height: 80px; overflow-y: auto;">
+              ${renderActivityChips(top3[1].activities)}
+            </div>
+            <div style="font-size: 0.75rem; color: #334155; font-weight: 600; border-top: 1px dashed rgba(100,116,139,0.3); padding-top: 0.4rem;">
+              Kegiatan Dinilai: <strong>${top3[1].total_lomba || (top3[1].activities ? top3[1].activities.length : 0)}</strong> • Avg: <strong>${top3[1].avg_score ? parseFloat(top3[1].avg_score).toFixed(1) : '-'}</strong>
             </div>
           </div>
         ` : ''}
 
         ${top3[2] ? `
           <div class="podium-card bronze">
-            <div class="podium-badge podium-bronze-badge">🥉</div>
+            <div class="podium-badge podium-bronze-badge">🥉 3</div>
             <div class="podium-unit-name">${Utils.escapeHtml(top3[2].unit_name)}</div>
             <div style="font-size: 0.75rem; color: #9a3412; font-weight: 700; margin-bottom: 0.25rem;">
               <span class="badge" style="background: rgba(234,88,12,0.15); color: #9a3412; font-size: 0.72rem; padding: 2px 7px;">${Utils.escapeHtml(top3[2].level_category || 'PMR')}</span>
             </div>
-            <div style="font-size: 0.8rem; color: #b45309; font-weight: 800; margin-bottom: 0.5rem;">JUARA III ${rankCategoryLabel}</div>
-            <div class="podium-scores">
-              <span class="medal-badge medal-emas">🥇 ${top3[2].emas || 0}</span>
-              <span class="medal-badge medal-perak">🥈 ${top3[2].perak || 0}</span>
-              <span class="medal-badge medal-perunggu">🥉 ${top3[2].perunggu || 0}</span>
+            <div style="font-size: 0.8rem; color: #b45309; font-weight: 800; margin-bottom: 0.35rem;">JUARA III ${rankCategoryLabel}</div>
+            <div style="margin-bottom: 0.4rem;">
+              <div style="font-size: 1.65rem; font-weight: 900; color: #7c2d12; line-height: 1.1;">
+                ${top3[2].total_score || 0} <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total Poin</span>
+              </div>
             </div>
-            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #7c2d12; font-weight: 600;">
-              Total Skor: <strong>${top3[2].total_score || 0}</strong> • Avg: <strong>${top3[2].avg_score ? parseFloat(top3[2].avg_score).toFixed(1) : '-'}</strong>
+            <div style="margin-bottom: 0.5rem; text-align: left; max-height: 80px; overflow-y: auto;">
+              ${renderActivityChips(top3[2].activities)}
+            </div>
+            <div style="font-size: 0.75rem; color: #7c2d12; font-weight: 600; border-top: 1px dashed rgba(234,88,12,0.3); padding-top: 0.4rem;">
+              Kegiatan Dinilai: <strong>${top3[2].total_lomba || (top3[2].activities ? top3[2].activities.length : 0)}</strong> • Avg: <strong>${top3[2].avg_score ? parseFloat(top3[2].avg_score).toFixed(1) : '-'}</strong>
             </div>
           </div>
         ` : ''}
@@ -1249,7 +1274,7 @@ const App = {
       if (lvl.includes('madya')) badgeStyle = 'background: #e0f2fe; color: #0369a1;';
       else if (lvl.includes('mula')) badgeStyle = 'background: #dcfce7; color: #15803d;';
 
-      const totalMedal = Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0);
+      const totalLomba = s.total_lomba || (s.activities ? s.activities.length : 0);
 
       return `
         <tr>
@@ -1257,18 +1282,22 @@ const App = {
           <td>
             <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">${Utils.escapeHtml(s.unit_name)}</div>
           </td>
-          <td>
+          <td style="text-align: center;">
             <span class="badge" style="${badgeStyle} font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
               ${Utils.escapeHtml(s.level_category || 'PMR')}
             </span>
           </td>
-          <td><span class="medal-badge medal-emas">🥇 ${s.emas || 0}</span></td>
-          <td><span class="medal-badge medal-perak">🥈 ${s.perak || 0}</span></td>
-          <td><span class="medal-badge medal-perunggu">🥉 ${s.perunggu || 0}</span></td>
-          <td><strong style="color: #0f172a; font-size: 0.95rem;">${totalMedal}</strong></td>
           <td>
-            <div style="font-weight: 700; color: #0284c7; font-size: 0.92rem;">${s.total_score || 0}</div>
-            <div style="font-size: 0.72rem; color: #64748b;">Avg: ${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</div>
+            ${renderActivityChips(s.activities)}
+          </td>
+          <td style="text-align: center;">
+            <span style="font-weight: 600; color: #475569; font-size: 0.88rem;">${totalLomba} Lomba</span>
+          </td>
+          <td style="text-align: center;">
+            <span style="font-weight: 600; color: #0f172a; font-size: 0.88rem;">${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</span>
+          </td>
+          <td style="text-align: center;">
+            <div style="font-weight: 800; color: #0284c7; font-size: 1.05rem;">${s.total_score || 0}</div>
           </td>
         </tr>
       `;
@@ -1279,14 +1308,13 @@ const App = {
         <table class="data-table">
           <thead>
             <tr>
-              <th style="width: 70px;">Rank</th>
+              <th style="width: 60px; text-align: center;">Rank</th>
               <th>Kontingen Unit Sekolah (PMR)</th>
-              <th style="width: 140px;">Tingkat PMR</th>
-              <th style="width: 90px;">🥇 Emas</th>
-              <th style="width: 90px;">🥈 Perak</th>
-              <th style="width: 90px;">🥉 Perunggu</th>
-              <th style="width: 100px;">Total Medali</th>
-              <th style="width: 110px;">Total Skor</th>
+              <th style="width: 120px; text-align: center;">Tingkat PMR</th>
+              <th>Skor per Cabang Kegiatan</th>
+              <th style="width: 100px; text-align: center;">Kegiatan</th>
+              <th style="width: 90px; text-align: center;">Rata-rata</th>
+              <th style="width: 120px; text-align: center;">Total Skor</th>
             </tr>
           </thead>
           <tbody>
@@ -1304,7 +1332,7 @@ const App = {
           if (lvl.includes('madya')) badgeStyle = 'background: #e0f2fe; color: #0369a1;';
           else if (lvl.includes('mula')) badgeStyle = 'background: #dcfce7; color: #15803d;';
 
-          const totalMedal = Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0);
+          const totalLomba = s.total_lomba || (s.activities ? s.activities.length : 0);
 
           return `
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem; margin-bottom: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
@@ -1316,17 +1344,15 @@ const App = {
                   </div>
                 </div>
                 <div style="text-align: right; flex-shrink: 0;">
-                  <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Total:</span>
-                  <strong style="font-size: 0.95rem; color: #0284c7; margin-left: 2px;">${s.total_score || 0}</strong>
+                  <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Total:</span>
+                  <strong style="font-size: 1.05rem; color: #0284c7; margin-left: 2px;">${s.total_score || 0} pts</strong>
                 </div>
               </div>
-              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
-                <span class="medal-badge medal-emas">🥇 ${s.emas || 0} Emas</span>
-                <span class="medal-badge medal-perak">🥈 ${s.perak || 0} Perak</span>
-                <span class="medal-badge medal-perunggu">🥉 ${s.perunggu || 0} Perunggu</span>
+              <div style="margin-bottom: 0.5rem;">
+                ${renderActivityChips(s.activities)}
               </div>
-              <div style="font-size: 0.75rem; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 0.35rem; display: flex; justify-content: space-between;">
-                <span>Total Medali: <strong>${totalMedal}</strong></span>
+              <div style="font-size: 0.75rem; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 0.4rem; display: flex; justify-content: space-between;">
+                <span>Kegiatan: <strong>${totalLomba} Lomba</strong></span>
                 <span>Rata-rata: <strong>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</strong></span>
               </div>
             </div>
@@ -2230,12 +2256,12 @@ const App = {
                   <span class="jkn-grid-label">Rundown Acara</span>
                 </div>
 
-                <!-- 7. Perolehan Medali -->
+                <!-- 7. Klasemen Skor -->
                 <div class="jkn-grid-item" onclick="App.switchPesertaMobileTab('medali')">
                   <div class="jkn-icon-circle jkn-circle-amber">
-                    <i class="fa-solid fa-trophy"></i>
+                    <i class="fa-solid fa-ranking-star"></i>
                   </div>
-                  <span class="jkn-grid-label">Perolehan Medali</span>
+                  <span class="jkn-grid-label">Klasemen Skor</span>
                 </div>
 
                 <!-- 8. Menu Lainnya -->
@@ -2631,7 +2657,7 @@ const App = {
               </div>
             </div>
 
-            <!-- TAB 5: KLASEMEN MEDALI & INFO -->
+            <!-- TAB 5: KLASEMEN SKOR & INFO -->
             <div id="pesertaTabMedali" style="display: none;">
               <div class="jkn-subtab-backbar" onclick="App.switchPesertaMobileTab('home')">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -2640,13 +2666,13 @@ const App = {
 
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Papan Klasemen & Perolehan Medali</span>
+                  <span><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Papan Klasemen Skor Kontingen</span>
                   <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile()" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
                     <i class="fa-solid fa-rotate"></i> Refresh
                   </button>
                 </div>
                 <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
-                  Perolehan medali kontingen secara real-time dari hasil penjurian kegiatan Jumbara:
+                  Klasemen perolehan skor kontingen secara real-time dari hasil penjurian kegiatan Jumbara:
                 </p>
                 <div id="pesertaStandingsContainer">
                   <!-- Dynamic standings loaded by loadPesertaStandingsMobile() -->
@@ -2908,7 +2934,7 @@ const App = {
     container.innerHTML = `
       <div style="text-align: center; padding: 1.5rem; color: #64748b;">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: #eab308;"></i>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem;">Memuat papan perolehan medali...</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">Memuat papan klasemen skor kontingen...</p>
       </div>
     `;
 
@@ -2919,7 +2945,7 @@ const App = {
         container.innerHTML = `
           <div style="text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem;">
             <i class="fa-solid fa-award" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem;"></i>
-            <p>Data rekapitulasi medali belum diterbitkan oleh Dewan Juri.</p>
+            <p>Data rekapitulasi skor kegiatan belum diterbitkan oleh Dewan Juri.</p>
           </div>
         `;
         return;
@@ -2927,24 +2953,35 @@ const App = {
 
       container.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-          ${standings.slice(0, 15).map((s, idx) => `
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
-              <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
-                <span style="width: 24px; height: 24px; border-radius: 50%; background: ${idx === 0 ? '#fef08a' : (idx === 1 ? '#e2e8f0' : (idx === 2 ? '#ffedd5' : '#f1f5f9'))}; color: ${idx === 0 ? '#854d0e' : (idx === 1 ? '#475569' : (idx === 2 ? '#9a3412' : '#64748b'))}; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">
-                  ${idx + 1}
-                </span>
-                <div style="min-width: 0;">
-                  <strong style="color: #0f172a; font-size: 0.82rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${Utils.escapeHtml(s.unit_name || s.name || 'Kontingen')}
-                  </strong>
-                  <span style="font-size: 0.7rem; color: #64748b;">${Utils.escapeHtml(s.level_category || '')}</span>
+          ${standings.slice(0, 20).map((s, idx) => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                  <span style="width: 24px; height: 24px; border-radius: 50%; background: ${idx === 0 ? '#fef08a' : (idx === 1 ? '#e2e8f0' : (idx === 2 ? '#ffedd5' : '#f1f5f9'))}; color: ${idx === 0 ? '#854d0e' : (idx === 1 ? '#475569' : (idx === 2 ? '#9a3412' : '#64748b'))}; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0;">
+                    ${idx + 1}
+                  </span>
+                  <div style="min-width: 0;">
+                    <strong style="color: #0f172a; font-size: 0.85rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      ${Utils.escapeHtml(s.unit_name || s.name || 'Kontingen')}
+                    </strong>
+                    <span style="font-size: 0.7rem; color: #64748b;">${Utils.escapeHtml(s.level_category || 'PMR')} • ${s.total_lomba || (s.activities ? s.activities.length : 0)} Lomba</span>
+                  </div>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                  <div style="font-size: 0.95rem; font-weight: 800; color: #0284c7;">${s.total_score || 0} pts</div>
+                  <div style="font-size: 0.68rem; color: #64748b;">Avg: ${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</div>
                 </div>
               </div>
-              <div style="display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0;">
-                <span title="Emas" style="background: #fef08a; color: #854d0e; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥇 ${s.emas || s.gold || 0}</span>
-                <span title="Perak" style="background: #e2e8f0; color: #334155; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥈 ${s.perak || s.silver || 0}</span>
-                <span title="Perunggu" style="background: #ffedd5; color: #9a3412; font-size: 0.72rem; font-weight: 800; padding: 2px 6px; border-radius: 6px;">🥉 ${s.perunggu || s.bronze || 0}</span>
-              </div>
+              ${(s.activities && s.activities.length) ? `
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #e2e8f0;">
+                  ${s.activities.slice(0, 4).map(act => `
+                    <span style="font-size: 0.68rem; background: #ffffff; border: 1px solid #e2e8f0; color: #334155; padding: 1px 5px; border-radius: 4px;">
+                      <strong>${Utils.escapeHtml(act.name)}:</strong> ${act.score}
+                    </span>
+                  `).join('')}
+                  ${s.activities.length > 4 ? `<span style="font-size: 0.68rem; color: #64748b;">+${s.activities.length - 4} kegiatan</span>` : ''}
+                </div>
+              ` : ''}
             </div>
           `).join('')}
         </div>
@@ -3182,12 +3219,12 @@ const App = {
                   <span class="jkn-grid-label">Rundown</span>
                 </div>
 
-                <!-- 4. Klasemen Medali -->
+                <!-- 4. Klasemen Skor -->
                 <div class="jkn-grid-item" onclick="App.switchPeninjauMobileTab('medali')">
                   <div class="jkn-icon-circle jkn-circle-amber">
-                    <i class="fa-solid fa-trophy"></i>
+                    <i class="fa-solid fa-ranking-star"></i>
                   </div>
-                  <span class="jkn-grid-label">Klasemen</span>
+                  <span class="jkn-grid-label">Klasemen Skor</span>
                 </div>
 
                 <!-- ROW 2 -->
@@ -3422,7 +3459,7 @@ const App = {
               </div>
             </div>
 
-            <!-- SUBTAB: KLASEMEN MEDALI -->
+            <!-- SUBTAB: KLASEMEN SKOR -->
             <div id="peninjauTabMedali" style="display: none;">
               <div class="jkn-subtab-backbar" onclick="App.switchPeninjauMobileTab('home')">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -3431,7 +3468,7 @@ const App = {
 
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Rekapitulasi Medali Jumbara</span>
+                  <span><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Klasemen Skor Kontingen Jumbara</span>
                   <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile('peninjauStandingsContainer')" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
                     <i class="fa-solid fa-rotate"></i> Refresh
                   </button>
@@ -3829,7 +3866,7 @@ const App = {
               </div>
             </div>
 
-            <!-- SUBTAB: KLASEMEN MEDALI -->
+            <!-- SUBTAB: KLASEMEN SKOR -->
             <div id="penilaiTabKlasemen" style="display: none;">
               <div class="jkn-subtab-backbar" onclick="App.switchPenilaiSubTab('home')">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -3838,7 +3875,7 @@ const App = {
 
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Rekapitulasi Medali Jumbara</span>
+                  <span><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Klasemen Skor Kontingen Jumbara</span>
                   <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile('penilaiStandingsContainer')" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
                     <i class="fa-solid fa-rotate"></i> Refresh
                   </button>
@@ -4194,12 +4231,12 @@ const App = {
                 </div>
 
                 <!-- ROW 2 -->
-                <!-- 5. Klasemen Medali -->
+                <!-- 5. Klasemen Skor -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('medali')">
                   <div class="jkn-icon-circle jkn-circle-amber">
-                    <i class="fa-solid fa-trophy"></i>
+                    <i class="fa-solid fa-ranking-star"></i>
                   </div>
-                  <span class="jkn-grid-label">Klasemen</span>
+                  <span class="jkn-grid-label">Klasemen Skor</span>
                 </div>
 
                 <!-- 6. Peta Buperta -->
@@ -4397,7 +4434,7 @@ const App = {
               </div>
             </div>
 
-            <!-- SUBTAB: KLASEMEN MEDALI -->
+            <!-- SUBTAB: KLASEMEN SKOR -->
             <div id="panitiaTabMedali" style="display: none;">
               <div class="jkn-subtab-backbar" onclick="App.switchPanitiaMobileTab('home')">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -4406,7 +4443,7 @@ const App = {
 
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span><i class="fa-solid fa-trophy" style="color: #eab308;"></i> Rekapitulasi Medali Jumbara</span>
+                  <span><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Klasemen Skor Kontingen Jumbara</span>
                   <button type="button" class="btn btn-outline btn-xs" onclick="App.loadPesertaStandingsMobile('panitiaStandingsContainer')" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px;">
                     <i class="fa-solid fa-rotate"></i> Refresh
                   </button>
@@ -4626,7 +4663,7 @@ const App = {
           <i class="fa-solid fa-calendar-check"></i> Jadwal & Pendaftaran Kegiatan
         </button>
         <button class="tab-btn ${this.activeUnitTab === 'nilai' ? 'active' : ''}" id="unit-tab-nilai" onclick="App.switchUnitTab('nilai')">
-          <i class="fa-solid fa-award"></i> Rekap Nilai & Medali
+          <i class="fa-solid fa-award"></i> Rekap Nilai & Skor Kontingen
         </button>
         <button class="tab-btn ${this.activeUnitTab === 'piagam' ? 'active' : ''}" id="unit-tab-piagam" onclick="App.switchUnitTab('piagam')">
           <i class="fa-solid fa-scroll"></i> Piagam Penghargaan Unit
@@ -4729,10 +4766,10 @@ const App = {
         <div class="panel-header" style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div>
             <h3 class="panel-title" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fa-solid fa-award" style="color: #f59e0b;"></i> Rekap Nilai, Medali & Klasemen Kontingen
+              <i class="fa-solid fa-ranking-star" style="color: #f59e0b;"></i> Rekap Nilai & Klasemen Skor Kontingen
             </h3>
             <p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: var(--text-muted);">
-              Pantau perolehan medali, rincian skor aspek dewan juri tiap cabang kegiatan, dan kedudukan kontingen sekolah di klasemen umum se-Kabupaten Pemalang.
+              Pantau rincian skor aspek dewan juri tiap cabang kegiatan, akumulasi total skor, dan kedudukan kontingen sekolah di klasemen umum se-Kabupaten Pemalang.
             </p>
           </div>
           <button class="btn btn-outline btn-sm" onclick="App.renderUnitTabNilai(document.getElementById('unitTabContent'))">
@@ -4741,7 +4778,7 @@ const App = {
         </div>
 
         <div id="unitNilaiContentContainer">
-          <p style="text-align: center; padding: 2.5rem 0; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi nilai dan medali kontingen...</p>
+          <p style="text-align: center; padding: 2.5rem 0; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi nilai dan skor kontingen...</p>
         </div>
       </div>
     `;
@@ -4760,34 +4797,48 @@ const App = {
       const myStanding = myRankIndex !== -1 ? standings[myRankIndex] : null;
       const myRank = myRankIndex !== -1 ? (myRankIndex + 1) : '-';
 
-      const emasCount = myStanding ? parseInt(myStanding.emas || 0) : 0;
-      const perakCount = myStanding ? parseInt(myStanding.perak || 0) : 0;
-      const perungguCount = myStanding ? parseInt(myStanding.perunggu || 0) : 0;
+      const renderUnitActivityChips = (activities) => {
+        if (!activities || !activities.length) {
+          return '<span style="font-size: 0.72rem; color: #94a3b8; font-style: italic;">Belum ada skor kegiatan</span>';
+        }
+        return `
+          <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+            ${activities.map(act => `
+              <span style="font-size: 0.72rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 2px 6px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                <span style="color: #15803d; font-weight: 600;">${Utils.escapeHtml(act.name)}:</span>
+                <strong style="color: #0f172a; font-weight: 800;">${act.score}</strong>
+              </span>
+            `).join('')}
+          </div>
+        `;
+      };
 
       contentBox.innerHTML = `
-        <!-- KPI MEDALI SUMMARY CARDS -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <!-- KPI SKOR SUMMARY CARDS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
           <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 14px; padding: 1.1rem; box-shadow: 0 4px 12px rgba(15,23,42,0.15);">
             <div style="font-size: 0.76rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Peringkat Kontingen</div>
             <div style="font-size: 1.85rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">
               #${myRank} <span style="font-size: 0.85rem; font-weight: 500; color: #cbd5e1;">dari ${standings.length} Unit</span>
             </div>
           </div>
+          <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; border-radius: 14px; padding: 1.1rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">Total Skor Akumulasi</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #1e40af; margin-top: 0.2rem;">
+              ${myStanding ? (myStanding.total_score || 0) : 0} <span style="font-size: 0.82rem; font-weight: 600; color: #2563eb;">Poin</span>
+            </div>
+          </div>
           <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fde68a; border-radius: 14px; padding: 1.1rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; color: #b45309; text-transform: uppercase;">🥇 Medali Emas</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;">${emasCount}</div>
-          </div>
-          <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.1rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; color: #475569; text-transform: uppercase;">🥈 Medali Perak</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: #334155; margin-top: 0.2rem;">${perakCount}</div>
-          </div>
-          <div style="background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fed7aa; border-radius: 14px; padding: 1.1rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; color: #c2410c; text-transform: uppercase;">🥉 Medali Perunggu</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: #ea580c; margin-top: 0.2rem;">${perungguCount}</div>
+            <div style="font-size: 0.76rem; font-weight: 700; color: #b45309; text-transform: uppercase;">Rata-rata Skor</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;">
+              ${myStanding && myStanding.avg_score ? parseFloat(myStanding.avg_score).toFixed(1) : '-'} <span style="font-size: 0.82rem; font-weight: 600; color: #b45309;">Poin</span>
+            </div>
           </div>
           <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.1rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; color: #15803d; text-transform: uppercase;">Lomba Diikuti</div>
-            <div style="font-size: 1.85rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;">${scores.length} <span style="font-size: 0.85rem; font-weight: 500; color: #15803d;">Cabang</span></div>
+            <div style="font-size: 0.76rem; font-weight: 700; color: #15803d; text-transform: uppercase;">Kegiatan Dinilai</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;">
+              ${scores.length} <span style="font-size: 0.85rem; font-weight: 500; color: #15803d;">Cabang</span>
+            </div>
           </div>
         </div>
 
@@ -4814,7 +4865,7 @@ const App = {
                     <th style="padding: 10px 14px;">Cabang Kegiatan / Lomba</th>
                     <th style="padding: 10px 14px;">Peserta / Tim</th>
                     <th style="padding: 10px 14px; text-align: center;">Skor Akhir</th>
-                    <th style="padding: 10px 14px; text-align: center;">Predikat Medali</th>
+                    <th style="padding: 10px 14px; text-align: center;">Predikat Skor</th>
                     <th style="padding: 10px 14px;">Rincian Aspek Penilaian & Catatan Juri</th>
                     <th style="padding: 10px 14px; text-align: center;">Status Kunci</th>
                   </tr>
@@ -4822,9 +4873,14 @@ const App = {
                 <tbody>
                   ${scores.map(s => {
                     let gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #475569;">Partisipasi</span>';
-                    if (s.grade === 'Emas') gradeBadge = '<span class="badge badge-verified" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;"><i class="fa-solid fa-medal"></i> Emas</span>';
-                    else if (s.grade === 'Perak') gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: 800;"><i class="fa-solid fa-medal"></i> Perak</span>';
-                    else if (s.grade === 'Perunggu') gradeBadge = '<span class="badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;"><i class="fa-solid fa-medal"></i> Perunggu</span>';
+                    const scNum = parseFloat(s.score_val || 0);
+                    if (s.grade && s.grade.includes('Emas')) gradeBadge = '<span class="badge badge-verified" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;">Grade A</span>';
+                    else if (s.grade && s.grade.includes('Perak')) gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: 800;">Grade B</span>';
+                    else if (s.grade && s.grade.includes('Perunggu')) gradeBadge = '<span class="badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;">Grade C</span>';
+                    else if (s.grade) gradeBadge = `<span class="badge" style="background: #f1f5f9; color: #475569;">${Utils.escapeHtml(s.grade)}</span>`;
+                    else if (scNum >= 90) gradeBadge = '<span class="badge badge-verified" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;">Grade A</span>';
+                    else if (scNum >= 80) gradeBadge = '<span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: 800;">Grade B</span>';
+                    else if (scNum >= 70) gradeBadge = '<span class="badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;">Grade C</span>';
 
                     const aspectsHtml = (s.aspect_details && s.aspect_details.length) ? `
                       <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem;">
@@ -4880,7 +4936,7 @@ const App = {
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
           <div style="padding: 0.85rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a;">
-              <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i> Klasemen Perolehan Medali Se-Kabupaten Pemalang
+              <i class="fa-solid fa-ranking-star" style="color: #f59e0b;"></i> Klasemen Skor Kontingen Se-Kabupaten Pemalang
             </h4>
             <span style="font-size: 0.78rem; color: #64748b;"><strong style="color: #2563eb;">Baris biru</strong> menandakan posisi kontingen Anda</span>
           </div>
@@ -4890,12 +4946,12 @@ const App = {
               <thead>
                 <tr style="background: #f1f5f9;">
                   <th style="padding: 10px 12px; width: 60px; text-align: center;">Rank</th>
-                  <th style="padding: 10px 14px;">Kontingen Unit Sekolah</th>
-                  <th style="padding: 10px 12px; text-align: center;">Tingkat</th>
-                  <th style="padding: 10px 12px; text-align: center; color: #d97706; font-weight: 800;">🥇 Emas</th>
-                  <th style="padding: 10px 12px; text-align: center; color: #475569; font-weight: 800;">🥈 Perak</th>
-                  <th style="padding: 10px 12px; text-align: center; color: #c2410c; font-weight: 800;">🥉 Perunggu</th>
-                  <th style="padding: 10px 12px; text-align: center;">Total Lomba</th>
+                  <th style="padding: 10px 14px; min-width: 180px;">Kontingen Unit Sekolah</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 100px;">Tingkat</th>
+                  <th style="padding: 10px 14px;">Skor per Kegiatan</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 100px;">Total Lomba</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 90px;">Rata-rata</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 110px; color: #0284c7; font-weight: 800;">Total Skor</th>
                 </tr>
               </thead>
               <tbody>
@@ -4903,6 +4959,7 @@ const App = {
                   const isCurrent = Number(st.unit_id) === myUnitId;
                   const rowBg = isCurrent ? '#eff6ff' : (idx % 2 === 1 ? '#fafafa' : '#ffffff');
                   const rowBorder = isCurrent ? '2px solid #3b82f6' : '1px solid #f1f5f9';
+                  const totalLomba = st.total_lomba || (st.activities ? st.activities.length : 0);
 
                   return `
                     <tr style="background: ${rowBg}; border-top: ${rowBorder}; border-bottom: ${rowBorder};">
@@ -4916,17 +4973,17 @@ const App = {
                       <td style="padding: 10px 12px; text-align: center;">
                         ${Utils.getLevelBadgeHtml(st.level_category || 'Madya')}
                       </td>
-                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #d97706; font-size: 0.95rem;">
-                        ${st.emas || 0}
-                      </td>
-                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #475569; font-size: 0.95rem;">
-                        ${st.perak || 0}
-                      </td>
-                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #c2410c; font-size: 0.95rem;">
-                        ${st.perunggu || 0}
+                      <td style="padding: 10px 14px;">
+                        ${renderUnitActivityChips(st.activities)}
                       </td>
                       <td style="padding: 10px 12px; text-align: center; font-weight: 600; color: #64748b;">
-                        ${st.total_lomba || 0}
+                        ${totalLomba}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 600; color: #0f172a;">
+                        ${st.avg_score ? parseFloat(st.avg_score).toFixed(1) : '-'}
+                      </td>
+                      <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #0284c7; font-size: 1.05rem;">
+                        ${st.total_score || 0}
                       </td>
                     </tr>
                   `;
@@ -5563,7 +5620,7 @@ const App = {
         { id: 'pengumuman', label: 'Pengumuman', icon: 'fa-solid fa-bullhorn', category: 'agenda', enabled: true, isSystem: true },
         { id: 'aspek', label: 'Aspek Penilaian Kegiatan', icon: 'fa-solid fa-list-check', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'rekap_nilai', label: 'Rekap Nilai per Kegiatan', icon: 'fa-solid fa-chart-simple', category: 'penilaian', enabled: true, isSystem: true },
-        { id: 'penilaian', label: 'Papan Medali Kontingen', icon: 'fa-solid fa-trophy', category: 'penilaian', enabled: true, isSystem: true },
+        { id: 'penilaian', label: 'Papan Skor Kontingen', icon: 'fa-solid fa-ranking-star', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'laporan', label: 'Laporan & Export', icon: 'fa-solid fa-file-export', category: 'penilaian', enabled: true, isSystem: true },
         { id: 'pengaturan', label: 'Pengaturan DB & Hero', icon: 'fa-solid fa-gear', category: 'pengaturan', enabled: true, isSystem: true },
         { id: 'users', label: 'Kelola User & Password', icon: 'fa-solid fa-users-gear', category: 'pengaturan', enabled: true, isSystem: true },
@@ -5631,7 +5688,7 @@ const App = {
     const meta = {
       'peserta': { desc: 'Verifikasi, ID Card & Kontingen', color: '#2563eb', bg: '#eff6ff' },
       'agenda': { desc: 'Jadwal, Lokasi & Presensi QR', color: '#059669', bg: '#ecfdf5' },
-      'penilaian': { desc: 'Dewan Juri & Rekap Medali', color: '#d97706', bg: '#fffbeb' },
+      'penilaian': { desc: 'Dewan Juri & Klasemen Skor', color: '#d97706', bg: '#fffbeb' },
       'pengaturan': { desc: 'Konfigurasi DB & Akun User', color: '#7c3aed', bg: '#f5f3ff' }
     };
 
@@ -7833,9 +7890,9 @@ const App = {
         <div class="panel-header" style="flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.85rem; margin-bottom: 1rem;">
           <div>
             <h3 class="panel-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-              ${Icons.trophy(22, 'var(--primary)')} Modul Penilaian & Rekap Medali Jumbara
+              ${Icons.trophy(22, 'var(--primary)')} Modul Penilaian & Klasemen Skor Jumbara
             </h3>
-            <small style="color: #64748b;">Pengaturan aspek kegiatan, rekap nilai per kegiatan, perolehan medali kontingen, dan entry nilai juri</small>
+            <small style="color: #64748b;">Pengaturan aspek kegiatan, rekap nilai per kegiatan, klasemen skor kontingen, dan entry nilai juri</small>
           </div>
           <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
             <button class="btn btn-outline btn-sm" style="font-weight: 700; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;" onclick="App.openManageAspectsModal()">
@@ -7859,7 +7916,7 @@ const App = {
             <i class="fa-solid fa-school-flag"></i> Rekap Total Nilai & Rangking Unit
           </button>
           <button type="button" id="btnSubTabKlasemen" class="btn ${activeSubTab === 'klasemen' ? 'btn-primary' : 'btn-outline'} btn-sm" style="border-radius: 20px; font-weight: 700;" onclick="App.switchPenilaianSubTab('klasemen')">
-            <i class="fa-solid fa-trophy"></i> Papan Medali Kontingen
+            <i class="fa-solid fa-ranking-star"></i> Papan Skor Kontingen
           </button>
           <button type="button" id="btnSubTabRiwayat" class="btn ${activeSubTab === 'riwayat' ? 'btn-primary' : 'btn-outline'} btn-sm" style="border-radius: 20px; font-weight: 700;" onclick="App.switchPenilaianSubTab('riwayat')">
             <i class="fa-solid fa-history"></i> Riwayat Entry Nilai Juri
@@ -7942,17 +7999,17 @@ const App = {
           </div>
         </div>
 
-        <!-- SUB-TAB 4: PAPAN PEROLEHAN MEDALI KONTINGEN -->
+        <!-- SUB-TAB 4: PAPAN KLASEMEN SKOR KONTINGEN -->
         <div id="penilaianSubTabKlasemen" style="display: ${activeSubTab === 'klasemen' ? 'block' : 'none'};">
           <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
             <div style="margin-bottom: 1rem;">
               <h4 style="margin: 0 0 0.25rem 0; color: var(--secondary); font-size: 1.05rem; font-weight: 700;">
-                <i class="fa-solid fa-trophy" style="color: #d97706;"></i> Papan Perolehan Medali Kontingen Unit PMR
+                <i class="fa-solid fa-ranking-star" style="color: #d97706;"></i> Papan Klasemen Skor Kontingen Unit PMR
               </h4>
-              <small style="color: #64748b;">Klasemen perolehan medali Emas, Perak, Perunggu, dan Rata-rata Skor per Unit</small>
+              <small style="color: #64748b;">Klasemen akumulasi total skor, rincian skor per cabang kegiatan, dan rata-rata skor per kontingen</small>
             </div>
             <div id="standingsTableContainer">
-              <p style="color: var(--text-muted);">Memuat klasemen medali...</p>
+              <p style="color: var(--text-muted);">Memuat klasemen skor...</p>
             </div>
           </div>
         </div>
@@ -8040,28 +8097,41 @@ const App = {
       this.loadRekapUnitTable();
 
       if (standingsContainer) {
+        const renderAdminActivityChips = (activities) => {
+          if (!activities || !activities.length) return '<span style="color: #94a3b8; font-size: 0.72rem; font-style: italic;">Belum ada nilai</span>';
+          return `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+              ${activities.map(act => `
+                <span style="font-size: 0.72rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 2px 6px; border-radius: 4px;">
+                  <strong>${Utils.escapeHtml(act.name)}:</strong> ${act.score}
+                </span>
+              `).join('')}
+            </div>
+          `;
+        };
+
         const desktopStandings = `
           <div class="standings-desktop-table table-responsive">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Rank</th>
+                  <th style="width: 60px; text-align: center;">Rank</th>
                   <th>Unit PMR</th>
-                  <th>Emas</th>
-                  <th>Perak</th>
-                  <th>Perunggu</th>
-                  <th>Avg Score</th>
+                  <th>Skor per Kegiatan</th>
+                  <th style="width: 100px; text-align: center;">Kegiatan</th>
+                  <th style="width: 100px; text-align: center;">Rata-rata</th>
+                  <th style="width: 110px; text-align: center;">Total Skor</th>
                 </tr>
               </thead>
               <tbody>
                 ${standings.map((s, idx) => `
                   <tr>
-                    <td><strong>#${idx + 1}</strong></td>
-                    <td><strong>${Utils.escapeHtml(s.unit_name)}</strong></td>
-                    <td><strong style="color: #d97706;">${s.emas || 0}</strong></td>
-                    <td><strong style="color: #64748b;">${s.perak || 0}</strong></td>
-                    <td><strong style="color: #b45309;">${s.perunggu || 0}</strong></td>
-                    <td>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</td>
+                    <td style="text-align: center;"><strong>#${idx + 1}</strong></td>
+                    <td><strong>${Utils.escapeHtml(s.unit_name)}</strong> <small style="color: #64748b;">(${Utils.escapeHtml(s.level_category || 'PMR')})</small></td>
+                    <td>${renderAdminActivityChips(s.activities)}</td>
+                    <td style="text-align: center;">${s.total_lomba || (s.activities ? s.activities.length : 0)} Lomba</td>
+                    <td style="text-align: center; font-weight: 600;">${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</td>
+                    <td style="text-align: center;"><strong style="font-size: 1.05rem; color: #0284c7;">${s.total_score || 0}</strong></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -8075,12 +8145,14 @@ const App = {
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                   <strong style="font-size: 0.95rem; color: var(--secondary);">#${idx + 1} ${Utils.escapeHtml(s.unit_name)}</strong>
-                  <span style="font-size: 0.78rem; color: #475569;">Avg: <strong>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</strong></span>
+                  <span style="font-size: 0.95rem; font-weight: 800; color: #0284c7;">${s.total_score || 0} pts</span>
                 </div>
-                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                  <span class="medal-badge medal-emas">🥇 ${s.emas || 0} Emas</span>
-                  <span class="medal-badge medal-perak">🥈 ${s.perak || 0} Perak</span>
-                  <span class="medal-badge medal-perunggu">🥉 ${s.perunggu || 0} Perunggu</span>
+                <div style="margin-bottom: 0.35rem;">
+                  ${renderAdminActivityChips(s.activities)}
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 0.35rem; display: flex; justify-content: space-between;">
+                  <span>Kegiatan: <strong>${s.total_lomba || (s.activities ? s.activities.length : 0)} Lomba</strong></span>
+                  <span>Avg: <strong>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</strong></span>
                 </div>
               </div>
             `).join('')}
@@ -8103,7 +8175,7 @@ const App = {
                   <th>Tingkat</th>
                   <th>Score Perolehan per Aspek</th>
                   <th style="text-align: center;">Skor Total</th>
-                  <th style="text-align: center;">Medali</th>
+                  <th style="text-align: center;">Predikat Skor</th>
                   <th style="text-align: center;">Status Validasi</th>
                   <th style="text-align: center; min-width: 200px; white-space: nowrap;">AKSI</th>
                 </tr>
@@ -8299,7 +8371,7 @@ const App = {
               <th style="text-align: center;">Level PMR</th>
               <th>Nilai Perolehan per Aspek</th>
               <th style="text-align: center;">Total Skor</th>
-              <th style="text-align: center;">Medali</th>
+              <th style="text-align: center;">Predikat Skor</th>
             </tr>
           </thead>
           <tbody>
@@ -11608,8 +11680,8 @@ const App = {
           </div>
 
           <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-            <h4>Laporan Medali & Juara Umum (Excel .xls)</h4>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export perolehan medali Tri Bakti PMR dan ranking kontingen unit dalam format spreadsheet Excel (.xls).</p>
+            <h4>Laporan Klasemen & Juara Umum (Excel .xls)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export perolehan skor Tri Bakti PMR per cabang kegiatan dan ranking kontingen unit dalam format spreadsheet Excel (.xls).</p>
             <button class="btn btn-secondary btn-sm" onclick="App.exportStandingsXLS()"><i class="fa-solid fa-file-excel"></i> Unduh Excel (.xls) Klasemen</button>
           </div>
 
@@ -14227,7 +14299,7 @@ const App = {
 
     try {
       const res = await API.addScore(payload);
-      Utils.showToast(`Penilaian disimpan! Medali: ${res.grade}`, 'success');
+      Utils.showToast(`Penilaian disimpan! Predikat: ${res.grade || '-'}`, 'success');
       this.closeModal('scoreModal');
       this.loadStandingsAndScores();
     } catch (err) {
@@ -14595,7 +14667,7 @@ const App = {
 
             <!-- Final Grade Preview Badge -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed #cbd5e1;">
-              <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">Predikat / Medali Terkalkulasi:</span>
+              <span style="font-size: 0.85rem; font-weight: 700; color: #334155;">Predikat Skor Terkalkulasi:</span>
               <span id="scoringGradeBadgePreview" class="badge" style="background: #e2e8f0; color: #334155; font-size: 0.9rem; font-weight: 800; padding: 0.4rem 0.85rem; border-radius: 8px;">
                 Peserta
               </span>
@@ -14981,11 +15053,12 @@ const App = {
       liveBadge.textContent = `Total: ${total.toFixed(1)} Poin`;
     }
 
-    let grade = 'Peserta';
+    let grade = 'Grade D';
     let gradeBg = '#64748b';
-    if (total >= 90) { grade = '🥇 Medali EMAS'; gradeBg = '#d97706'; }
-    else if (total >= 80) { grade = '🥈 Medali PERAK'; gradeBg = '#475569'; }
-    else if (total >= 70) { grade = '🥉 Medali PERUNGGU'; gradeBg = '#b45309'; }
+    if (total >= 90) { grade = 'Grade A (Sangat Baik)'; gradeBg = '#15803d'; }
+    else if (total >= 80) { grade = 'Grade B (Baik)'; gradeBg = '#0284c7'; }
+    else if (total >= 70) { grade = 'Grade C (Cukup)'; gradeBg = '#b45309'; }
+    else { grade = 'Grade D (Perlu Pembinaan)'; gradeBg = '#64748b'; }
 
     const gradeBadge = document.getElementById('scoringGradeBadgePreview');
     if (gradeBadge) {
@@ -15419,13 +15492,12 @@ const App = {
         'Peringkat': idx + 1,
         'Nama Unit Kontingen': s.unit_name || '-',
         'Jenjang': s.level_category || '-',
-        'Medali Emas': Number(s.emas || 0),
-        'Medali Perak': Number(s.perak || 0),
-        'Medali Perunggu': Number(s.perunggu || 0),
-        'Total Medali': Number(s.emas || 0) + Number(s.perak || 0) + Number(s.perunggu || 0),
-        'Total Lomba Diikuti': Number(s.total_lomba || 0)
+        'Skor per Kegiatan': (s.activities && s.activities.length) ? s.activities.map(a => `${a.name}: ${a.score}`).join('; ') : '-',
+        'Total Kegiatan Dinilai': Number(s.total_lomba || (s.activities ? s.activities.length : 0)),
+        'Rata-rata Skor': s.avg_score ? parseFloat(s.avg_score).toFixed(2) : '0',
+        'Total Skor': Number(s.total_score || 0)
       }));
-      Utils.exportToXLS('klasemen_medali_jumbara_2026', rows, 'REKAPITULASI KLASEMEN MEDALI JUMBARA PMR 2026');
+      Utils.exportToXLS('klasemen_skor_jumbara_2026', rows, 'REKAPITULASI KLASEMEN SKOR KONTINGEN JUMBARA PMR 2026');
     } catch (err) {
       Utils.showToast(err.message, 'error');
     }
