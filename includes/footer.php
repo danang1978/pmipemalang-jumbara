@@ -840,6 +840,26 @@ $settings = getAppSettings();
     </div>
   </div>
 
+  <!-- Modal: Detail Rincian Skor Kontingen Unit (Publik) -->
+  <div class="modal" id="publicUnitScoreModal">
+    <div class="modal-dialog" style="max-width: 850px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white;">
+        <h3 class="modal-title" id="publicUnitScoreModalTitle" style="color: white;">
+          <i class="fa-solid fa-award"></i> Rincian Skor Kontingen Unit
+        </h3>
+        <button class="modal-close" style="color: white;" onclick="App.closeModal('publicUnitScoreModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem; max-height: 80vh; overflow-y: auto;" id="publicUnitScoreModalBody">
+        <p style="text-align: center; color: var(--text-muted); padding: 2rem 0;">
+          <i class="fa-solid fa-spinner fa-spin"></i> Memuat rincian skor kontingen...
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-circle-check"></i> Sumber data resmi Dewan Juri Jumbara PMR PMI Pemalang</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('publicUnitScoreModal')">Tutup</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal 8: Kelola Pendaftaran Peserta Unit ke Kegiatan -->
   <div class="modal" id="unitEventRegistrationModal">
