@@ -149,8 +149,19 @@ if ($method === 'POST') {
             $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null]);
         } catch (PDOException $e) {
-            $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
-            $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId]);
+            if (strpos($e->getMessage(), "column 'role'") !== false || $e->getCode() === '01000' || (int)($e->errorInfo[1] ?? 0) === 1265) {
+                try {
+                    $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'peserta'");
+                    $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId, $fullName ?: null, $phone ?: null]);
+                } catch (\Throwable $eRetry) {
+                    $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
+                    $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId]);
+                }
+            } else {
+                $stmtIns = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id) VALUES (?, ?, ?, ?, ?)");
+                $stmtIns->execute([$username, $hash, $email ?: null, $role, $unitId]);
+            }
         }
 
         $newUserId = $pdo->lastInsertId();

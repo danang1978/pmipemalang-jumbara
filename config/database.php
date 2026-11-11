@@ -67,39 +67,62 @@ function getPDOConnection() {
                 try {
                     $dsnFallback = "mysql:host=localhost;port={$port};dbname={$dbname};charset=utf8mb4";
                     $pdo = new PDO($dsnFallback, $user, $pass, $options);
-                    return $pdo;
                 } catch (PDOException $eHost) {}
             }
 
             // Fallback 2: Jika di lokal MAMP port 8889 gagal, coba port standar 3306
-            if ($port === '8889') {
+            if (!$pdo && $port === '8889') {
                 try {
                     $dsnFallback = "mysql:host={$host};port=3306;dbname={$dbname};charset=utf8mb4";
                     $pdo = new PDO($dsnFallback, $user, ($pass === 'root' ? '' : $pass), $options);
-                    return $pdo;
                 } catch (PDOException $e2) {}
             }
 
             // Fallback 3: Coba koneksi via socket UNIX lokal jika TCP dibatasi oleh server
-            $socketPaths = ['/tmp/mysql.sock', '/var/run/mysqld/mysqld.sock', '/Applications/MAMP/tmp/mysql/mysql.sock'];
-            foreach ($socketPaths as $sock) {
-                if (file_exists($sock)) {
-                    try {
-                        $dsnSocket = "mysql:unix_socket={$sock};dbname={$dbname};charset=utf8mb4";
-                        $pdo = new PDO($dsnSocket, $user, $pass, $options);
-                        return $pdo;
-                    } catch (PDOException $eSocket) {}
+            if (!$pdo) {
+                $socketPaths = ['/tmp/mysql.sock', '/var/run/mysqld/mysqld.sock', '/Applications/MAMP/tmp/mysql/mysql.sock'];
+                foreach ($socketPaths as $sock) {
+                    if (file_exists($sock)) {
+                        try {
+                            $dsnSocket = "mysql:unix_socket={$sock};dbname={$dbname};charset=utf8mb4";
+                            $pdo = new PDO($dsnSocket, $user, $pass, $options);
+                            break;
+                        } catch (PDOException $eSocket) {}
+                    }
                 }
             }
 
-            error_log('[JUMBARA DB ERROR] ' . $e->getMessage());
-            http_response_code(500);
-            header('Content-Type: application/json; charset=utf-8');
-            // Cegah kebocoran path dan kredensial internal database di respon API
-            $isDev = (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false);
-            $errMsg = $isDev ? ('Koneksi MySQL Gagal: ' . $e->getMessage()) : 'Koneksi ke database server gagal. Silakan hubungi Administrator Sistem.';
-            echo json_encode(['error' => $errMsg]);
-            exit;
+            if (!$pdo) {
+                error_log('[JUMBARA DB ERROR] ' . $e->getMessage());
+                http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
+                // Cegah kebocoran path dan kredensial internal database di respon API
+                $isDev = (strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || strpos($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1') !== false);
+                $errMsg = $isDev ? ('Koneksi MySQL Gagal: ' . $e->getMessage()) : 'Koneksi ke database server gagal. Silakan hubungi Administrator Sistem.';
+                echo json_encode(['error' => $errMsg]);
+                exit;
+            }
+        }
+
+        // --- SELF-HEALING DATABASE SCHEMA (Mencegah SQLSTATE[01000] Warning 1265 Data truncated) ---
+        static $schemaHealed = false;
+        if (!$schemaHealed && $pdo) {
+            $schemaHealed = true;
+            try {
+                // Pastikan kolom users.role adalah VARCHAR(50) untuk mendukung seluruh role (pendamping, peninjau, dll)
+                $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'peserta'");
+            } catch (\Throwable $eUsersRole) {}
+
+            try {
+                // Pastikan kolom activity_logs.role mendukung VARCHAR(50)
+                $pdo->exec("ALTER TABLE `activity_logs` MODIFY COLUMN `role` VARCHAR(50) NULL DEFAULT NULL");
+            } catch (\Throwable $eActRole) {}
+
+            try {
+                // Pastikan kolom participants.registration_type dan level tidak terpotong oleh enum sempit
+                $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `registration_type` VARCHAR(50) NOT NULL DEFAULT 'Peserta'");
+                $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `level` VARCHAR(100) NOT NULL DEFAULT 'Wira'");
+            } catch (\Throwable $ePart) {}
         }
     }
 

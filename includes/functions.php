@@ -808,17 +808,30 @@ function logActivity($action, $module, $description, $details = null, $userId = 
             (`user_id`, `username`, `role`, `action`, `module`, `description`, `details`, `ip_address`, `user_agent`, `created_at`) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
-        $stmt->execute([
-            $userId,
-            $username ?: 'System/Guest',
-            $role ?: 'guest',
-            $action,
-            $module,
-            $description,
-            $detailsJson,
-            $ip,
-            $userAgent
-        ]);
+        try {
+            $stmt->execute([
+                $userId,
+                $username ?: 'System/Guest',
+                $role ?: 'guest',
+                $action,
+                $module,
+                $description,
+                $detailsJson,
+                $ip,
+                $userAgent
+            ]);
+        } catch (\PDOException $eExec) {
+            if (strpos($eExec->getMessage(), "column 'role'") !== false || $eExec->getCode() === '01000' || (int)($eExec->errorInfo[1] ?? 0) === 1265) {
+                try {
+                    $pdo->exec("ALTER TABLE `activity_logs` MODIFY COLUMN `role` VARCHAR(50) NULL DEFAULT NULL");
+                    $stmt->execute([$userId, $username ?: 'System/Guest', $role ?: 'guest', $action, $module, $description, $detailsJson, $ip, $userAgent]);
+                } catch (\Throwable $eRetry) {
+                    $stmt->execute([$userId, $username ?: 'System/Guest', null, $action, $module, $description, $detailsJson, $ip, $userAgent]);
+                }
+            } else {
+                throw $eExec;
+            }
+        }
         return true;
     } catch (Throwable $e) {
         error_log('[ACTIVITY LOGGER ERROR] ' . $e->getMessage());
