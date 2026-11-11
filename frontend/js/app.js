@@ -1063,9 +1063,10 @@ const App = {
       }
 
       this.publicStandings = standings;
+      this.publicEvents = events || [];
+      this.publicUnits = units || [];
       this.renderPublicStandings(this.activePublicStandingsCategory || 'ALL', this.publicStandingsSearchKeyword || '');
 
-      this.publicUnits = units;
       this.renderPublicUnits(this.activePublicUnitCategory || 'PMR', this.publicUnitSearchKeyword || '');
 
       // Load Materials & Documents
@@ -1074,6 +1075,75 @@ const App = {
     } catch (e) {
       console.error('Error loading public data:', e);
     }
+  },
+
+  getOfficialActivitiesList() {
+    // 1. Standar Cabang Kegiatan Tri Bakti PMR Jumbara (Jumpa, Bakti, Gembira)
+    const baseActivities = [
+      { name: 'Pertolongan Pertama (PP)', category: 'Jumpa', desc: 'Penanganan kedaruratan medik & triage korban' },
+      { name: 'Perawatan Keluarga (PK)', category: 'Jumpa', desc: 'Perawatan dasar orang sakit & kebersihan keluarga' },
+      { name: 'Ayo Siaga Bencana (ASB)', category: 'Bakti', desc: 'Kesiapsiagaan, simulasi evakuasi & tanggap darurat' },
+      { name: 'Tandu Darurat Cepat', category: 'Jumpa', desc: 'Pembuatan tandu darurat & evakuasi halang rintang' },
+      { name: 'Kepemimpinan & Tri Bakti', category: 'Jumpa', desc: 'Prinsip kepemimpinan, kepalangmerahan & dinamika kelompok' },
+      { name: 'Pentas Seni Budaya PMR', category: 'Gembira', desc: 'Apresiasi seni drama/tari & ekspresi budaya remaja' },
+      { name: 'Paduan Suara Mars PMI', category: 'Gembira', desc: 'Paduan suara lagu kebangsaan & Mars PMI' },
+      { name: 'Jurnalistik PMR', category: 'Jumpa', desc: 'Liputan kemanusiaan, fotografi, penulisan berita & mading' }
+    ];
+
+    const clean = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const isMatch = (nameA, nameB) => {
+      const cA = clean(nameA);
+      const cB = clean(nameB);
+      if (!cA || !cB) return false;
+      if (cA === cB) return true;
+      if (cA.includes('pertolonganpertama') && cB.includes('pertolonganpertama')) return true;
+      if (cA.includes('perawatankeluarga') && cB.includes('perawatankeluarga')) return true;
+      if ((cA.includes('siagabencana') || cA.includes('asb')) && (cB.includes('siagabencana') || cB.includes('asb'))) return true;
+      if (cA.includes('tandudarurat') && cB.includes('tandudarurat')) return true;
+      if (cA.includes('kepemimpinan') && cB.includes('kepemimpinan')) return true;
+      if ((cA.includes('pentasseni') || cA.includes('gembirapmr')) && (cB.includes('pentasseni') || cB.includes('gembirapmr'))) return true;
+      if (cA.includes('paduansuara') && cB.includes('paduansuara')) return true;
+      if (cA.includes('jurnalistik') && cB.includes('jurnalistik')) return true;
+      return (cA.length > 5 && cB.length > 5 && (cA.includes(cB) || cB.includes(cA)));
+    };
+
+    // 2. Gabungkan dengan kegiatan di master events DB jika belum ada
+    if (Array.isArray(this.publicEvents)) {
+      this.publicEvents.forEach(ev => {
+        if (!ev || !ev.title) return;
+        const exists = baseActivities.some(b => isMatch(b.name, ev.title));
+        if (!exists) {
+          const isCeremony = clean(ev.title).includes('upacarapembukaan') || clean(ev.title).includes('upacarapenutupan');
+          if (!isCeremony) {
+            baseActivities.push({
+              name: ev.title,
+              category: ev.category || 'Umum',
+              desc: ev.description || 'Cabang kegiatan resmi Jumbara PMR'
+            });
+          }
+        }
+      });
+    }
+
+    // 3. Gabungkan dengan riwayat cabang penilaian di standings
+    if (Array.isArray(this.publicStandings)) {
+      this.publicStandings.forEach(st => {
+        (st.activities || []).forEach(act => {
+          if (!act || !act.name) return;
+          const exists = baseActivities.some(b => isMatch(b.name, act.name));
+          if (!exists) {
+            baseActivities.push({
+              name: act.name,
+              category: act.category || 'Umum',
+              desc: 'Cabang penilaian perlombaan Jumbara'
+            });
+          }
+        });
+      });
+    }
+
+    return baseActivities;
   },
 
   filterPublicStandings(category) {
@@ -1098,7 +1168,21 @@ const App = {
 
   async openPublicUnitScoreDetail(unitId) {
     const rawStandings = this.publicStandings || [];
-    const unit = rawStandings.find(s => Number(s.unit_id) === Number(unitId));
+    let unit = rawStandings.find(s => Number(s.unit_id) === Number(unitId));
+    if (!unit) {
+      const u = (this.publicUnits || []).find(un => Number(un.id) === Number(unitId));
+      if (u) {
+        unit = {
+          unit_id: u.id,
+          unit_name: u.name,
+          level_category: u.level_category,
+          total_score: 0,
+          avg_score: 0,
+          total_lomba: 0,
+          activities: []
+        };
+      }
+    }
     if (!unit) return;
 
     const titleEl = document.getElementById('publicUnitScoreModalTitle');
@@ -1109,69 +1193,195 @@ const App = {
     }
 
     if (bodyEl) {
+      const officialList = this.getOfficialActivitiesList();
+      const scoredActivities = Array.isArray(unit.activities) ? [...unit.activities] : [];
+
+      const clean = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const isMatch = (nameA, nameB) => {
+        const cA = clean(nameA);
+        const cB = clean(nameB);
+        if (!cA || !cB) return false;
+        if (cA === cB) return true;
+        if (cA.includes('pertolonganpertama') && cB.includes('pertolonganpertama')) return true;
+        if (cA.includes('perawatankeluarga') && cB.includes('perawatankeluarga')) return true;
+        if ((cA.includes('siagabencana') || cA.includes('asb')) && (cB.includes('siagabencana') || cB.includes('asb'))) return true;
+        if (cA.includes('tandudarurat') && cB.includes('tandudarurat')) return true;
+        if (cA.includes('kepemimpinan') && cB.includes('kepemimpinan')) return true;
+        if ((cA.includes('pentasseni') || cA.includes('gembirapmr')) && (cB.includes('pentasseni') || cB.includes('gembirapmr'))) return true;
+        if (cA.includes('paduansuara') && cB.includes('paduansuara')) return true;
+        if (cA.includes('jurnalistik') && cB.includes('jurnalistik')) return true;
+        return (cA.length > 5 && cB.length > 5 && (cA.includes(cB) || cB.includes(cA)));
+      };
+
+      const matchedIndices = new Set();
+      const fullRows = officialList.map(off => {
+        let matchIdx = -1;
+        for (let i = 0; i < scoredActivities.length; i++) {
+          if (matchedIndices.has(i)) continue;
+          if (isMatch(off.name, scoredActivities[i].name)) {
+            matchIdx = i;
+            break;
+          }
+        }
+
+        if (matchIdx !== -1) {
+          matchedIndices.add(matchIdx);
+          const scItem = scoredActivities[matchIdx];
+          const sc = parseFloat(scItem.score || 0);
+          let gradeText = 'Grade D';
+          let gradeStyle = 'background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;';
+          if (sc >= 90) { gradeText = 'Grade A (Sangat Baik)'; gradeStyle = 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;'; }
+          else if (sc >= 80) { gradeText = 'Grade B (Baik)'; gradeStyle = 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 800;'; }
+          else if (sc >= 70) { gradeText = 'Grade C (Cukup)'; gradeStyle = 'background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;'; }
+
+          return {
+            name: off.name,
+            category: scItem.category || off.category || 'Umum',
+            scored: true,
+            score: sc,
+            gradeText,
+            gradeStyle
+          };
+        } else {
+          return {
+            name: off.name,
+            category: off.category || 'Umum',
+            scored: false,
+            score: null,
+            gradeText: 'Belum Dinilai',
+            gradeStyle: 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;'
+          };
+        }
+      });
+
+      // Tambahkan jika ada skor kegiatan yang tidak terdaftar di daftar resmi base
+      scoredActivities.forEach((act, idx) => {
+        if (!matchedIndices.has(idx)) {
+          const sc = parseFloat(act.score || 0);
+          let gradeText = 'Grade D';
+          let gradeStyle = 'background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;';
+          if (sc >= 90) { gradeText = 'Grade A (Sangat Baik)'; gradeStyle = 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;'; }
+          else if (sc >= 80) { gradeText = 'Grade B (Baik)'; gradeStyle = 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 800;'; }
+          else if (sc >= 70) { gradeText = 'Grade C (Cukup)'; gradeStyle = 'background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;'; }
+
+          fullRows.push({
+            name: act.name,
+            category: act.category || 'Umum',
+            scored: true,
+            score: sc,
+            gradeText,
+            gradeStyle
+          });
+        }
+      });
+
+      const totalActs = fullRows.length;
+      const scoredActs = fullRows.filter(r => r.scored).length;
+      const pendingActs = totalActs - scoredActs;
+
       bodyEl.innerHTML = `
-        <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 12px; padding: 1.1rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(15,23,42,0.15);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 12px; padding: 1.15rem 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 14px rgba(15,23,42,0.18);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
             <div>
-              <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Kontingen PMR Unit Sekolah</div>
-              <h3 style="margin: 0.15rem 0 0.35rem 0; font-size: 1.25rem; font-weight: 800; color: #f8fafc;">${Utils.escapeHtml(unit.unit_name)}</h3>
-              <div>${Utils.getLevelBadgeHtml(unit.level_category || 'PMR')}</div>
+              <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Kontingen PMR Unit Sekolah</div>
+              <h3 style="margin: 0.15rem 0 0.35rem 0; font-size: 1.3rem; font-weight: 800; color: #f8fafc;">${Utils.escapeHtml(unit.unit_name)}</h3>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                ${Utils.getLevelBadgeHtml(unit.level_category || 'PMR')}
+                <span class="badge" style="background: ${scoredActs > 0 ? (pendingActs === 0 ? '#059669' : '#0284c7') : '#b45309'}; color: #ffffff; font-size: 0.72rem; padding: 2px 8px; border-radius: 999px;">
+                  <i class="fa-solid ${scoredActs > 0 ? (pendingActs === 0 ? 'fa-circle-check' : 'fa-spinner') : 'fa-hourglass-start'}"></i>
+                  ${scoredActs === 0 ? 'Belum Ada Penilaian' : (pendingActs === 0 ? 'Semua Lomba Selesai Dinilai' : `${scoredActs} Selesai • ${pendingActs} Menunggu`)}
+                </span>
+              </div>
             </div>
-            <div style="text-align: right; background: rgba(255,255,255,0.08); padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);">
-              <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; text-transform: uppercase;">Total Skor Akumulasi</div>
-              <div style="font-size: 1.6rem; font-weight: 900; color: #38bdf8; line-height: 1.1;">${unit.total_score || 0} <span style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Poin</span></div>
-              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">Avg: <strong>${unit.avg_score ? parseFloat(unit.avg_score).toFixed(1) : '-'}</strong> • <strong>${(unit.activities || []).length}</strong> Lomba</div>
+            <div style="text-align: right; background: rgba(255,255,255,0.08); padding: 0.65rem 1.1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);">
+              <div style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Total Skor Akumulasi</div>
+              <div style="font-size: 1.7rem; font-weight: 900; color: #38bdf8; line-height: 1.1;">${unit.total_score || 0} <span style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;">Poin</span></div>
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
+                Rata-rata: <strong>${unit.avg_score ? parseFloat(unit.avg_score).toFixed(1) : '-'}</strong> • Dinilai: <strong>${scoredActs}/${totalActs}</strong> Cabang
+              </div>
             </div>
           </div>
         </div>
 
-        <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+        ${scoredActs === 0 ? `
+          <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.84rem; color: #92400e; display: flex; align-items: center; gap: 0.65rem;">
+            <i class="fa-solid fa-clock-rotate-left" style="font-size: 1.2rem; color: #d97706; flex-shrink: 0;"></i>
+            <div>
+              <strong>Kegiatan Belum Memiliki Penilaian</strong><br>
+              Kontingen ini belum menerima penilaian juri untuk cabang lomba yang diikuti. Seluruh cabang kegiatan resmi Jumbara ditampilkan di bawah ini dengan status menunggu penilaian.
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
           <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a;">
-            <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Daftar Perolehan Nilai Cabang Kegiatan (${(unit.activities || []).length})
+            <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Seluruh Cabang Kegiatan / Lomba Jumbara (${totalActs})
           </h4>
-          <span style="font-size: 0.78rem; color: #64748b;">Diperbarui langsung dari dewan juri</span>
+          <div style="font-size: 0.76rem; display: flex; gap: 0.75rem;">
+            <span style="color: #059669; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> ${scoredActs} Selesai Dinilai</span>
+            <span style="color: #b45309; font-weight: 700;"><i class="fa-regular fa-clock"></i> ${pendingActs} Belum Dinilai</span>
+          </div>
         </div>
 
-        ${(!unit.activities || !unit.activities.length) ? `
-          <div style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; color: #64748b;">
-            <i class="fa-solid fa-clipboard" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
-            Belum ada nilai cabang lomba yang dicatat untuk kontingen ini.
-          </div>
-        ` : `
-          <div class="table-responsive" style="margin: 0;">
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr>
-                  <th style="width: 50px; text-align: center;">No</th>
-                  <th>Cabang Kegiatan / Lomba</th>
-                  <th style="width: 120px; text-align: center;">Kategori</th>
-                  <th style="width: 110px; text-align: center;">Skor Nilai</th>
-                  <th style="width: 150px; text-align: center;">Predikat Skor</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${unit.activities.map((act, i) => {
-                  const sc = parseFloat(act.score || 0);
-                  let gradeText = 'Grade D';
-                  let gradeColor = 'background: #f1f5f9; color: #475569;';
-                  if (sc >= 90) { gradeText = 'Grade A (Sangat Baik)'; gradeColor = 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800;'; }
-                  else if (sc >= 80) { gradeText = 'Grade B (Baik)'; gradeColor = 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 800;'; }
-                  else if (sc >= 70) { gradeText = 'Grade C (Cukup)'; gradeColor = 'background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; font-weight: 800;'; }
+        <div class="table-responsive" style="margin: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f8fafc;">
+                <th style="width: 45px; text-align: center;">No</th>
+                <th>Cabang Kegiatan / Perlombaan</th>
+                <th style="width: 110px; text-align: center;">Kategori</th>
+                <th style="width: 120px; text-align: center;">Skor Perolehan</th>
+                <th style="width: 170px; text-align: center;">Status / Predikat</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fullRows.map((act, i) => {
+                let categoryBadge = 'background: #f1f5f9; color: #334155;';
+                const c = (act.category || '').toLowerCase();
+                if (c.includes('jumpa')) categoryBadge = 'background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;';
+                else if (c.includes('bakti')) categoryBadge = 'background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;';
+                else if (c.includes('gembira')) categoryBadge = 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a;';
 
-                  return `
-                    <tr>
-                      <td style="text-align: center; font-weight: 700; color: #64748b;">${i + 1}</td>
-                      <td><strong style="color: #0f172a; font-size: 0.92rem;">${Utils.escapeHtml(act.name)}</strong></td>
-                      <td style="text-align: center;"><span class="badge badge-unit" style="font-size: 0.72rem;">${Utils.escapeHtml(act.category || 'Umum')}</span></td>
-                      <td style="text-align: center;"><span style="font-size: 1.15rem; font-weight: 800; color: #0284c7; font-family: monospace;">${sc.toFixed(1)}</span></td>
-                      <td style="text-align: center;"><span class="badge" style="${gradeColor} font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;">${gradeText}</span></td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        `}
+                return `
+                  <tr style="${!act.scored ? 'background: #fafafa;' : ''}">
+                    <td style="text-align: center; font-weight: 700; color: #64748b;">${i + 1}</td>
+                    <td>
+                      <div style="font-weight: 700; color: #0f172a; font-size: 0.92rem;">
+                        ${Utils.escapeHtml(act.name)}
+                      </div>
+                      ${act.scored ? '' : '<span style="font-size: 0.72rem; color: #94a3b8;"><i class="fa-regular fa-clock"></i> Menunggu penilaian Dewan Juri</span>'}
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="badge" style="${categoryBadge} font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 700;">
+                        ${Utils.escapeHtml(act.category || 'Umum')}
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      ${act.scored ? `
+                        <span style="font-size: 1.15rem; font-weight: 900; color: #0284c7; font-family: monospace;">
+                          ${act.score.toFixed(1)}
+                        </span>
+                      ` : `
+                        <span style="font-size: 1.1rem; font-weight: 700; color: #cbd5e1;">—</span>
+                      `}
+                    </td>
+                    <td style="text-align: center;">
+                      ${act.scored ? `
+                        <span class="badge" style="${act.gradeStyle} font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;">
+                          ${act.gradeText}
+                        </span>
+                      ` : `
+                        <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.73rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                          <i class="fa-regular fa-clock"></i> Belum Dinilai
+                        </span>
+                      `}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       `;
     }
 
@@ -1191,8 +1401,14 @@ const App = {
     // HANYA Kontingen PMR (Unit Sekolah): Mula, Madya, Wira.
     const allStandings = rawStandings.filter(s => Utils.isPmrUnit({ level_category: s.level_category, name: s.unit_name }));
 
-    // Ambil daftar unik semua nama kegiatan yang telah dinilai
+    // Himpun seluruh cabang kegiatan resmi Jumbara (baik yang sudah dinilai maupun belum dinilai)
+    const officialActivities = this.getOfficialActivitiesList();
     const allEventMap = new Map();
+    officialActivities.forEach(oa => {
+      allEventMap.set(oa.name, oa.category || 'Umum');
+    });
+
+    // Tambahkan kegiatan dari scores jika ada nama baru
     allStandings.forEach(s => {
       (s.activities || []).forEach(a => {
         if (a && a.name && !allEventMap.has(a.name)) {
@@ -1200,7 +1416,7 @@ const App = {
         }
       });
     });
-    const allEventNames = Array.from(allEventMap.keys()).sort();
+    const allEventNames = Array.from(allEventMap.keys());
 
     // Kelompokkan kontingen sekolah PMR berdasarkan jenjang resmi
     const wiraStandings = allStandings.filter(s => (s.level_category || '').toLowerCase().includes('wira'));
@@ -1238,7 +1454,7 @@ const App = {
             onclick="App.setPublicStandingsViewMode('event')" 
             style="cursor: pointer; padding: 0.45rem 1rem; border-radius: 999px; border: 1px solid ${viewMode === 'event' ? '#0284c7' : '#cbd5e1'}; background: ${viewMode === 'event' ? '#0284c7' : '#ffffff'}; color: ${viewMode === 'event' ? '#ffffff' : '#334155'}; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.2s;">
             <i class="fa-solid fa-list-check"></i> 2. Skor per Cabang Kegiatan
-            <span style="background: ${viewMode === 'event' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${viewMode === 'event' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${allEventNames.length} Cabang</span>
+            <span style="background: ${viewMode === 'event' ? 'rgba(255,255,255,0.25)' : '#f1f5f9'}; color: ${viewMode === 'event' ? '#ffffff' : '#475569'}; padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.72rem;">${allEventNames.length} Cabang Resmi</span>
           </button>
         </div>
 
@@ -1293,16 +1509,45 @@ const App = {
     if (viewMode === 'event') {
       const selectedEvent = this.publicSelectedScoreEvent || allEventNames[0] || '';
       
+      const clean = str => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const isMatch = (nameA, nameB) => {
+        const cA = clean(nameA);
+        const cB = clean(nameB);
+        if (!cA || !cB) return false;
+        if (cA === cB) return true;
+        if (cA.includes('pertolonganpertama') && cB.includes('pertolonganpertama')) return true;
+        if (cA.includes('perawatankeluarga') && cB.includes('perawatankeluarga')) return true;
+        if ((cA.includes('siagabencana') || cA.includes('asb')) && (cB.includes('siagabencana') || cB.includes('asb'))) return true;
+        if (cA.includes('tandudarurat') && cB.includes('tandudarurat')) return true;
+        if (cA.includes('kepemimpinan') && cB.includes('kepemimpinan')) return true;
+        if ((cA.includes('pentasseni') || cA.includes('gembirapmr')) && (cB.includes('pentasseni') || cB.includes('gembirapmr'))) return true;
+        if (cA.includes('paduansuara') && cB.includes('paduansuara')) return true;
+        if (cA.includes('jurnalistik') && cB.includes('jurnalistik')) return true;
+        return (cA.length > 5 && cB.length > 5 && (cA.includes(cB) || cB.includes(cA)));
+      };
+
       const eventScores = [];
+      const unscoredUnits = [];
+
       filtered.forEach(s => {
-        const act = (s.activities || []).find(a => a.name === selectedEvent);
+        const act = (s.activities || []).find(a => isMatch(a.name, selectedEvent));
         if (act) {
           eventScores.push({
             unit_id: s.unit_id,
             unit_name: s.unit_name,
             level_category: s.level_category,
             score: parseFloat(act.score || 0),
-            category: act.category || 'Umum'
+            category: act.category || allEventMap.get(selectedEvent) || 'Umum',
+            scored: true
+          });
+        } else {
+          unscoredUnits.push({
+            unit_id: s.unit_id,
+            unit_name: s.unit_name,
+            level_category: s.level_category,
+            score: 0,
+            category: allEventMap.get(selectedEvent) || 'Umum',
+            scored: false
           });
         }
       });
@@ -1314,7 +1559,7 @@ const App = {
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <div style="flex: 1; min-width: 250px;">
             <label style="display: block; font-size: 0.8rem; font-weight: 800; color: #334155; margin-bottom: 0.35rem;">
-              <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Pilih Cabang Kegiatan / Lomba:
+              <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Pilih Cabang Kegiatan / Lomba (${allEventNames.length} Cabang Resmi):
             </label>
             <select class="form-control" style="font-weight: 700; font-size: 0.92rem; padding: 0.5rem 0.85rem; border-radius: 8px; border-color: #cbd5e1; background: #ffffff;" onchange="App.selectPublicScoreEvent(this.value)">
               ${allEventNames.map(ev => `
@@ -1325,8 +1570,10 @@ const App = {
             </select>
           </div>
           <div style="text-align: right; background: #ffffff; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Kontingen Dinilai</span>
-            <div style="font-size: 1.3rem; font-weight: 900; color: #0284c7;">${eventScores.length} <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">Unit</span></div>
+            <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Status Penilaian</span>
+            <div style="font-size: 1.15rem; font-weight: 900; color: ${eventScores.length > 0 ? '#0284c7' : '#b45309'};">
+              ${eventScores.length} <span style="font-size: 0.78rem; font-weight: 600; color: #64748b;">Dinilai</span> • ${unscoredUnits.length} <span style="font-size: 0.78rem; font-weight: 600; color: #64748b;">Menunggu</span>
+            </div>
           </div>
         </div>
       `;
@@ -1334,9 +1581,52 @@ const App = {
       let eventTableHtml = '';
       if (!eventScores.length) {
         eventTableHtml = `
-          <div style="text-align: center; padding: 2.5rem 1rem; background: #ffffff; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
-            <i class="fa-solid fa-clipboard" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
-            Belum ada nilai yang dicatat untuk cabang kegiatan <strong>${Utils.escapeHtml(selectedEvent)}</strong> pada filter ini.
+          <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 1.1rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; color: #92400e;">
+            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.35rem;">
+              <i class="fa-solid fa-hourglass-half" style="font-size: 1.3rem; color: #d97706;"></i>
+              <strong style="font-size: 1rem; color: #78350f;">Cabang Kegiatan Belum Dinilai oleh Dewan Juri</strong>
+            </div>
+            <div style="font-size: 0.86rem; color: #92400e; line-height: 1.5;">
+              Belum ada perolehan skor yang dicatat untuk cabang kegiatan <strong>${Utils.escapeHtml(selectedEvent)}</strong> pada filter ini.
+              Di bawah ini adalah daftar <strong>${unscoredUnits.length}</strong> kontingen unit yang terdaftar dan sedang menunggu penilaian Dewan Juri.
+            </div>
+          </div>
+
+          <div class="table-responsive" style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="width: 50px; text-align: center;">No</th>
+                  <th>Kontingen Peserta (PMR)</th>
+                  <th style="width: 140px; text-align: center;">Tingkat PMR</th>
+                  <th style="width: 180px; text-align: center;">Status Penilaian</th>
+                  <th style="width: 100px; text-align: center;">Rincian</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${unscoredUnits.map((u, i) => `
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: #94a3b8;">${i + 1}</td>
+                    <td>
+                      <strong style="color: #0f172a; font-size: 0.95rem;">${Utils.escapeHtml(u.unit_name)}</strong>
+                    </td>
+                    <td style="text-align: center;">
+                      ${Utils.getLevelBadgeHtml(u.level_category || 'PMR')}
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.73rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                        <i class="fa-regular fa-clock"></i> Menunggu Penilaian Juri
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      <button type="button" class="btn btn-outline btn-xs" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 6px; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-weight: 700;" onclick="App.openPublicUnitScoreDetail(${u.unit_id})">
+                        <i class="fa-solid fa-list-ul"></i> Detail
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
         `;
       } else {
@@ -1390,6 +1680,31 @@ const App = {
                     </tr>
                   `;
                 }).join('')}
+
+                ${unscoredUnits.map(u => `
+                  <tr style="background: #fafafa; opacity: 0.85;">
+                    <td style="text-align: center; font-weight: 700; color: #94a3b8; font-size: 0.85rem;">—</td>
+                    <td>
+                      <span style="color: #334155; font-size: 0.92rem; font-weight: 600;">${Utils.escapeHtml(u.unit_name)}</span>
+                    </td>
+                    <td style="text-align: center;">
+                      ${Utils.getLevelBadgeHtml(u.level_category || 'PMR')}
+                    </td>
+                    <td style="text-align: center;">
+                      <span style="font-size: 1.1rem; font-weight: 700; color: #cbd5e1;">—</span>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.73rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                        <i class="fa-regular fa-clock"></i> Belum Dinilai
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      <button type="button" class="btn btn-outline btn-xs" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 6px; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-weight: 700;" onclick="App.openPublicUnitScoreDetail(${u.unit_id})">
+                        <i class="fa-solid fa-list-ul"></i> Detail
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
               </tbody>
             </table>
           </div>
@@ -1421,12 +1736,17 @@ const App = {
 
     const renderActivityChips = (activities, unitId) => {
       if (!activities || !activities.length) {
-        return '<span style="font-size: 0.72rem; color: #94a3b8; font-style: italic;">Belum ada skor kegiatan</span>';
+        return `
+          <button type="button" class="btn btn-outline btn-xs" style="font-size: 0.72rem; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; cursor: pointer;" onclick="App.openPublicUnitScoreDetail(${unitId})" title="Klik untuk lihat seluruh daftar cabang lomba resmi Jumbara">
+            <i class="fa-regular fa-clock"></i> <span>Menunggu Penilaian Juri</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem; margin-left: 2px; color: #d97706;"></i>
+          </button>
+        `;
       }
       return `
         <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
           ${activities.map(act => `
-            <span style="font-size: 0.72rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+            <span style="font-size: 0.72rem; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: pointer;" onclick="App.openPublicUnitScoreDetail(${unitId})" title="Lihat detail skor ${Utils.escapeHtml(act.name)}">
               <span style="color: #15803d; font-weight: 600;">${Utils.escapeHtml(act.name)}:</span>
               <strong style="color: #0f172a; font-weight: 800;">${act.score}</strong>
             </span>
@@ -1543,7 +1863,7 @@ const App = {
             ${renderActivityChips(s.activities, s.unit_id)}
           </td>
           <td style="text-align: center;">
-            <span style="font-weight: 600; color: #475569; font-size: 0.88rem;">${totalLomba} Lomba</span>
+            <span style="font-weight: 600; color: #475569; font-size: 0.88rem;">${totalLomba > 0 ? `${totalLomba} Dinilai` : '<span style="color: #b45309; font-size: 0.78rem; font-weight: 600;">Belum Dinilai</span>'}</span>
           </td>
           <td style="text-align: center;">
             <span style="font-weight: 600; color: #0f172a; font-size: 0.88rem;">${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</span>
@@ -1613,7 +1933,7 @@ const App = {
                 ${renderActivityChips(s.activities, s.unit_id)}
               </div>
               <div style="font-size: 0.75rem; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 0.4rem; display: flex; justify-content: space-between; align-items: center;">
-                <span>Kegiatan: <strong>${totalLomba} Lomba</strong> • Avg: <strong>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</strong></span>
+                <span>Kegiatan: <strong>${totalLomba > 0 ? `${totalLomba} Dinilai` : 'Belum Dinilai'}</strong> • Avg: <strong>${s.avg_score ? parseFloat(s.avg_score).toFixed(1) : '-'}</strong></span>
                 <button type="button" class="btn btn-outline btn-xs" style="padding: 2px 7px; font-size: 0.72rem; border-radius: 6px; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-weight: 700;" onclick="App.openPublicUnitScoreDetail(${s.unit_id})">
                   <i class="fa-solid fa-list-ul"></i> Detail
                 </button>
