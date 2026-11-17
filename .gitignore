@@ -28,6 +28,7 @@ Thumbs.db
 config/database.local.php
 .env
 .env.local
+.user.ini
 
 # Temporary & Log files
 *.log
