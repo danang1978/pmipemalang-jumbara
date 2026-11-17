@@ -3699,7 +3699,7 @@ const App = {
                 </div>
                 <div class="jkn-brand-info">
                   <span class="jkn-brand-title">${portalHeaderTitle} <span class="jkn-brand-badge" style="background: rgba(16,185,129,0.3); color: #a7f3d0; border-color: #34d399;">RESMI</span></span>
-                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN')}</span>
+                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN PEMALANG')}</span>
                 </div>
               </div>
 
@@ -4180,7 +4180,7 @@ const App = {
                 </div>
                 <div class="jkn-brand-info">
                   <span class="jkn-brand-title">PORTAL PENILAI <span class="jkn-brand-badge" style="background: rgba(99,102,241,0.35); color: #e0e7ff; border-color: #818cf8;">JURI</span></span>
-                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN')}</span>
+                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN PEMALANG')}</span>
                 </div>
               </div>
 
@@ -4705,7 +4705,7 @@ const App = {
                 </div>
                 <div class="jkn-brand-info">
                   <span class="jkn-brand-title">PORTAL PANITIA <span class="jkn-brand-badge" style="background: rgba(220,38,38,0.35); color: #fee2e2; border-color: #f87171;">OPERASIONAL</span></span>
-                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN')}</span>
+                  <span class="jkn-brand-sub">${Utils.escapeHtml(this.appSettings.organizer_name || 'PMI KABUPATEN PEMALANG')}</span>
                 </div>
               </div>
 

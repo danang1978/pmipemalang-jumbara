@@ -540,12 +540,15 @@ if (($method === 'POST' || $method === 'PATCH') && $action === 'status') {
             $phone = '62' . substr($phone, 1);
         }
 
+        $settings = getAppSettings();
+        $fullOrgName = 'Palang Merah Indonesia (PMI) Kabupaten Pemalang';
+
         if ($newStatus === 'verified_kabupaten') {
-            $statusTitle = "DITERIMA & DISETUJUI RESMI PMI KABUPATEN";
+            $statusTitle = "DITERIMA & DISETUJUI RESMI PMI KABUPATEN PEMALANG";
             $detailMsg = "Pendaftaran Anda telah terverifikasi penuh. Silakan login ke portal resmi untuk mengunduh ID Card QR Code Anda.";
         } else if ($newStatus === 'verified_unit') {
             $statusTitle = "DIVERIFIKASI PEMBINA UNIT";
-            $detailMsg = "Pendaftaran Anda telah disetujui Pembina Unit Sekolah dan diteruskan ke PMI Kabupaten.";
+            $detailMsg = "Pendaftaran Anda telah disetujui Pembina Unit Sekolah dan diteruskan ke PMI Kabupaten Pemalang.";
         } else if ($newStatus === 'revision') {
             $statusTitle = "MINTA PERBAIKAN / REVISI BERKAS";
             $detailMsg = "📝 *Catatan Perbaikan dari Admin:*\n\"{$reason}\"\n\nSilakan login ke Portal Peserta untuk memperbarui data / berkas foto & surat tugas Anda.";
@@ -554,7 +557,7 @@ if (($method === 'POST' || $method === 'PATCH') && $action === 'status') {
             $detailMsg = "📝 *Alasan Penolakan:*\n\"{$reason}\"\n\nSilakan hubungi Pembina Unit Sekolah Anda untuk informasi lebih lanjut.";
         }
 
-        $waMsg = "Halo *{$part['full_name']}*,\n\nStatus pendaftaran JUMBARA PMR 2026 Anda pada unit *{$part['unit_name']}* telah diperbarui menjadi: *{$statusTitle}*.\n\n📌 Kode Peserta: *{$part['code']}*\n{$detailMsg}\n\nPalang Merah Indonesia (PMI) Kabupaten";
+        $waMsg = "Halo *{$part['full_name']}*,\n\nStatus pendaftaran JUMBARA PMR 2026 Anda pada unit *{$part['unit_name']}* telah diperbarui menjadi: *{$statusTitle}*.\n\n📌 Kode Peserta: *{$part['code']}*\n{$detailMsg}\n\n{$fullOrgName}";
 
         $waUrl = "https://api.whatsapp.com/send?phone={$phone}&text=" . urlencode($waMsg);
 

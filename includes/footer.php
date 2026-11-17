@@ -536,7 +536,7 @@ $settings = getAppSettings();
             <i class="fa-solid fa-qrcode" style="color: #38bdf8; font-size: 1.25rem;"></i>
             <div>
               <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">E-Presensi QR Code Resmi</h3>
-              <p style="margin: 0; font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">JUMBARA PMR PMI KABUPATEN</p>
+              <p style="margin: 0; font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">JUMBARA PMR PMI KABUPATEN PEMALANG</p>
             </div>
           </div>
           <button class="modal-close" onclick="App.closeModal('largeQrModal')" style="color: #ffffff; opacity: 0.85;">&times;</button>
