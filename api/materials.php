@@ -85,24 +85,78 @@ if ($method === 'POST') {
     $user = requireUser(['kabupaten', 'admin_kabupaten', 'super_admin']);
     $input = getJsonInput();
 
-    $title = trim($input['title'] ?? '');
-    $category = trim($input['category'] ?? 'Buku Panduan & Juknis');
-    $description = trim($input['description'] ?? '');
-    $fileUrl = trim($input['file_url'] ?? '');
-    $fileSize = trim($input['file_size'] ?? '1.5 MB');
-    $fileType = strtolower(trim($input['file_type'] ?? 'pdf'));
+    // Terima parameter baik dari Multipart/Form-Data ($_POST) maupun JSON Payload ($input)
+    $title = trim($_POST['title'] ?? $input['title'] ?? '');
+    $category = trim($_POST['category'] ?? $input['category'] ?? 'Buku Panduan & Juknis');
+    $description = trim($_POST['description'] ?? $input['description'] ?? '');
+    $isFeatured = isset($_POST['is_featured']) ? (int)$_POST['is_featured'] : (int)($input['is_featured'] ?? 0);
+    $fileUrl = trim($_POST['file_url'] ?? $input['file_url'] ?? '');
+    $fileSize = trim($_POST['file_size'] ?? $input['file_size'] ?? '');
+    $fileType = strtolower(trim($_POST['file_type'] ?? $input['file_type'] ?? ''));
+    $fileName = trim($_POST['file_name'] ?? $input['file_name'] ?? '');
 
     if (!$title) {
         jsonResponse(['error' => 'Judul dokumen/materi wajib diisi.'], 400);
     }
 
-    // Support base64 file upload if provided
-    if (!empty($input['file_data']) && strpos($input['file_data'], 'data:') === 0) {
-        $uploadedPath = saveBase64File($input['file_data'], 'materi');
+    // A. Prioritas 1: Unggahan File Biner Langsung (Multipart FormData $_FILES)
+    if (!empty($_FILES['file']['name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
+        $file = $_FILES['file'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errMsgs = [
+                UPLOAD_ERR_INI_SIZE => 'Ukuran berkas melebihi batas upload server (upload_max_filesize).',
+                UPLOAD_ERR_FORM_SIZE => 'Ukuran berkas melebihi batas form.',
+                UPLOAD_ERR_PARTIAL => 'Berkas hanya terunggah sebagian. Silakan ulangi upload.',
+                UPLOAD_ERR_NO_FILE => 'Tidak ada file yang dipilih.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Folder temp server tidak ditemukan.',
+                UPLOAD_ERR_CANT_WRITE => 'Gagal menulis berkas ke penyimpanan server.',
+                UPLOAD_ERR_EXTENSION => 'Unggahan berkas dihentikan oleh ekstensi server.'
+            ];
+            jsonResponse(['error' => $errMsgs[$file['error']] ?? 'Gagal mengunggah berkas (Error code: ' . $file['error'] . ')'], 400);
+        }
+
+        $origName = basename($file['name']);
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $allowedExts = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'zip', 'jpg', 'jpeg', 'png', 'webp'];
+        if (!in_array($ext, $allowedExts)) {
+            jsonResponse(['error' => 'Format file tidak didukung. Harap unggah berkas PDF, DOCX, PPTX, XLSX, atau ZIP.'], 400);
+        }
+
+        if ($file['size'] > 30 * 1024 * 1024) {
+            jsonResponse(['error' => 'Ukuran berkas melebihi batas maksimal 25MB.'], 400);
+        }
+
+        $uploadDir = __DIR__ . '/../uploads/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0777, true);
+        }
+        if (!is_writable($uploadDir)) {
+            @chmod($uploadDir, 0777);
+        }
+
+        $safeName = 'materi_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $targetPath = $uploadDir . $safeName;
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            jsonResponse(['error' => 'Gagal menyimpan berkas ke server.'], 500);
+        }
+
+        $fileUrl = 'uploads/' . $safeName;
+        $fileName = $origName;
+        $fileType = $ext;
+        if (!$fileSize) {
+            $bytes = $file['size'];
+            $fileSize = ($bytes >= 1024 * 1024) ? round($bytes / (1024 * 1024), 1) . ' MB' : round($bytes / 1024) . ' KB';
+        }
+    }
+    // B. Prioritas 2: Unggahan Base64 DataURL (JSON payload)
+    else if (!empty($input['file_data']) && strpos($input['file_data'], 'data:') === 0) {
+        $origName = trim($input['file_name'] ?? '');
+        $uploadedPath = saveBase64File($input['file_data'], 'materi', $origName);
         if ($uploadedPath) {
             $fileUrl = $uploadedPath;
             $ext = pathinfo($uploadedPath, PATHINFO_EXTENSION);
             if ($ext) $fileType = strtolower($ext);
+            if ($origName) $fileName = $origName;
         }
     }
 
@@ -110,22 +164,50 @@ if ($method === 'POST') {
         jsonResponse(['error' => 'URL berkas materi atau unggahan file dokumen wajib diisi.'], 400);
     }
 
-    $fileName = basename($fileUrl);
+    if (!$fileName) {
+        $fileName = basename($fileUrl);
+    }
+    if (!$fileSize) {
+        $fileSize = '1.5 MB';
+    }
+    if (!$fileType) {
+        $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION) ?: 'pdf');
+    }
 
-    $stmt = $pdo->prepare("
-        INSERT INTO materials (title, category, description, file_url, file_name, file_size, file_type, uploaded_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([
-        $title,
-        $category,
-        $description,
-        $fileUrl,
-        $fileName,
-        $fileSize,
-        $fileType,
-        $user['full_name'] ?? 'Panitia Kabupaten PMI'
-    ]);
+    // Pastikan kolom is_featured didukung di database
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO materials (title, category, is_featured, description, file_url, file_name, file_size, file_type, uploaded_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $title,
+            $category,
+            $isFeatured,
+            $description,
+            $fileUrl,
+            $fileName,
+            $fileSize,
+            $fileType,
+            $user['full_name'] ?? 'Panitia Kabupaten PMI'
+        ]);
+    } catch (\PDOException $e) {
+        // Fallback jika database belum memiliki kolom is_featured
+        $stmt = $pdo->prepare("
+            INSERT INTO materials (title, category, description, file_url, file_name, file_size, file_type, uploaded_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $title,
+            $category,
+            $description,
+            $fileUrl,
+            $fileName,
+            $fileSize,
+            $fileType,
+            $user['full_name'] ?? 'Panitia Kabupaten PMI'
+        ]);
+    }
 
     jsonResponse([
         'message' => 'Materi berhasil ditambahkan ke portal!',

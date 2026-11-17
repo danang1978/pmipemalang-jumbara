@@ -28,10 +28,10 @@ const API = {
   },
 
   async request(endpoint, options = {}) {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers
-    };
+    const headers = { ...options.headers };
+    if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     const base = window.APP_BASE_URL || '/';
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
@@ -453,6 +453,12 @@ const API = {
   },
 
   saveMaterial(payload) {
+    if (payload instanceof FormData) {
+      return this.request('/materials.php', {
+        method: 'POST',
+        body: payload
+      });
+    }
     return this.request('/materials.php', {
       method: 'POST',
       body: JSON.stringify(payload)

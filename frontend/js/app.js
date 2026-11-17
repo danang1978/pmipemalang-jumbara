@@ -9683,51 +9683,83 @@ const App = {
     }
 
     const file = fileInput.files[0];
+    if (file.size > 25 * 1024 * 1024) {
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.innerHTML = 'Ukuran file melebihi batas 25MB.';
+      }
+      Utils.showToast('Ukuran file melebihi batas 25MB.', 'error');
+      return;
+    }
+
     const origBtnHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...';
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const base64Data = e.target.result;
-        const fileSizeStr = (file.size > 1024 * 1024) 
-          ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
-          : Math.round(file.size / 1024) + ' KB';
+    const fileSizeStr = (file.size > 1024 * 1024) 
+      ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' 
+      : Math.round(file.size / 1024) + ' KB';
 
-        await API.saveMaterial({
-          title: title,
-          category: category,
-          is_featured: isFeatured,
-          description: description,
-          file_data: base64Data,
-          file_name: file.name,
-          file_size: fileSizeStr
-        });
+    try {
+      // 1. Metode Utama: Kirim multipart/form-data biner langsung (ringan, cepat & hemat memori)
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('category', category);
+      formData.append('is_featured', isFeatured);
+      formData.append('description', description);
+      formData.append('file_size', fileSizeStr);
+      formData.append('file', file);
 
-        Utils.showToast('Dokumen materi berhasil diupload dan dipublikasikan!', 'success');
-        this.closeModal('addMaterialModal');
-        this.loadManageMaterials();
-        this.loadPublicMaterials();
-      } catch (err) {
-        if (alertBox) {
-          alertBox.style.display = 'block';
-          alertBox.style.background = '#fee2e2';
-          alertBox.style.color = '#b91c1c';
-          alertBox.innerHTML = `Gagal upload: ${Utils.escapeHtml(err.message)}`;
+      await API.saveMaterial(formData);
+
+      Utils.showToast('Dokumen materi berhasil diupload dan dipublikasikan!', 'success');
+      this.closeModal('addMaterialModal');
+      this.loadManageMaterials();
+      this.loadPublicMaterials();
+    } catch (err) {
+      // 2. Metode Cadangan: Jika server membatasi multipart, gunakan Base64 DataURL (jika <= 10MB)
+      if (file.size <= 10 * 1024 * 1024) {
+        try {
+          const base64Data = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result);
+            r.onerror = reject;
+            r.readAsDataURL(file);
+          });
+
+          await API.saveMaterial({
+            title: title,
+            category: category,
+            is_featured: isFeatured,
+            description: description,
+            file_data: base64Data,
+            file_name: file.name,
+            file_size: fileSizeStr
+          });
+
+          Utils.showToast('Dokumen materi berhasil diupload dan dipublikasikan!', 'success');
+          this.closeModal('addMaterialModal');
+          this.loadManageMaterials();
+          this.loadPublicMaterials();
+          return;
+        } catch (fallbackErr) {
+          console.error('Fallback Base64 upload failed:', fallbackErr);
         }
-        Utils.showToast(err.message, 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = origBtnHtml;
       }
-    };
-    reader.onerror = () => {
+
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.innerHTML = `Gagal upload: ${Utils.escapeHtml(err.message)}`;
+      }
+      Utils.showToast(err.message, 'error');
+    } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = origBtnHtml;
-      Utils.showToast('Gagal membaca file dari komputer Anda.', 'error');
-    };
-    reader.readAsDataURL(file);
+    }
   },
 
   async deleteMaterial(id) {

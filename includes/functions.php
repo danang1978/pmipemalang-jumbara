@@ -222,7 +222,7 @@ function getAppSettings($forceRefresh = false) {
 
 // Secure Base64 File Saver Helper with Whitelisting & XSS Protection
 if (!function_exists('saveBase64File')) {
-    function saveBase64File($fileData, $prefix = 'file') {
+    function saveBase64File($fileData, $prefix = 'file', $originalFileName = '') {
         if (!$fileData || strpos($fileData, 'data:') !== 0) {
             return null;
         }
@@ -243,10 +243,33 @@ if (!function_exists('saveBase64File')) {
             $ext = 'webp';
         } else if ((strpos($mime, 'icon') !== false || strpos($mime, 'ico') !== false) && $prefix === 'favicon') {
             $ext = 'ico';
-        } else if (strpos($mime, 'pdf') !== false && ($prefix === 'surattugas' || $prefix === 'file')) {
+        } else if (strpos($mime, 'pdf') !== false) {
             $ext = 'pdf';
+        } else if (strpos($mime, 'wordprocessingml') !== false || strpos($mime, 'docx') !== false) {
+            $ext = 'docx';
+        } else if (strpos($mime, 'msword') !== false) {
+            $ext = 'doc';
+        } else if (strpos($mime, 'presentationml') !== false || strpos($mime, 'pptx') !== false) {
+            $ext = 'pptx';
+        } else if (strpos($mime, 'powerpoint') !== false) {
+            $ext = 'ppt';
+        } else if (strpos($mime, 'spreadsheetml') !== false || strpos($mime, 'xlsx') !== false) {
+            $ext = 'xlsx';
+        } else if (strpos($mime, 'excel') !== false) {
+            $ext = 'xls';
+        } else if (strpos($mime, 'zip') !== false || strpos($mime, 'compressed') !== false) {
+            $ext = 'zip';
         } else if (strpos($mime, 'svg') !== false && ($prefix === 'logo' || $prefix === 'favicon' || $prefix === 'event_logo' || $prefix === 'jumbara_logo' || $prefix === 'kop' || $prefix === 'app_kop')) {
             $ext = 'svg';
+        }
+
+        // If MIME was generic (e.g. application/octet-stream) and originalFileName provided, inspect extension
+        if (!$ext && !empty($originalFileName)) {
+            $candidateExt = strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION));
+            $allowedCandidateExts = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'zip', 'jpg', 'jpeg', 'png', 'webp'];
+            if (in_array($candidateExt, $allowedCandidateExts)) {
+                $ext = $candidateExt;
+            }
         }
 
         // Reject disallowed extensions or executable mime types
@@ -259,8 +282,9 @@ if (!function_exists('saveBase64File')) {
             return null;
         }
 
-        // Limit file size to 10MB maximum
-        if (strlen($decoded) > 10 * 1024 * 1024) {
+        // Limit file size (materi can be up to 30MB, other files 10MB)
+        $maxBytes = (strpos($prefix, 'materi') !== false || $prefix === 'file') ? (30 * 1024 * 1024) : (10 * 1024 * 1024);
+        if (strlen($decoded) > $maxBytes) {
             return null;
         }
 
