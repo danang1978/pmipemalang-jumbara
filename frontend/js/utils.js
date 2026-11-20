@@ -147,9 +147,11 @@ const Utils = {
     }
     const d = new Date(ts);
     if (isNaN(d.getTime())) return null;
+    const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+    const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' });
     return {
-      time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB',
-      date: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
+      time: `${timeStr} WIB`,
+      date: dateStr
     };
   },
 

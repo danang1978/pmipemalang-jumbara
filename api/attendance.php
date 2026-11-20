@@ -9,6 +9,9 @@ date_default_timezone_set('Asia/Jakarta');
 require_once __DIR__ . '/../includes/functions.php';
 
 $pdo = getPDOConnection();
+try {
+    $pdo->exec("SET time_zone = '+07:00'");
+} catch (\Throwable $eTz) {}
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
@@ -102,7 +105,8 @@ if ($method === 'POST' && $action === 'scan') {
 
     // 5. CHECK PREVIOUS ATTENDANCE RECORD (Masuk / Keluar)
     $stmtCheckLast = $pdo->prepare("
-        SELECT * FROM attendance 
+        SELECT *, DATE_FORMAT(COALESCE(timestamp, scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at_wib 
+        FROM attendance 
         WHERE event_id = ? AND participant_id = ? 
         ORDER BY id DESC LIMIT 1
     ");
@@ -111,7 +115,7 @@ if ($method === 'POST' && $action === 'scan') {
 
     $formattedLastTime = '';
     if ($lastAttendance) {
-        $rawTime = $lastAttendance['scanned_at'] ?? $lastAttendance['timestamp'] ?? null;
+        $rawTime = $lastAttendance['scanned_at_wib'] ?? $lastAttendance['timestamp'] ?? $lastAttendance['scanned_at'] ?? null;
         if ($rawTime) {
             $ts = strtotime($rawTime);
             if ($ts !== false) {
@@ -126,7 +130,7 @@ if ($method === 'POST' && $action === 'scan') {
     if ($type === 'masuk') {
         // Check if participant is currently checked-in at another event without checking out
         $stmtActiveOther = $pdo->prepare("
-            SELECT a.event_id, a.status, a.scanned_at, e.title AS event_title 
+            SELECT a.event_id, a.status, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, e.title AS event_title 
             FROM attendance a 
             JOIN events e ON a.event_id = e.id 
             WHERE a.participant_id = ? AND a.event_id != ? 
@@ -141,8 +145,9 @@ if ($method === 'POST' && $action === 'scan') {
 
         if ($activeOther) {
             $otherTime = '';
-            if (!empty($activeOther['scanned_at'])) {
-                $ts = strtotime($activeOther['scanned_at']);
+            $rawOtherTime = $activeOther['scanned_at'] ?? null;
+            if (!empty($rawOtherTime)) {
+                $ts = strtotime($rawOtherTime);
                 if ($ts) $otherTime = ' pada pukul ' . date('H:i', $ts) . ' WIB';
             }
             jsonResponse([
@@ -180,7 +185,8 @@ if ($method === 'POST' && $action === 'scan') {
     }
 
     // 6. RECORD ATTENDANCE (Explicitly record current WIB Asia/Jakarta timestamp)
-    $nowJakarta = date('Y-m-d H:i:s');
+    $dtNow = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+    $nowJakarta = $dtNow->format('Y-m-d H:i:s');
     $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, timestamp, scanned_at) VALUES (?, ?, ?, ?, ?, ?)");
     $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta, $nowJakarta]);
 
@@ -191,7 +197,7 @@ if ($method === 'POST' && $action === 'scan') {
         'participant' => $part,
         'event' => $event,
         'type' => $type,
-        'timestamp' => date('H:i:s') . ' WIB, ' . date('d-m-Y')
+        'timestamp' => $dtNow->format('H:i:s') . ' WIB, ' . $dtNow->format('d-m-Y')
     ]);
 }
 
@@ -207,11 +213,11 @@ if ($method === 'GET' && $action === 'my_attendance') {
     }
 
     $stmtAtt = $pdo->prepare("
-        SELECT a.*, COALESCE(a.scanned_at, a.timestamp) AS scanned_at, e.title AS event_title, e.location AS event_location, e.event_date
+        SELECT a.*, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, e.title AS event_title, e.location AS event_location, e.event_date
         FROM attendance a
         JOIN events e ON a.event_id = e.id
         WHERE a.participant_id = ?
-        ORDER BY COALESCE(a.scanned_at, a.timestamp) ASC
+        ORDER BY COALESCE(a.timestamp, a.scanned_at) ASC
     ");
     $stmtAtt->execute([$part['id']]);
     $rows = $stmtAtt->fetchAll();
@@ -259,7 +265,7 @@ if ($method === 'GET' && $action === 'registered_participants') {
     if (!$event) jsonResponse(['error' => 'Kegiatan tidak ditemukan.'], 404);
 
     // Fetch attendance status map for this event
-    $stmtAtt = $pdo->prepare("SELECT participant_id, status, COALESCE(scanned_at, timestamp) AS scanned_at FROM attendance WHERE event_id = ? ORDER BY id ASC");
+    $stmtAtt = $pdo->prepare("SELECT participant_id, status, DATE_FORMAT(COALESCE(timestamp, scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at FROM attendance WHERE event_id = ? ORDER BY id ASC");
     $stmtAtt->execute([$eventId]);
     $attRows = $stmtAtt->fetchAll();
     
@@ -426,12 +432,12 @@ if ($method === 'GET') {
     $totalLogs = (int)$stmtCount->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT a.*, COALESCE(a.scanned_at, a.timestamp) AS scanned_at, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
+        SELECT a.*, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
         FROM attendance a 
         JOIN participants p ON a.participant_id = p.id 
         JOIN units un ON p.unit_id = un.id 
         WHERE a.event_id = ? 
-        ORDER BY COALESCE(a.scanned_at, a.timestamp) DESC
+        ORDER BY COALESCE(a.timestamp, a.scanned_at) DESC
         LIMIT $limit OFFSET $offset
     ");
     $stmt->execute([$eventId]);

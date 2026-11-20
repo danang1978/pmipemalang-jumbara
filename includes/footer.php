@@ -432,97 +432,34 @@ $settings = getAppSettings();
     </div>
   </div>
 
-  <!-- Modal 4: Kartu Peserta ID Card Modal (Modern Studio Layout) -->
+  <!-- Modal 4: Kartu Peserta ID Card Modal (Langsung Tampil - Tanpa Cetak & Unduh) -->
   <div class="modal" id="idCardModal">
-    <div class="modal-dialog idcard-modal-dialog" style="max-width: 840px; width: 95%; max-height: 90vh; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.35); border: none; padding: 0; background: #ffffff; display: flex; flex-direction: column;">
+    <div class="modal-dialog" style="max-width: 420px; width: 95%; max-height: 90vh; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.35); border: none; padding: 0; background: #ffffff; display: flex; flex-direction: column; margin: 1.5rem auto;">
       
-      <!-- Modal Header (Sleek & Aesthetic) -->
+      <!-- Modal Header -->
       <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
         <div style="display: flex; align-items: center; gap: 0.6rem;">
           <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(56,189,248,0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8;">
             <i class="fa-solid fa-id-card" style="font-size: 1.1rem;"></i>
           </div>
           <div>
-            <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0; letter-spacing: -0.2px;">Pratinjau & Cetak ID Card</h3>
-            <p id="modalIdCardParticipantSub" style="margin: 0; font-size: 0.72rem; color: #94a3b8; font-weight: 500;">Peserta JUMBARA PMR PMI</p>
+            <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0; letter-spacing: -0.2px;">Kartu Tanda Pengenal Resmi</h3>
+            <p id="modalIdCardParticipantSub" style="margin: 0; font-size: 0.72rem; color: #94a3b8; font-weight: 500;">Jumbara PMR PMI Kabupaten Pemalang</p>
           </div>
         </div>
         <button class="modal-close" onclick="App.closeModal('idCardModal')" style="color: #94a3b8; font-size: 1.5rem; line-height: 1; padding: 4px 8px; border-radius: 6px; background: transparent; border: none; cursor: pointer;">&times;</button>
       </div>
       
-      <!-- Studio Split View: Kiri Kontrol & Aksi, Kanan Visual Preview -->
-      <div class="idcard-modal-grid" style="display: grid; grid-template-columns: 310px 1fr; flex: 1; overflow: hidden; min-height: 0;">
-        
-        <!-- KOLOM KIRI: PENGATURAN & TOMBOL CETAK -->
-        <div class="idcard-modal-sidebar" style="background: #f8fafc; padding: 1.15rem; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; gap: 0.9rem; overflow-y: auto;">
-          
-          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-            <!-- Format Preset -->
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <label for="modalIdCardSizeSelect" style="font-weight: 700; font-size: 0.76rem; color: #334155; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i> Pilihan Ukuran
-                </label>
-                <span class="badge" id="modalIdCardSizeBadge" style="font-size: 0.68rem; font-weight: 700; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px;">
-                  9.3 × 13.8 cm
-                </span>
-              </div>
-              <select id="modalIdCardSizeSelect" class="form-control" style="font-size: 0.82rem; font-weight: 600; padding: 0.5rem 0.65rem; border-color: #cbd5e1; border-radius: 8px; background: #ffffff;" onchange="App.changeModalIDCardSize(this.value)">
-                <option value="a4_event_large" selected>🪪 Standar Event / Lanyard (Besar 9.3 × 13.8 cm) [Rekomendasi]</option>
-                <option value="a4_event_jumbo">📄 Jumbo A6 (10.5 × 15.6 cm) [1/4 A4 - Ekstra Jelas]</option>
-                <option value="a4_event_medium">🪪 Sedang B2 (7.5 × 11.1 cm) [Pas Mika B2]</option>
-                <option value="a4_atm">💳 Seukuran Kartu ATM / KTP (5.4 × 8.6 cm) [Dompet]</option>
-                <option value="f4_event_large">📑 Kertas F4 / Folio - Standar Event (9.3 × 13.8 cm)</option>
-                <option value="atm_single">💳 Kartu Tunggal CR80 (5.4 × 8.6 cm) [Printer PVC]</option>
-              </select>
-            </div>
+      <!-- Modal Body: ID Card Langsung Muncul Saja Tampilannya -->
+      <div class="modal-body" id="idCardModalContent" style="background: #f8fafc; padding: 1.25rem 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; overflow-x: hidden;">
+        <!-- ID Card dynamically rendered -->
+      </div>
 
-            <!-- Custom Scale Slider -->
-            <div style="background: #ffffff; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-size: 0.74rem; font-weight: 700; color: #475569;">Sesuaikan Ukuran:</span>
-                <span style="font-size: 0.72rem; color: #0284c7; font-weight: 700;" id="modalIdCardDimensionText">9.3 × 13.8 cm</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" class="btn btn-outline btn-xs" onclick="App.stepModalIDCardScale(-5)" title="Perkecil 5%" style="padding: 2px 7px; font-size: 0.7rem; border-radius: 5px;"><i class="fa-solid fa-minus"></i></button>
-                <input type="range" id="modalIdCardScaleSlider" min="50" max="135" value="100" step="5" style="flex: 1; cursor: pointer; accent-color: var(--primary);" oninput="App.onModalIDCardScaleChange(this.value)">
-                <button type="button" class="btn btn-outline btn-xs" onclick="App.stepModalIDCardScale(5)" title="Perbesar 5%" style="padding: 2px 7px; font-size: 0.7rem; border-radius: 5px;"><i class="fa-solid fa-plus"></i></button>
-              </div>
-              <div style="text-align: center; margin-top: 4px;">
-                <button type="button" onclick="App.resetModalIDCardScale()" style="background: none; border: none; font-size: 0.68rem; color: #64748b; text-decoration: underline; cursor: pointer; padding: 0;">
-                  Reset Skala: <span id="modalIdCardScaleBtnText" style="font-weight: 700; color: #0f172a;">100%</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Petunjuk Ringkas -->
-            <div id="modalIdCardSizeHelp" style="font-size: 0.71rem; color: #64748b; line-height: 1.35; background: #eff6ff; padding: 0.5rem 0.7rem; border-radius: 8px; border: 1px solid #dbeafe;">
-              <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format standar besar resmi panitia & peserta (lanyard B3/B4). Pasfoto & teks terbaca jelas dari jauh.
-            </div>
-          </div>
-
-          <!-- ACTION BUTTONS: TEPAT DI SINI, SELALU TERLIHAT & TIDAK PERNAH KETUTUP! -->
-          <div style="display: flex; flex-direction: column; gap: 0.45rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0;">
-            <button type="button" class="btn btn-primary" onclick="App.triggerPrintIDCard()" style="width: 100%; padding: 0.65rem; font-weight: 800; font-size: 0.88rem; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2,132,199,0.3); background: #0284c7; border: none; cursor: pointer;">
-              <i class="fa-solid fa-print"></i> Cetak ID Card (PDF)
-            </button>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-              <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardInNewWindow()" title="Buka pratinjau di tab baru" style="font-size: 0.76rem; padding: 0.4rem; border-radius: 8px; font-weight: 600;">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Tab Baru
-              </button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('idCardModal')" style="font-size: 0.76rem; padding: 0.4rem; border-radius: 8px; color: #64748b;">
-                Tutup
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- KOLOM KANAN: PRATINJAU KARTU VISUAL (FIT SEMPURNA) -->
-        <div class="modal-body idcard-modal-preview-pane" id="idCardModalContent" style="background: #f1f5f9; padding: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative;">
-          <!-- ID Card dynamically rendered -->
-        </div>
-
+      <!-- Modal Footer: Hanya Tutup (Tidak Perlu Unduh / Cetak) -->
+      <div class="modal-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 0.75rem 1.25rem; display: flex; justify-content: center; align-items: center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('idCardModal')" style="border-radius: 12px; font-weight: 700; padding: 0.5rem 2rem; color: #475569;">
+          <i class="fa-solid fa-xmark"></i> Tutup
+        </button>
       </div>
     </div>
   </div>

@@ -133,6 +133,12 @@ function getPDOConnection() {
                 $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `registration_type` VARCHAR(50) NOT NULL DEFAULT 'Peserta'");
                 $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `level` VARCHAR(100) NOT NULL DEFAULT 'Wira'");
             } catch (\Throwable $ePart) {}
+
+            try {
+                // Pastikan kolom attendance.scanned_at dan timestamp bertipe DATETIME agar tersimpan sesuai WIB (Asia/Jakarta) tanpa tergeser zona waktu server
+                $pdo->exec("ALTER TABLE `attendance` MODIFY COLUMN `scanned_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
+                $pdo->exec("ALTER TABLE `attendance` MODIFY COLUMN `timestamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
+            } catch (\Throwable $eAttTz) {}
         }
     }
 
