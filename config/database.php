@@ -137,6 +137,8 @@ function getPDOConnection() {
             try {
                 // Pastikan kolom attendance.scanned_at bertipe DATETIME agar tersimpan sesuai WIB (Asia/Jakarta) tanpa tergeser zona waktu server
                 $pdo->exec("ALTER TABLE `attendance` MODIFY COLUMN `scanned_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
+                // Cegah error 1054 Unknown column jika ada query yang memanggil timestamp
+                $pdo->exec("ALTER TABLE `attendance` ADD COLUMN `timestamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
             } catch (\Throwable $eAttTz) {}
 
             // Otomatis koreksi data presensi yang sempat tersimpan dalam zona waktu UTC (+00:00) ke WIB (Asia/Jakarta, +07:00)
