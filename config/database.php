@@ -135,9 +135,8 @@ function getPDOConnection() {
             } catch (\Throwable $ePart) {}
 
             try {
-                // Pastikan kolom attendance.scanned_at dan timestamp bertipe DATETIME agar tersimpan sesuai WIB (Asia/Jakarta) tanpa tergeser zona waktu server
+                // Pastikan kolom attendance.scanned_at bertipe DATETIME agar tersimpan sesuai WIB (Asia/Jakarta) tanpa tergeser zona waktu server
                 $pdo->exec("ALTER TABLE `attendance` MODIFY COLUMN `scanned_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
-                $pdo->exec("ALTER TABLE `attendance` MODIFY COLUMN `timestamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
             } catch (\Throwable $eAttTz) {}
 
             // Otomatis koreksi data presensi yang sempat tersimpan dalam zona waktu UTC (+00:00) ke WIB (Asia/Jakarta, +07:00)
@@ -145,10 +144,9 @@ function getPDOConnection() {
                 $pdo->exec("
                     UPDATE `attendance` 
                     SET 
-                        `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
                         `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
                     WHERE 
-                        HOUR(COALESCE(`timestamp`, `scanned_at`)) < 10
+                        HOUR(`scanned_at`) < 10
                 ");
             } catch (\Throwable $eMigrateTz) {}
         }

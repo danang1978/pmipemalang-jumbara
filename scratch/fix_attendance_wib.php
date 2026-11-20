@@ -8,9 +8,9 @@ echo "Memeriksa data presensi di database...\n";
 try {
     $stmtCheck = $pdo->query("
         SELECT id, participant_id, status, 
-               DATE_FORMAT(COALESCE(timestamp, scanned_at), '%Y-%m-%d %H:%i:%s') AS raw_time 
+               DATE_FORMAT(scanned_at, '%Y-%m-%d %H:%i:%s') AS raw_time 
         FROM attendance 
-        WHERE HOUR(COALESCE(timestamp, scanned_at)) < 10
+        WHERE HOUR(scanned_at) < 10
     ");
     $rows = $stmtCheck->fetchAll();
     echo "Ditemukan " . count($rows) . " data presensi dengan jam UTC yang perlu dikonversi ke WIB.\n";
@@ -19,10 +19,9 @@ try {
         $count = $pdo->exec("
             UPDATE attendance 
             SET 
-                timestamp = IF(timestamp IS NOT NULL, DATE_ADD(timestamp, INTERVAL 7 HOUR), NULL),
                 scanned_at = IF(scanned_at IS NOT NULL, DATE_ADD(scanned_at, INTERVAL 7 HOUR), NULL)
             WHERE 
-                HOUR(COALESCE(timestamp, scanned_at)) < 10
+                HOUR(scanned_at) < 10
         ");
         echo "SUKSES: Berhasil memperbarui $count baris presensi (+7 Jam ke WIB Asia/Jakarta)!\n";
     } else {

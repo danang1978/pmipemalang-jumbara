@@ -22,10 +22,9 @@ if ($action === 'fix_attendance_tz') {
         $count = $pdo->exec("
             UPDATE `attendance` 
             SET 
-                `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
                 `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
             WHERE 
-                HOUR(COALESCE(`timestamp`, `scanned_at`)) < 10
+                HOUR(`scanned_at`) < 10
         ");
         jsonResponse([
             'success' => true,
@@ -126,7 +125,15 @@ if ($method === 'POST' && $action === 'scan') {
 
     // 5. CHECK PREVIOUS ATTENDANCE RECORD (Masuk / Keluar)
     $stmtCheckLast = $pdo->prepare("
-        SELECT *, DATE_FORMAT(COALESCE(timestamp, scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at_wib 
+        SELECT *, 
+               DATE_FORMAT(
+                   CASE 
+                       WHEN HOUR(scanned_at) < 10 
+                       THEN DATE_ADD(scanned_at, INTERVAL 7 HOUR)
+                       ELSE scanned_at
+                   END, 
+                   '%Y-%m-%d %H:%i:%s'
+               ) AS scanned_at_wib 
         FROM attendance 
         WHERE event_id = ? AND participant_id = ? 
         ORDER BY id DESC LIMIT 1
@@ -136,7 +143,7 @@ if ($method === 'POST' && $action === 'scan') {
 
     $formattedLastTime = '';
     if ($lastAttendance) {
-        $rawTime = $lastAttendance['scanned_at_wib'] ?? $lastAttendance['timestamp'] ?? $lastAttendance['scanned_at'] ?? null;
+        $rawTime = $lastAttendance['scanned_at_wib'] ?? $lastAttendance['scanned_at'] ?? null;
         if ($rawTime) {
             $ts = strtotime($rawTime);
             if ($ts !== false) {
@@ -151,7 +158,16 @@ if ($method === 'POST' && $action === 'scan') {
     if ($type === 'masuk') {
         // Check if participant is currently checked-in at another event without checking out
         $stmtActiveOther = $pdo->prepare("
-            SELECT a.event_id, a.status, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, e.title AS event_title 
+            SELECT a.event_id, a.status, 
+                   DATE_FORMAT(
+                       CASE 
+                           WHEN HOUR(a.scanned_at) < 10 
+                           THEN DATE_ADD(a.scanned_at, INTERVAL 7 HOUR)
+                           ELSE a.scanned_at
+                       END, 
+                       '%Y-%m-%d %H:%i:%s'
+                   ) AS scanned_at, 
+                   e.title AS event_title 
             FROM attendance a 
             JOIN events e ON a.event_id = e.id 
             WHERE a.participant_id = ? AND a.event_id != ? 
@@ -208,8 +224,8 @@ if ($method === 'POST' && $action === 'scan') {
     // 6. RECORD ATTENDANCE (Explicitly record current WIB Asia/Jakarta timestamp)
     $dtNow = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
     $nowJakarta = $dtNow->format('Y-m-d H:i:s');
-    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, timestamp, scanned_at) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta, $nowJakarta]);
+    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, scanned_at) VALUES (?, ?, ?, ?, ?)");
+    $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta]);
 
     $actionText = ($type === 'masuk') ? 'PRESENSI MASUK (Check-In)' : (($type === 'keluar') ? 'PRESENSI KELUAR (Check-Out)' : strtoupper($type));
 
@@ -237,9 +253,9 @@ if ($method === 'GET' && $action === 'my_attendance') {
         SELECT a.*, 
                DATE_FORMAT(
                    CASE 
-                       WHEN HOUR(COALESCE(a.timestamp, a.scanned_at)) < 10 
-                       THEN DATE_ADD(COALESCE(a.timestamp, a.scanned_at), INTERVAL 7 HOUR)
-                       ELSE COALESCE(a.timestamp, a.scanned_at)
+                       WHEN HOUR(a.scanned_at) < 10 
+                       THEN DATE_ADD(a.scanned_at, INTERVAL 7 HOUR)
+                       ELSE a.scanned_at
                    END, 
                    '%Y-%m-%d %H:%i:%s'
                ) AS scanned_at, 
@@ -247,7 +263,7 @@ if ($method === 'GET' && $action === 'my_attendance') {
         FROM attendance a
         JOIN events e ON a.event_id = e.id
         WHERE a.participant_id = ?
-        ORDER BY COALESCE(a.timestamp, a.scanned_at) ASC
+        ORDER BY a.scanned_at ASC
     ");
     $stmtAtt->execute([$part['id']]);
     $rows = $stmtAtt->fetchAll();
@@ -299,9 +315,9 @@ if ($method === 'GET' && $action === 'registered_participants') {
         SELECT participant_id, status, 
                DATE_FORMAT(
                    CASE 
-                       WHEN HOUR(COALESCE(timestamp, scanned_at)) < 10 
-                       THEN DATE_ADD(COALESCE(timestamp, scanned_at), INTERVAL 7 HOUR)
-                       ELSE COALESCE(timestamp, scanned_at)
+                       WHEN HOUR(scanned_at) < 10 
+                       THEN DATE_ADD(scanned_at, INTERVAL 7 HOUR)
+                       ELSE scanned_at
                    END, 
                    '%Y-%m-%d %H:%i:%s'
                ) AS scanned_at 
@@ -478,9 +494,9 @@ if ($method === 'GET') {
         SELECT a.*, 
                DATE_FORMAT(
                    CASE 
-                       WHEN HOUR(COALESCE(a.timestamp, a.scanned_at)) < 10 
-                       THEN DATE_ADD(COALESCE(a.timestamp, a.scanned_at), INTERVAL 7 HOUR)
-                       ELSE COALESCE(a.timestamp, a.scanned_at)
+                       WHEN HOUR(a.scanned_at) < 10 
+                       THEN DATE_ADD(a.scanned_at, INTERVAL 7 HOUR)
+                       ELSE a.scanned_at
                    END, 
                    '%Y-%m-%d %H:%i:%s'
                ) AS scanned_at, 
@@ -489,7 +505,7 @@ if ($method === 'GET') {
         JOIN participants p ON a.participant_id = p.id 
         JOIN units un ON p.unit_id = un.id 
         WHERE a.event_id = ? 
-        ORDER BY COALESCE(a.timestamp, a.scanned_at) DESC
+        ORDER BY a.scanned_at DESC
         LIMIT $limit OFFSET $offset
     ");
     $stmt->execute([$eventId]);
