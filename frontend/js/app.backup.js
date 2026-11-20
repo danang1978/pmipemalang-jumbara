@@ -3699,7 +3699,10 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
-                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="QR Presensi (Dompet Digital)">
+                  <i class="fa-solid fa-wallet"></i>
+                </button>
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaIDCardModal()" title="Lihat ID Card Resmi">
                   <i class="fa-solid fa-id-card"></i>
                 </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
@@ -3932,9 +3935,7 @@ const App = {
               <div class="peserta-info-card">
                 <div class="peserta-info-header" style="display: flex; justify-content: space-between; align-items: center;">
                   <span><i class="fa-solid fa-id-card" style="color: #059669;"></i> Kartu Tanda Pengenal Peninjau</span>
-                  <button type="button" class="btn btn-primary btn-xs" onclick="window.print()" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; background: #059669; border-color: #059669;">
-                    <i class="fa-solid fa-print"></i> Cetak PDF
-                  </button>
+                  <span style="background: #d1fae5; color: #065f46; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">E-ID Card</span>
                 </div>
                 <div id="peninjauMobileIDCardContainer" style="padding-top: 0.5rem;">
                   <!-- Will be populated by loadPeninjauMobileIDCard() -->
@@ -4183,7 +4184,10 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
-                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="QR Presensi (Dompet Digital)">
+                  <i class="fa-solid fa-wallet"></i>
+                </button>
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaIDCardModal()" title="Lihat ID Card Resmi">
                   <i class="fa-solid fa-id-card"></i>
                 </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
@@ -4711,7 +4715,10 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
-                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="QR Presensi (Dompet Digital)">
+                  <i class="fa-solid fa-wallet"></i>
+                </button>
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaIDCardModal()" title="Lihat ID Card Resmi">
                   <i class="fa-solid fa-id-card"></i>
                 </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
@@ -4754,11 +4761,11 @@ const App = {
                   </div>
                 </div>
 
-                <div class="jkn-avatar-wrap" onclick="App.openPanitiaQRCodeModal()" style="cursor: pointer;" title="Klik untuk lihat QR Code Presensi & ID Card Panitia">
+                <div class="jkn-avatar-wrap" onclick="App.openPanitiaIDCardModal()" style="cursor: pointer;" title="Klik untuk lihat ID Card Panitia">
                   <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #b91c1c, #7f1d1d); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.55rem; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(185,28,28,0.35); transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
                     <i class="fa-solid fa-id-card"></i>
                   </div>
-                  <span class="jkn-status-dot status-green" title="Panitia Aktif - Klik untuk buka QR Presensi & ID Card"></span>
+                  <span class="jkn-status-dot status-green" title="Panitia Aktif - Klik untuk buka ID Card"></span>
                 </div>
               </div>
 
@@ -4776,10 +4783,10 @@ const App = {
                   <i class="fa-solid fa-qrcode"></i> Scan Presensi
                 </button>
                 <button type="button" class="btn btn-sm" onclick="App.openPanitiaQRCodeModal()" style="background: #991b1b; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(153,27,27,0.25);">
-                  <i class="fa-solid fa-qrcode"></i> QR Presensi
+                  <i class="fa-solid fa-wallet"></i> QR Presensi
                 </button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="App.switchPanitiaMobileTab('peserta')" style="color: #b91c1c; border-color: #dc2626; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-                  <i class="fa-solid fa-users-line"></i> Cek Peserta
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.openPanitiaIDCardModal()" style="color: #b91c1c; border-color: #dc2626; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                  <i class="fa-solid fa-id-card"></i> ID Card
                 </button>
               </div>
             </div>

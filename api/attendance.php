@@ -15,6 +15,30 @@ try {
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
+// Perbaikan manual / verifikasi pergeseran jam presensi UTC ke WIB (Asia/Jakarta)
+if ($action === 'fix_attendance_tz') {
+    $user = requireUser(['admin', 'kabupaten', 'panitia']);
+    try {
+        $count = $pdo->exec("
+            UPDATE `attendance` 
+            SET 
+                `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
+                `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
+            WHERE 
+                (DATE(COALESCE(`timestamp`, `scanned_at`)) = '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 11)
+                OR (DATE(COALESCE(`timestamp`, `scanned_at`)) < '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 17)
+        ");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `settings` (`key` VARCHAR(100) PRIMARY KEY, `value` LONGTEXT)");
+        $pdo->exec("REPLACE INTO `settings` (`key`, `value`) VALUES ('attendance_tz_wib_fixed_v20261120', '1')");
+        jsonResponse([
+            'success' => true,
+            'message' => 'Berhasil menyesuaikan ' . (int)$count . ' data presensi ke zona waktu WIB (Asia/Jakarta).'
+        ]);
+    } catch (\Throwable $e) {
+        jsonResponse(['error' => $e->getMessage()], 500);
+    }
+}
+
 if ($method === 'POST' && $action === 'scan') {
     $user = requireUser(['kabupaten', 'unit', 'panitia', 'admin']);
     $input = getJsonInput();
