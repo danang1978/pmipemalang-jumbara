@@ -333,7 +333,7 @@ const API = {
 
   // Settings
   getSettings() {
-    return this.request('/settings.php');
+    return this.request('/settings.php?_t=' + Date.now());
   },
 
   updateSettings(settings) {

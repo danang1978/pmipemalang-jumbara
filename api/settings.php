@@ -11,6 +11,9 @@ $action = $_GET['action'] ?? '';
 
 // GET Settings (Public access allowed for branding & schedule, sensitive tokens filtered)
 if ($method === 'GET') {
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     $settings = getAppSettings();
     $user = getCurrentUser();
 

@@ -384,7 +384,7 @@ try {
         ('event_dates', '15 - 17 Oktober 2026'),
         ('app_logo', 'frontend/images/logo-pmi.svg'),
         ('app_favicon', 'frontend/favicon.svg'),
-        ('reg_deadline', '2026-10-14T23:59'),
+        ('reg_deadline', '2026-11-24T23:59'),
         ('reg_active', '1'),
         ('fonnte_token', ''),
         ('fonnte_enabled', '0'),

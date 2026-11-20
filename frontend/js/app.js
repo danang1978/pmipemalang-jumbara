@@ -28,7 +28,7 @@ const App = {
     event_logo: 'frontend/images/logo-jumbara-xii.png',
     app_favicon: 'frontend/favicon.svg',
     app_kop: '',
-    reg_deadline: '2026-10-14T23:59',
+    reg_deadline: '2026-11-24T23:59',
     reg_active: '1',
     jumbotron_images: [
       'frontend/images/jumbotron-tema1-cerdas.jpg',
@@ -185,6 +185,9 @@ const App = {
       const settings = await API.getSettings();
       if (settings && Object.keys(settings).length) {
         this.appSettings = { ...this.appSettings, ...settings };
+        try {
+          localStorage.setItem('jumbara_cached_settings', JSON.stringify(this.appSettings));
+        } catch (e) {}
       }
       this.applySettingsToDOM();
     } catch (e) {
@@ -273,9 +276,82 @@ const App = {
         img.src = s.event_logo;
       });
     }
+
+    // 3. Dynamic Jumbotron Title & Subtitle Update
+    const jumbotronTitleEl = document.getElementById('jumbotronTitle');
+    const jumbotronSubtitleEl = document.getElementById('jumbotronSubtitle');
+    if (jumbotronTitleEl && s.jumbotron_title) jumbotronTitleEl.textContent = s.jumbotron_title;
+    if (jumbotronSubtitleEl && s.jumbotron_subtitle) jumbotronSubtitleEl.textContent = s.jumbotron_subtitle;
+
+    // 4. Dynamic Hero Registration Badge & Action Buttons Update
+    this.updateHeroRegistrationStatus();
+  },
+
+  updateHeroRegistrationStatus() {
+    const s = this.appSettings;
+    const badgeContainer = document.getElementById('heroDeadlineBadgeContainer');
+    const btnsContainer = document.getElementById('heroActionBtns');
+    if (!badgeContainer && !btnsContainer) return;
+
+    const deadlineStr = s.reg_deadline || '2026-11-24T23:59';
+    const deadlineDate = new Date(deadlineStr);
+    const now = new Date();
+    const isOpen = (s.reg_active === '1' || s.reg_active === 1 || s.reg_active === true) && (now < deadlineDate);
+
+    if (badgeContainer) {
+      if (isOpen) {
+        badgeContainer.innerHTML = `
+          <div class="reg-deadline-banner" id="countdownBannerContainer">
+            <span class="live-pulse-dot"></span>
+            <i class="fa-solid fa-clock"></i>
+            <span>Sisa Waktu Pendaftaran: <strong id="cdTimeStr">-- Hari -- Jam -- Mnt</strong></span>
+          </div>
+        `;
+        this.startCountdownTimer(deadlineStr);
+      } else {
+        if (this.countdownIntervalId) {
+          clearInterval(this.countdownIntervalId);
+          this.countdownIntervalId = null;
+        }
+        const formattedDate = !isNaN(deadlineDate.getTime())
+          ? deadlineDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : deadlineStr;
+        badgeContainer.innerHTML = `
+          <div class="reg-closed-alert">
+            <i class="fa-solid fa-lock"></i>
+            <span>Pendaftaran Mandiri Ditutup (Batas Akhir: ${formattedDate})</span>
+          </div>
+        `;
+      }
+    }
+
+    if (btnsContainer) {
+      let regBtnHtml = '';
+      if (isOpen) {
+        regBtnHtml = `<button class="btn btn-primary btn-sm" onclick="App.openRegisterModal()">${Icons.userPlus(14)} Daftar</button>`;
+      } else {
+        regBtnHtml = `<button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Ditutup</button>`;
+      }
+      btnsContainer.innerHTML = `
+        ${regBtnHtml}
+        <button class="btn btn-secondary btn-sm" onclick="App.openLoginModal()">${Icons.login(14)} Login</button>
+      `;
+    }
   },
 
   initLocalCaches() {
+    try {
+      const storedSettings = localStorage.getItem('jumbara_cached_settings');
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed && typeof parsed === 'object') {
+          this.appSettings = { ...this.appSettings, ...parsed };
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load local settings cache:', e);
+    }
+
     try {
       const storedUnits = localStorage.getItem('jumbara_cached_units');
       if (storedUnits) {
