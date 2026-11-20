@@ -70,12 +70,15 @@ const App = {
     }
     // Muat cache lokal offline/instan agar dropdown unit langsung muncul tanpa jeda internet
     this.initLocalCaches();
-    await Promise.all([
-      this.loadSettings(),
-      this.loadCommonData()
-    ]);
+    // Render tampilan antarmuka seketika tanpa memblokir browser (0 ms)
     this.renderHeaderNav();
     this.renderView();
+
+    // Sinkronkan pengaturan dan common data secara asinkron di latar belakang
+    Promise.all([
+      this.loadSettings(),
+      this.loadCommonData()
+    ]).catch(err => console.warn('Background sync warning:', err));
   },
 
   toggleMobileMenu() {

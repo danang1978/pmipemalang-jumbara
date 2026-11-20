@@ -120,10 +120,12 @@ function getPDOConnection() {
             } catch (\Throwable $eIso) {}
         }
 
-        // --- SELF-HEALING DATABASE SCHEMA (Mencegah SQLSTATE[01000] Warning 1265 Data truncated) ---
-        static $schemaHealed = false;
-        if (!$schemaHealed && $pdo) {
-            $schemaHealed = true;
+        // --- ONE-TIME SCHEMA & INDEX OPTIMIZATION (PERSISTENT LOCK) ---
+        // Menjalankan ALTER TABLE / DDL hanya 1 kali saja seumur deployment menggunakan lock file,
+        // sehingga request HTTP normal TIDAK PERNAH terblokir oleh MySQL metadata lock!
+        $migrationLockFile = __DIR__ . '/.db_schema_v4.lock';
+        if (!file_exists($migrationLockFile) && $pdo) {
+            @file_put_contents($migrationLockFile, date('Y-m-d H:i:s'));
             try {
                 // Pastikan kolom users.role adalah VARCHAR(50) untuk mendukung seluruh role (pendamping, peninjau, dll)
                 $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'peserta'");
@@ -147,7 +149,7 @@ function getPDOConnection() {
                 $pdo->exec("ALTER TABLE `attendance` ADD COLUMN `timestamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
             } catch (\Throwable $eAttTz) {}
 
-            // Compound Indexes untuk optimasi konkurensi tinggi & eliminasi gap locks
+            // Compound Indexes untuk query super cepat pada ribuan data
             $indexesToEnsure = [
                 "ALTER TABLE `participants` ADD INDEX `idx_part_unit_level_status` (`unit_id`, `level`, `status`)",
                 "ALTER TABLE `participants` ADD INDEX `idx_part_code` (`code`)",
@@ -164,17 +166,6 @@ function getPDOConnection() {
                     $pdo->exec($idxSql);
                 } catch (\Throwable $eIdx) {}
             }
-
-            // Otomatis koreksi data presensi yang sempat tersimpan dalam zona waktu UTC (+00:00) ke WIB (Asia/Jakarta, +07:00)
-            try {
-                $pdo->exec("
-                    UPDATE `attendance` 
-                    SET 
-                        `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
-                    WHERE 
-                        HOUR(`scanned_at`) < 10
-                ");
-            } catch (\Throwable $eMigrateTz) {}
         }
     }
 

@@ -440,7 +440,15 @@ if ($method === 'GET') {
     $registrationType = trim($_GET['registration_type'] ?? $_GET['category'] ?? '');
     if ($registrationType !== '') {
         $lowerReg = strtolower($registrationType);
-        if (strpos($lowerReg, 'wira') !== false || strpos($lowerReg, 'madya') !== false || strpos($lowerReg, 'mula') !== false) {
+        if ($lowerReg === 'pmr wira' || $lowerReg === 'wira') {
+            $where[] = "(p.level = 'Wira' OR p.registration_type = 'PMR Wira' OR p.registration_type = 'Wira')";
+        } else if ($lowerReg === 'pmr madya' || $lowerReg === 'madya') {
+            $where[] = "(p.level = 'Madya' OR p.registration_type = 'PMR Madya' OR p.registration_type = 'Madya')";
+        } else if ($lowerReg === 'pmr mula' || $lowerReg === 'mula') {
+            $where[] = "(p.level = 'Mula' OR p.registration_type = 'PMR Mula' OR p.registration_type = 'Mula')";
+        } else if ($lowerReg === 'peserta') {
+            $where[] = "p.registration_type = 'Peserta'";
+        } else if (strpos($lowerReg, 'wira') !== false || strpos($lowerReg, 'madya') !== false || strpos($lowerReg, 'mula') !== false) {
             $where[] = "(LOWER(p.level) LIKE ? OR LOWER(p.registration_type) LIKE ?)";
             $cleanLevel = '%' . str_replace(['pmr ', 'pmr'], '', $lowerReg) . '%';
             $params[] = $cleanLevel;
@@ -482,6 +490,29 @@ if ($method === 'GET') {
         $stmt->execute($params);
         $items = $stmt->fetchAll();
 
+        // Sanitasi ukuran payload Base64 agar respon API super ringan (< 50KB)
+        foreach ($items as &$item) {
+            if (!empty($item['photo_url']) && strpos($item['photo_url'], 'data:image') === 0) {
+                $savedPhoto = saveBase64File($item['photo_url'], 'pasfoto');
+                if ($savedPhoto) {
+                    $item['photo_url'] = $savedPhoto;
+                    try {
+                        $pdo->prepare("UPDATE participants SET photo_url = ? WHERE id = ?")->execute([$savedPhoto, $item['id']]);
+                    } catch (\Throwable $eUp) {}
+                }
+            }
+            if (!empty($item['assignment_letter_url']) && strpos($item['assignment_letter_url'], 'data:') === 0) {
+                $savedLetter = saveBase64File($item['assignment_letter_url'], 'surattugas');
+                if ($savedLetter) {
+                    $item['assignment_letter_url'] = $savedLetter;
+                    try {
+                        $pdo->prepare("UPDATE participants SET assignment_letter_url = ? WHERE id = ?")->execute([$savedLetter, $item['id']]);
+                    } catch (\Throwable $eUp) {}
+                }
+            }
+        }
+        unset($item);
+
         jsonResponse([
             'data' => $items,
             'pagination' => [
@@ -503,6 +534,29 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $items = $stmt->fetchAll();
+
+        // Sanitasi ukuran payload Base64 agar respon API super ringan (< 50KB)
+        foreach ($items as &$item) {
+            if (!empty($item['photo_url']) && strpos($item['photo_url'], 'data:image') === 0) {
+                $savedPhoto = saveBase64File($item['photo_url'], 'pasfoto');
+                if ($savedPhoto) {
+                    $item['photo_url'] = $savedPhoto;
+                    try {
+                        $pdo->prepare("UPDATE participants SET photo_url = ? WHERE id = ?")->execute([$savedPhoto, $item['id']]);
+                    } catch (\Throwable $eUp) {}
+                }
+            }
+            if (!empty($item['assignment_letter_url']) && strpos($item['assignment_letter_url'], 'data:') === 0) {
+                $savedLetter = saveBase64File($item['assignment_letter_url'], 'surattugas');
+                if ($savedLetter) {
+                    $item['assignment_letter_url'] = $savedLetter;
+                    try {
+                        $pdo->prepare("UPDATE participants SET assignment_letter_url = ? WHERE id = ?")->execute([$savedLetter, $item['id']]);
+                    } catch (\Throwable $eUp) {}
+                }
+            }
+        }
+        unset($item);
 
         jsonResponse([
             'data' => $items,
