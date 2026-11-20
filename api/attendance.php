@@ -25,11 +25,8 @@ if ($action === 'fix_attendance_tz') {
                 `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
                 `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
             WHERE 
-                (DATE(COALESCE(`timestamp`, `scanned_at`)) = '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 11)
-                OR (DATE(COALESCE(`timestamp`, `scanned_at`)) < '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 17)
+                HOUR(COALESCE(`timestamp`, `scanned_at`)) < 10
         ");
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `settings` (`key` VARCHAR(100) PRIMARY KEY, `value` LONGTEXT)");
-        $pdo->exec("REPLACE INTO `settings` (`key`, `value`) VALUES ('attendance_tz_wib_fixed_v20261120', '1')");
         jsonResponse([
             'success' => true,
             'message' => 'Berhasil menyesuaikan ' . (int)$count . ' data presensi ke zona waktu WIB (Asia/Jakarta).'
@@ -237,7 +234,16 @@ if ($method === 'GET' && $action === 'my_attendance') {
     }
 
     $stmtAtt = $pdo->prepare("
-        SELECT a.*, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, e.title AS event_title, e.location AS event_location, e.event_date
+        SELECT a.*, 
+               DATE_FORMAT(
+                   CASE 
+                       WHEN HOUR(COALESCE(a.timestamp, a.scanned_at)) < 10 
+                       THEN DATE_ADD(COALESCE(a.timestamp, a.scanned_at), INTERVAL 7 HOUR)
+                       ELSE COALESCE(a.timestamp, a.scanned_at)
+                   END, 
+                   '%Y-%m-%d %H:%i:%s'
+               ) AS scanned_at, 
+               e.title AS event_title, e.location AS event_location, e.event_date
         FROM attendance a
         JOIN events e ON a.event_id = e.id
         WHERE a.participant_id = ?
@@ -289,7 +295,20 @@ if ($method === 'GET' && $action === 'registered_participants') {
     if (!$event) jsonResponse(['error' => 'Kegiatan tidak ditemukan.'], 404);
 
     // Fetch attendance status map for this event
-    $stmtAtt = $pdo->prepare("SELECT participant_id, status, DATE_FORMAT(COALESCE(timestamp, scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at FROM attendance WHERE event_id = ? ORDER BY id ASC");
+    $stmtAtt = $pdo->prepare("
+        SELECT participant_id, status, 
+               DATE_FORMAT(
+                   CASE 
+                       WHEN HOUR(COALESCE(timestamp, scanned_at)) < 10 
+                       THEN DATE_ADD(COALESCE(timestamp, scanned_at), INTERVAL 7 HOUR)
+                       ELSE COALESCE(timestamp, scanned_at)
+                   END, 
+                   '%Y-%m-%d %H:%i:%s'
+               ) AS scanned_at 
+        FROM attendance 
+        WHERE event_id = ? 
+        ORDER BY id ASC
+    ");
     $stmtAtt->execute([$eventId]);
     $attRows = $stmtAtt->fetchAll();
     
@@ -456,7 +475,16 @@ if ($method === 'GET') {
     $totalLogs = (int)$stmtCount->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT a.*, DATE_FORMAT(COALESCE(a.timestamp, a.scanned_at), '%Y-%m-%d %H:%i:%s') AS scanned_at, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
+        SELECT a.*, 
+               DATE_FORMAT(
+                   CASE 
+                       WHEN HOUR(COALESCE(a.timestamp, a.scanned_at)) < 10 
+                       THEN DATE_ADD(COALESCE(a.timestamp, a.scanned_at), INTERVAL 7 HOUR)
+                       ELSE COALESCE(a.timestamp, a.scanned_at)
+                   END, 
+                   '%Y-%m-%d %H:%i:%s'
+               ) AS scanned_at, 
+               p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
         FROM attendance a 
         JOIN participants p ON a.participant_id = p.id 
         JOIN units un ON p.unit_id = un.id 

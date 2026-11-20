@@ -142,21 +142,14 @@ function getPDOConnection() {
 
             // Otomatis koreksi data presensi yang sempat tersimpan dalam zona waktu UTC (+00:00) ke WIB (Asia/Jakarta, +07:00)
             try {
-                $pdo->exec("CREATE TABLE IF NOT EXISTS `settings` (`key` VARCHAR(100) PRIMARY KEY, `value` LONGTEXT)");
-                $stmtCheckTz = $pdo->query("SELECT `value` FROM `settings` WHERE `key` = 'attendance_tz_wib_fixed_v20261120'");
-                $isTzFixed = $stmtCheckTz ? $stmtCheckTz->fetchColumn() : null;
-                if (!$isTzFixed) {
-                    $pdo->exec("
-                        UPDATE `attendance` 
-                        SET 
-                            `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
-                            `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
-                        WHERE 
-                            (DATE(COALESCE(`timestamp`, `scanned_at`)) = '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 11)
-                            OR (DATE(COALESCE(`timestamp`, `scanned_at`)) < '2026-11-20' AND HOUR(COALESCE(`timestamp`, `scanned_at`)) < 17)
-                    ");
-                    $pdo->exec("REPLACE INTO `settings` (`key`, `value`) VALUES ('attendance_tz_wib_fixed_v20261120', '1')");
-                }
+                $pdo->exec("
+                    UPDATE `attendance` 
+                    SET 
+                        `timestamp` = IF(`timestamp` IS NOT NULL, DATE_ADD(`timestamp`, INTERVAL 7 HOUR), NULL),
+                        `scanned_at` = IF(`scanned_at` IS NOT NULL, DATE_ADD(`scanned_at`, INTERVAL 7 HOUR), NULL)
+                    WHERE 
+                        HOUR(COALESCE(`timestamp`, `scanned_at`)) < 10
+                ");
             } catch (\Throwable $eMigrateTz) {}
         }
     }

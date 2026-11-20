@@ -137,20 +137,30 @@ const Utils = {
     if (typeof ts === 'string') {
       const sqlMatch = ts.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/);
       if (sqlMatch && !ts.endsWith('Z')) {
-        const [_, y, m, d, hh, mm] = sqlMatch;
+        let [_, y, m, d, hh, mm] = sqlMatch;
+        let hourNum = parseInt(hh, 10);
+        // Safeguard: Jika jam < 10 (misal 04, 05, 06 hasil simpanan UTC server), otomatis sesuaikan +7 jam ke WIB
+        if (hourNum < 10) {
+          hourNum = (hourNum + 7) % 24;
+          hh = String(hourNum).padStart(2, '0');
+        }
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         return {
-          time: `${hh}:${mm} WIB`,
+          time: `${hh}.${mm} WIB`,
           date: `${parseInt(d, 10)} ${months[parseInt(m, 10) - 1] || ''}`
         };
       }
     }
     const d = new Date(ts);
     if (isNaN(d.getTime())) return null;
-    const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
+    let hourNum = d.getHours();
+    if (hourNum < 10) {
+      d.setHours(d.getHours() + 7);
+    }
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
     const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' });
     return {
-      time: `${timeStr} WIB`,
+      time: `${timeStr.replace(':', '.')} WIB`,
       date: dateStr
     };
   },
