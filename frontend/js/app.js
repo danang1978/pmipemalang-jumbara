@@ -70,10 +70,12 @@ const App = {
     }
     // Muat cache lokal offline/instan agar dropdown unit langsung muncul tanpa jeda internet
     this.initLocalCaches();
-    await this.loadSettings();
+    await Promise.all([
+      this.loadSettings(),
+      this.loadCommonData()
+    ]);
     this.renderHeaderNav();
     this.renderView();
-    this.loadCommonData();
   },
 
   toggleMobileMenu() {
@@ -318,7 +320,9 @@ const App = {
       document.getElementById('adminParticipantUnit')
     ];
     selects.forEach(sel => {
-      if (sel) {
+      // HANYA update jika elemen ada dan belum memiliki opsi lengkap (options.length <= 1)
+      // Hal ini mencegah select tertutup otomatis / reset pilihan saat pengguna sedang berinteraksi
+      if (sel && sel.options.length <= 1) {
         const curVal = sel.value;
         const firstOpt = sel.querySelector('option:first-child');
         const defaultText = firstOpt ? firstOpt.textContent : 'Semua Unit Sekolah';
@@ -328,13 +332,14 @@ const App = {
           opts.push(`<option value="${u.id}"${isSel}>${Utils.escapeHtml(u.name)}</option>`);
         });
         sel.innerHTML = opts.join('');
+        if (curVal) sel.value = curVal;
       }
     });
   },
 
   async populateFilterKabUnit(targetEl = null) {
     const unitSelect = targetEl || document.getElementById('filterKabUnit');
-    if (!unitSelect) return;
+    if (!unitSelect || unitSelect.options.length > 1) return;
 
     const currentVal = unitSelect.value;
 
@@ -363,7 +368,9 @@ const App = {
       if (Array.isArray(units) && units.length > 0) {
         this.cachedUnits = units;
         try { localStorage.setItem('jumbara_cached_units', JSON.stringify(units)); } catch (e) {}
-        this.renderUnitSelectOptions(unitSelect, this.cachedUnits, currentVal);
+        if (unitSelect && unitSelect.options.length <= 1) {
+          this.renderUnitSelectOptions(unitSelect, this.cachedUnits, currentVal);
+        }
       }
     } catch (err) {
       console.warn('Gagal memuat daftar unit sekolah:', err);
@@ -371,13 +378,16 @@ const App = {
   },
 
   renderUnitSelectOptions(selectEl, units, selectedVal = '') {
-    if (!selectEl) return;
-    const opts = ['<option value="">Semua Unit Sekolah</option>'];
+    if (!selectEl || !Array.isArray(units) || !units.length) return;
+    const firstOpt = selectEl.querySelector('option:first-child');
+    const defaultText = firstOpt ? firstOpt.textContent : 'Semua Unit Sekolah';
+    const opts = [`<option value="">${defaultText}</option>`];
     units.forEach(u => {
       const isSel = (String(u.id) === String(selectedVal)) ? ' selected' : '';
       opts.push(`<option value="${u.id}"${isSel}>${Utils.escapeHtml(u.name)}</option>`);
     });
     selectEl.innerHTML = opts.join('');
+    if (selectedVal) selectEl.value = selectedVal;
   },
 
   renderHeaderNav() {
@@ -6683,6 +6693,10 @@ const App = {
   },
 
   async renderTabVerifikasi(container) {
+    const unitOptionsHtml = (this.cachedUnits && this.cachedUnits.length)
+      ? this.cachedUnits.map(u => `<option value="${u.id}">${Utils.escapeHtml(u.name)}</option>`).join('')
+      : '';
+
     container.innerHTML = `
       <div class="panel-card" style="box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
@@ -6723,6 +6737,7 @@ const App = {
             </select>
             <select id="filterKabUnit" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Unit Sekolah</option>
+              ${unitOptionsHtml}
             </select>
             <select id="filterKabStatus" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Status</option>
@@ -6753,8 +6768,11 @@ const App = {
       </div>
     `;
 
-    // Langsung isi dropdown unit seketika dari cache (0 ms) & sinkronkan via background
-    this.populateFilterKabUnit();
+    // Pastikan jika cache awalnya belum ada, fallback mengisi secara aman tanpa menimpa pilihan aktif
+    const unitSelect = document.getElementById('filterKabUnit');
+    if (unitSelect && unitSelect.options.length <= 1) {
+      this.populateFilterKabUnit(unitSelect);
+    }
     this.loadKabupatenParticipants();
   },
 

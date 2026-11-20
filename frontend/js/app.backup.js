@@ -70,10 +70,12 @@ const App = {
     }
     // Muat cache lokal offline/instan agar dropdown unit langsung muncul tanpa jeda internet
     this.initLocalCaches();
-    await this.loadSettings();
+    await Promise.all([
+      this.loadSettings(),
+      this.loadCommonData()
+    ]);
     this.renderHeaderNav();
     this.renderView();
-    this.loadCommonData();
   },
 
   toggleMobileMenu() {
