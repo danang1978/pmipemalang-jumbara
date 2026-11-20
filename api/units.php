@@ -9,6 +9,7 @@ $pdo = getPDOConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    header('Cache-Control: public, max-age=60, stale-while-revalidate=120');
     $stmt = $pdo->query("SELECT * FROM units ORDER BY name ASC");
     jsonResponse($stmt->fetchAll());
 }

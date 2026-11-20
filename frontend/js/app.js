@@ -68,6 +68,8 @@ const App = {
         }
       }
     }
+    // Muat cache lokal offline/instan agar dropdown unit langsung muncul tanpa jeda internet
+    this.initLocalCaches();
     await this.loadSettings();
     this.renderHeaderNav();
     this.renderView();
@@ -268,13 +270,114 @@ const App = {
     }
   },
 
+  initLocalCaches() {
+    try {
+      const storedUnits = localStorage.getItem('jumbara_cached_units');
+      if (storedUnits) {
+        const parsed = JSON.parse(storedUnits);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.cachedUnits = parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load local units cache:', e);
+    }
+  },
+
   async loadCommonData() {
     try {
-      this.cachedUnits = await API.getUnits();
-      this.cachedEvents = await API.getEvents();
+      const [units, events] = await Promise.all([
+        API.getUnits().catch(() => this.cachedUnits || []),
+        API.getEvents().catch(() => this.cachedEvents || [])
+      ]);
+      if (Array.isArray(units) && units.length > 0) {
+        this.cachedUnits = units;
+        try {
+          localStorage.setItem('jumbara_cached_units', JSON.stringify(units));
+        } catch (e) {}
+        this.updateAllUnitSelectsInDom();
+      }
+      if (Array.isArray(events) && events.length > 0) {
+        this.cachedEvents = events;
+      }
     } catch (err) {
       console.warn('Common data fetch issue:', err);
     }
+  },
+
+  updateAllUnitSelectsInDom() {
+    if (!this.cachedUnits || !this.cachedUnits.length) return;
+    const selects = [
+      document.getElementById('filterKabUnit'),
+      document.getElementById('piagamFilterUnit'),
+      document.getElementById('genPiagamUnit'),
+      document.getElementById('idcardUnitFilter'),
+      document.getElementById('filterParticipantUnit'),
+      document.getElementById('bulkCertUnitFilter'),
+      document.getElementById('regUnit'),
+      document.getElementById('adminParticipantUnit')
+    ];
+    selects.forEach(sel => {
+      if (sel) {
+        const curVal = sel.value;
+        const firstOpt = sel.querySelector('option:first-child');
+        const defaultText = firstOpt ? firstOpt.textContent : 'Semua Unit Sekolah';
+        const opts = [`<option value="">${defaultText}</option>`];
+        this.cachedUnits.forEach(u => {
+          const isSel = (String(u.id) === String(curVal)) ? ' selected' : '';
+          opts.push(`<option value="${u.id}"${isSel}>${Utils.escapeHtml(u.name)}</option>`);
+        });
+        sel.innerHTML = opts.join('');
+      }
+    });
+  },
+
+  async populateFilterKabUnit(targetEl = null) {
+    const unitSelect = targetEl || document.getElementById('filterKabUnit');
+    if (!unitSelect) return;
+
+    const currentVal = unitSelect.value;
+
+    // 1. Prioritas Utama: Dari memory cache (0 milidetik langsung muncul)
+    if (this.cachedUnits && this.cachedUnits.length > 0) {
+      this.renderUnitSelectOptions(unitSelect, this.cachedUnits, currentVal);
+      return;
+    }
+
+    // 2. Prioritas Kedua: Dari localStorage browser (0 milidetik kebal koneksi lambat)
+    try {
+      const local = localStorage.getItem('jumbara_cached_units');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.cachedUnits = parsed;
+          this.renderUnitSelectOptions(unitSelect, this.cachedUnits, currentVal);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Fallback: Jika cache baru pertama kali, ambil via API dan segera render
+    try {
+      const units = await API.getUnits();
+      if (Array.isArray(units) && units.length > 0) {
+        this.cachedUnits = units;
+        try { localStorage.setItem('jumbara_cached_units', JSON.stringify(units)); } catch (e) {}
+        this.renderUnitSelectOptions(unitSelect, this.cachedUnits, currentVal);
+      }
+    } catch (err) {
+      console.warn('Gagal memuat daftar unit sekolah:', err);
+    }
+  },
+
+  renderUnitSelectOptions(selectEl, units, selectedVal = '') {
+    if (!selectEl) return;
+    const opts = ['<option value="">Semua Unit Sekolah</option>'];
+    units.forEach(u => {
+      const isSel = (String(u.id) === String(selectedVal)) ? ' selected' : '';
+      opts.push(`<option value="${u.id}"${isSel}>${Utils.escapeHtml(u.name)}</option>`);
+    });
+    selectEl.innerHTML = opts.join('');
   },
 
   renderHeaderNav() {
@@ -5762,10 +5865,13 @@ const App = {
             </select>
             <select id="filterUnitCategory" class="filter-select" onchange="App.loadUnitParticipants(1)">
               <option value="">Semua Kategori</option>
-              <option value="Peserta">Peserta PMR</option>
-              <option value="Panitia">Panitia</option>
+              <option value="Peserta">Semua Peserta PMR</option>
+              <option value="PMR Wira">PMR Wira (SMA/SMK/MA)</option>
+              <option value="PMR Madya">PMR Madya (SMP/MTs)</option>
+              <option value="PMR Mula">PMR Mula (SD/MI)</option>
+              <option value="Pendamping">Pendamping / Pembina</option>
+              <option value="Panitia">Panitia Pelaksana</option>
               <option value="Peninjau">Peninjau</option>
-              <option value="Pendamping">Pendamping</option>
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
@@ -6606,9 +6712,12 @@ const App = {
             <select id="filterKabCategory" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Kategori</option>
               <option value="Peserta">Peserta PMR</option>
-              <option value="Panitia">Panitia</option>
+              <option value="PMR Wira">PMR Wira (SMA/SMK/MA)</option>
+              <option value="PMR Madya">PMR Madya (SMP/MTs)</option>
+              <option value="PMR Mula">PMR Mula (SD/MI)</option>
+              <option value="Pendamping">Pendamping / Pembina</option>
+              <option value="Panitia">Panitia Pelaksana</option>
               <option value="Peninjau">Peninjau</option>
-              <option value="Pendamping">Pendamping</option>
               <option value="Tamu Undangan">Tamu Undangan</option>
               <option value="Media">Media / Pers</option>
             </select>
@@ -6617,10 +6726,11 @@ const App = {
             </select>
             <select id="filterKabStatus" class="filter-select" onchange="App.loadKabupatenParticipants(1)">
               <option value="">Semua Status</option>
-              <option value="verified_unit">Diverifikasi Unit</option>
-              <option value="verified_kabupaten">Disetujui Kabupaten</option>
-              <option value="pending_unit">Pending Unit</option>
-              <option value="rejected">Ditolak</option>
+              <option value="pending_unit">⏳ Pending Unit (Baru Daftar)</option>
+              <option value="verified_unit">🔵 Diverifikasi Unit (Siap Dicek Kab)</option>
+              <option value="verified_kabupaten">🟢 Disetujui Kabupaten (Lolos/Final)</option>
+              <option value="revision">🟡 Perlu Revisi / Perbaikan</option>
+              <option value="rejected">🔴 Ditolak</option>
             </select>
             <button type="button" class="btn-filter-reset" onclick="App.resetKabFilter()" title="Reset semua filter">
               <i class="fa-solid fa-rotate-left"></i> Reset
@@ -6643,12 +6753,8 @@ const App = {
       </div>
     `;
 
-    const unitSelect = document.getElementById('filterKabUnit');
-    if (unitSelect && this.cachedUnits.length) {
-      unitSelect.innerHTML = '<option value="">Semua Unit Sekolah</option>' +
-        this.cachedUnits.map(u => `<option value="${u.id}">${Utils.escapeHtml(u.name)}</option>`).join('');
-    }
-
+    // Langsung isi dropdown unit seketika dari cache (0 ms) & sinkronkan via background
+    this.populateFilterKabUnit();
     this.loadKabupatenParticipants();
   },
 

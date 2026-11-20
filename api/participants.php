@@ -181,8 +181,17 @@ if ($method === 'GET' && $action === 'export') {
         $params[] = $level;
     }
     if ($registrationType !== '') {
-        $where[] = "p.registration_type = ?";
-        $params[] = $registrationType;
+        $lowerReg = strtolower($registrationType);
+        if (strpos($lowerReg, 'wira') !== false || strpos($lowerReg, 'madya') !== false || strpos($lowerReg, 'mula') !== false) {
+            $where[] = "(LOWER(p.level) LIKE ? OR LOWER(p.registration_type) LIKE ?)";
+            $cleanLevel = '%' . str_replace(['pmr ', 'pmr'], '', $lowerReg) . '%';
+            $params[] = $cleanLevel;
+            $params[] = $cleanLevel;
+        } else {
+            $where[] = "(p.registration_type = ? OR p.level = ?)";
+            $params[] = $registrationType;
+            $params[] = $registrationType;
+        }
     }
     if ($search !== '') {
         $where[] = "(p.full_name LIKE ? OR p.code LIKE ? OR p.nisn LIKE ?)";
@@ -430,8 +439,17 @@ if ($method === 'GET') {
     }
     $registrationType = trim($_GET['registration_type'] ?? $_GET['category'] ?? '');
     if ($registrationType !== '') {
-        $where[] = "p.registration_type = ?";
-        $params[] = $registrationType;
+        $lowerReg = strtolower($registrationType);
+        if (strpos($lowerReg, 'wira') !== false || strpos($lowerReg, 'madya') !== false || strpos($lowerReg, 'mula') !== false) {
+            $where[] = "(LOWER(p.level) LIKE ? OR LOWER(p.registration_type) LIKE ?)";
+            $cleanLevel = '%' . str_replace(['pmr ', 'pmr'], '', $lowerReg) . '%';
+            $params[] = $cleanLevel;
+            $params[] = $cleanLevel;
+        } else {
+            $where[] = "(p.registration_type = ? OR p.level = ?)";
+            $params[] = $registrationType;
+            $params[] = $registrationType;
+        }
     }
     if ($search !== '') {
         $where[] = "(p.full_name LIKE ? OR p.code LIKE ? OR p.nisn LIKE ?)";
