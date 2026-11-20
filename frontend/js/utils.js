@@ -211,6 +211,289 @@ const Utils = {
     }
   },
 
+  // Download Complete Official ID Card Badge as high-resolution PNG image
+  downloadCompleteIDCardBadge(cardData, filename) {
+    if (!cardData) return;
+    const code = String(cardData.code || cardData.registration_code || 'JMB-2026-0001');
+    const name = String(cardData.full_name || 'Peserta Jumbara').trim();
+    const unit = String(cardData.unit_name || 'PMI KABUPATEN PEMALANG').trim();
+    const level = String(cardData.level || cardData.registration_type || 'Peserta').trim();
+    const photoUrl = cardData.photo_url || null;
+    const fname = (filename || `ID-Card-${code}`).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+
+    const triggerDownload = (url) => {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`ID Card Lengkap ${code} berhasil diunduh!`, 'success');
+    };
+
+    const getQRDataUrl = () => {
+      return new Promise((resolve) => {
+        if (typeof window !== 'undefined' && window.QRCode && typeof window.QRCode.toDataURL === 'function') {
+          window.QRCode.toDataURL(code, { width: 400, margin: 2, errorCorrectionLevel: 'H' }, (err, url) => {
+            if (!err && url) resolve(url);
+            else resolve(this.getQRCodeUrl(code, 400));
+          });
+        } else {
+          resolve(this.getQRCodeUrl(code, 400));
+        }
+      });
+    };
+
+    const loadImg = (src) => {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    };
+
+    Promise.all([getQRDataUrl(), loadImg(photoUrl)]).then(([qrDataUrl, photoImg]) => {
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 720;
+        canvas.height = 1140;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Helper: rounded rectangle
+        const roundRect = (c, x, y, w, h, r, fill, stroke) => {
+          c.beginPath();
+          c.moveTo(x + r, y);
+          c.lineTo(x + w - r, y);
+          c.quadraticCurveTo(x + w, y, x + w, y + r);
+          c.lineTo(x + w, y + h - r);
+          c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+          c.lineTo(x + r, y + h);
+          c.quadraticCurveTo(x, y + h, x, y + h - r);
+          c.lineTo(x, y + r);
+          c.quadraticCurveTo(x, y, x + r, y);
+          c.closePath();
+          if (fill) c.fill();
+          if (stroke) c.stroke();
+        };
+
+        // Clip whole card with rounded corners
+        ctx.save();
+        roundRect(ctx, 0, 0, 720, 1140, 28, false, false);
+        ctx.clip();
+
+        // 1. White Card Background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 720, 1140);
+
+        // 2. Header Banner (Deep Crimson Gradient)
+        const headerGrad = ctx.createLinearGradient(0, 0, 720, 180);
+        headerGrad.addColorStop(0, '#7f1d1d');
+        headerGrad.addColorStop(0.5, '#b91c1c');
+        headerGrad.addColorStop(1, '#dc2626');
+        ctx.fillStyle = headerGrad;
+        ctx.fillRect(0, 0, 720, 180);
+
+        // Red Cross Logo (PMI)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(360, 42, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dc2626';
+        // Horizontal bar
+        ctx.fillRect(360 - 13, 42 - 4.5, 26, 9);
+        // Vertical bar
+        ctx.fillRect(360 - 4.5, 42 - 13, 9, 26);
+
+        // Header Texts
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '2px';
+        ctx.fillText('PALANG MERAH INDONESIA', 360, 90);
+
+        ctx.fillStyle = '#fecdd3';
+        ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.fillText('KABUPATEN PEMALANG', 360, 116);
+
+        ctx.fillStyle = '#fef08a';
+        ctx.font = '900 22px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.fillText('JUMBARA PMR XII TAHUN 2026', 360, 148);
+
+        // Golden Accent Line
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(0, 176, 720, 4);
+
+        // 3. Photo / Avatar
+        const photoY = 270;
+        const photoR = 64;
+        if (photoImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          // Draw image centered & aspect cover
+          const minDim = Math.min(photoImg.width, photoImg.height);
+          const sx = (photoImg.width - minDim) / 2;
+          const sy = (photoImg.height - minDim) / 2;
+          ctx.drawImage(photoImg, sx, sy, minDim, minDim, 360 - photoR, photoY - photoR, photoR * 2, photoR * 2);
+          ctx.restore();
+        } else {
+          // Silhouette Avatar
+          ctx.fillStyle = '#f1f5f9';
+          ctx.beginPath();
+          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.fillStyle = '#cbd5e1';
+          // Head
+          ctx.beginPath();
+          ctx.arc(360, photoY - 10, 24, 0, Math.PI * 2);
+          ctx.fill();
+          // Shoulders
+          ctx.beginPath();
+          ctx.arc(360, photoY + 54, 46, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        // Border ring around photo
+        ctx.strokeStyle = '#b91c1c';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 4. Name
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#0f172a';
+        let nameFontSize = 30;
+        if (name.length > 35) nameFontSize = 21;
+        else if (name.length > 25) nameFontSize = 24;
+        else if (name.length > 18) nameFontSize = 27;
+        ctx.font = `900 ${nameFontSize}px Inter, -apple-system, sans-serif`;
+        ctx.fillText(name, 360, 375);
+
+        // 5. Role / Level Pill Badge
+        let pillBg = '#f1f5f9';
+        let pillText = '#334155';
+        const lvlLower = level.toLowerCase();
+        if (lvlLower.includes('panitia')) {
+          pillBg = '#fee2e2'; pillText = '#991b1b';
+        } else if (lvlLower.includes('wira')) {
+          pillBg = '#e0f2fe'; pillText = '#0369a1';
+        } else if (lvlLower.includes('madya')) {
+          pillBg = '#dcfce7'; pillText = '#15803d';
+        } else if (lvlLower.includes('mula')) {
+          pillBg = '#fef3c7'; pillText = '#b45309';
+        } else if (lvlLower.includes('peninjau')) {
+          pillBg = '#f3e8ff'; pillText = '#7e22ce';
+        } else if (lvlLower.includes('pendamping')) {
+          pillBg = '#ffedd5'; pillText = '#c2410c';
+        }
+        ctx.font = 'bold 17px Inter, -apple-system, sans-serif';
+        const levelMeasure = ctx.measureText(level.toUpperCase());
+        const pillW = Math.max(220, levelMeasure.width + 48);
+        const pillH = 38;
+        ctx.fillStyle = pillBg;
+        roundRect(ctx, 360 - pillW / 2, 396, pillW, pillH, 19, true, false);
+        ctx.fillStyle = pillText;
+        ctx.fillText(level.toUpperCase(), 360, 421);
+
+        // 6. Unit / Kontingen
+        ctx.fillStyle = '#475569';
+        let unitFontSize = 20;
+        if (unit.length > 32) unitFontSize = 17;
+        ctx.font = `700 ${unitFontSize}px Inter, -apple-system, sans-serif`;
+        ctx.fillText(unit, 360, 465);
+
+        // 7. Large Clear QR Code Container (Tetapi Jelas QR Codenya)
+        const qrBoxW = 430;
+        const qrBoxH = 430;
+        const qrBoxX = (720 - qrBoxW) / 2;
+        const qrBoxY = 495;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        roundRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 22, true, true);
+
+        // Draw the QR Code image at high sharpness
+        const qrImgSize = 370;
+        const qrImgX = (720 - qrImgSize) / 2;
+        const qrImgY = qrBoxY + (qrBoxH - qrImgSize) / 2;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrImg, qrImgX, qrImgY, qrImgSize, qrImgSize);
+
+        // 8. Monospaced Code Box
+        const codeBoxW = 320;
+        const codeBoxH = 46;
+        const codeBoxX = (720 - codeBoxW) / 2;
+        const codeBoxY = 945;
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, codeBoxX, codeBoxY, codeBoxW, codeBoxH, 12, true, true);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 24px "JetBrains Mono", Courier, monospace';
+        ctx.letterSpacing = '2px';
+        ctx.fillText(code, 360, codeBoxY + 31);
+
+        // 9. Card Footer Banner
+        const footerH = 75;
+        const footerY = 1140 - footerH;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, footerY, 720, footerH);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '2px';
+        ctx.fillText('KARTU TANDA PENGENAL & PRESENSI RESMI', 360, footerY + 34);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 13px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '0.5px';
+        ctx.fillText('Palang Merah Indonesia Kabupaten Pemalang', 360, footerY + 56);
+
+        // Restore context clip
+        ctx.restore();
+
+        // Outer border stroke
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        roundRect(ctx, 1, 1, 718, 1138, 28, false, true);
+
+        // Export to Blob & Trigger Download
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              triggerDownload(url);
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } else {
+              triggerDownload(canvas.toDataURL('image/png', 1.0));
+            }
+          }, 'image/png', 1.0);
+        } else {
+          triggerDownload(canvas.toDataURL('image/png', 1.0));
+        }
+      };
+      qrImg.src = qrDataUrl;
+    }).catch((err) => {
+      console.error('Error generating complete ID Card badge:', err);
+      this.downloadQRCode(code, fname);
+    });
+  },
+
   // Export JSON array to downloadable Excel (.xls) file with HTML Spreadsheet formatting
   exportToXLS(filename, rows, title = 'Data Export JUMBARA 2026') {
     if (!rows || !rows.length) {

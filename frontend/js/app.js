@@ -13117,8 +13117,8 @@ const App = {
 
     modalBody.innerHTML = `
       <div style="padding: 2.5rem 1rem; text-align: center;">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #0284c7; margin-bottom: 0.85rem;"></i>
-        <p style="color: #64748b; font-weight: 600; font-size: 0.9rem;">Menyiapkan QR Code Presensi...</p>
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #b91c1c; margin-bottom: 0.85rem;"></i>
+        <p style="color: #64748b; font-weight: 600; font-size: 0.9rem;">Menyiapkan ID Card Lengkap...</p>
       </div>
     `;
     this.openModal('largeQrModal');
@@ -13131,71 +13131,122 @@ const App = {
 
       const code = data.code || data.registration_code || 'JMB-2026-0001';
       const name = data.full_name || (this.currentUser ? this.currentUser.username : 'Peserta Jumbara');
-      const unit = data.unit_name || 'Kontingen PMI';
+      const unit = data.unit_name || 'PMI KABUPATEN PEMALANG';
       const level = data.level || (data.registration_type || 'Peserta');
-      const qrUrl = data.qr_code_base64 || Utils.getQRCodeUrl(code, 320);
+      const photoUrl = data.photo_url || null;
+      const qrUrl = data.qr_code_base64 || Utils.getQRCodeUrl(code, 360);
+
+      const photoHtml = photoUrl
+        ? `<img src="${photoUrl}" alt="${Utils.escapeHtml(name)}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3.5px solid #b91c1c; box-shadow: 0 4px 12px rgba(185,28,28,0.22);" onerror="this.outerHTML='<div style=\\'width: 72px; height: 72px; border-radius: 50%; background: #f1f5f9; border: 3.5px solid #b91c1c; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.06);\\'><i class=\\'fa-solid fa-user\\'></i></div>'"/>`
+        : `<div style="width: 72px; height: 72px; border-radius: 50%; background: #f1f5f9; border: 3.5px solid #b91c1c; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.06);"><i class="fa-solid fa-user"></i></div>`;
+
+      let levelStyle = "background: #f1f5f9; color: #334155; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;";
+      const lvlLow = level.toLowerCase();
+      if (lvlLow.includes('panitia')) {
+        levelStyle = "background: #fee2e2; color: #991b1b; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #fecaca;";
+      } else if (lvlLow.includes('wira')) {
+        levelStyle = "background: #e0f2fe; color: #0369a1; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #bae6fd;";
+      } else if (lvlLow.includes('madya')) {
+        levelStyle = "background: #dcfce7; color: #15803d; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #bbf7d0;";
+      } else if (lvlLow.includes('mula')) {
+        levelStyle = "background: #fef3c7; color: #b45309; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #fde68a;";
+      } else if (lvlLow.includes('peninjau')) {
+        levelStyle = "background: #f3e8ff; color: #7e22ce; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #e9d5ff;";
+      } else if (lvlLow.includes('pendamping')) {
+        levelStyle = "background: #ffedd5; color: #c2410c; font-weight: 800; font-size: 0.76rem; padding: 0.25rem 0.85rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #fed7aa;";
+      }
 
       modalBody.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 360px; margin: 0 auto;">
           <!-- RADAR PULSING STATUS -->
-          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.4rem 0.9rem; border-radius: 9999px; margin-bottom: 1.1rem; box-shadow: 0 2px 6px rgba(16,185,129,0.12);">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.25);"></span>
-            <span style="color: #047857; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.35rem 0.85rem; border-radius: 9999px; margin-bottom: 0.85rem; box-shadow: 0 2px 6px rgba(16,185,129,0.12);">
+            <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 0 3.5px rgba(16,185,129,0.25);"></span>
+            <span style="color: #047857; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
               Siap Di-Scan Presensi Lapangan
             </span>
           </div>
 
-          <!-- BIG HIGH-CONTRAST QR CODE CONTAINER -->
-          <div style="background: #ffffff; padding: 1.25rem; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04); margin-bottom: 1.1rem; max-width: 280px; width: 100%;">
-            <img src="${qrUrl}" alt="QR Presensi ${code}" 
-                 style="width: 100%; height: auto; aspect-ratio: 1/1; display: block; border-radius: 12px;" 
-                 loading="eager">
-          </div>
+          <!-- COMPLETE OFFICIAL ID CARD BADGE FRAME -->
+          <div style="background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.06); width: 100%; border: 1.5px solid #e2e8f0;">
+            <!-- CARD HEADER (PMI & JUMBARA BANNER) -->
+            <div style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #dc2626 100%); color: #ffffff; padding: 0.85rem 1rem 0.75rem; text-align: center; position: relative;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; margin-bottom: 0.15rem;">
+                <span style="background: #ffffff; color: #dc2626; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 900; line-height: 1;">+</span>
+                <span style="font-size: 0.76rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Palang Merah Indonesia</span>
+              </div>
+              <div style="font-size: 0.72rem; font-weight: 700; color: #fecdd3; letter-spacing: 0.5px;">KABUPATEN PEMALANG</div>
+              <div style="font-size: 0.82rem; font-weight: 900; color: #fef08a; letter-spacing: 0.8px; margin-top: 0.2rem; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                JUMBARA PMR XII TAHUN 2026
+              </div>
+            </div>
 
-          <!-- MONOSPACED CODE BOX -->
-          <div style="background: #f1f5f9; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 0.55rem 1.1rem; display: inline-flex; align-items: center; gap: 0.65rem; margin-bottom: 0.9rem;">
-            <span style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 2px;">
-              ${code}
-            </span>
-            <button type="button" onclick="navigator.clipboard.writeText('${code}'); Utils.showToast('Kode berhasil disalin!', 'success');" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 2px 6px; font-size: 0.85rem;" title="Salin Kode">
-              <i class="fa-regular fa-copy"></i>
-            </button>
-          </div>
+            <!-- CARD BODY -->
+            <div style="padding: 1rem 1rem 1.1rem; text-align: center; background: #ffffff;">
+              <!-- PHOTO / AVATAR -->
+              <div style="margin: -0.25rem auto 0.65rem; display: flex; justify-content: center;">
+                ${photoHtml}
+              </div>
 
-          <!-- PARTICIPANT IDENTITY -->
-          <h4 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0; line-height: 1.3;">
-            ${Utils.escapeHtml(name)}
-          </h4>
-          <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem;">
-            <span style="background: #e0f2fe; color: #0369a1; font-weight: 800; font-size: 0.75rem; padding: 0.2rem 0.65rem; border-radius: 9999px;">
-              ${Utils.escapeHtml(level)}
-            </span>
-            <span style="font-size: 0.8rem; color: #64748b;">•</span>
-            <span style="font-size: 0.82rem; color: #475569; font-weight: 600;">
-              ${Utils.escapeHtml(unit)}
-            </span>
+              <!-- FULL NAME -->
+              <h3 style="font-size: 1.15rem; font-weight: 900; color: #0f172a; margin: 0 0 0.35rem; line-height: 1.3;">
+                ${Utils.escapeHtml(name)}
+              </h3>
+
+              <!-- ROLE / LEVEL PILL -->
+              <div style="display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem;">
+                <span style="${levelStyle}">
+                  ${Utils.escapeHtml(level)}
+                </span>
+              </div>
+
+              <!-- UNIT / CONTINGENT -->
+              <div style="font-size: 0.82rem; color: #475569; font-weight: 700; margin-bottom: 0.85rem; line-height: 1.3;">
+                <i class="fa-solid fa-school" style="color: #64748b; font-size: 0.75rem;"></i> ${Utils.escapeHtml(unit)}
+              </div>
+
+              <!-- CRISP HIGH-CONTRAST QR CODE CONTAINER (TETAPI JELAS QRCODENYA) -->
+              <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 18px; padding: 0.75rem; margin: 0 auto 0.75rem; max-width: 230px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                <img src="${qrUrl}" alt="QR Presensi ${code}" 
+                     style="width: 100%; height: auto; aspect-ratio: 1/1; display: block; border-radius: 8px; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+                     loading="eager">
+              </div>
+
+              <!-- MONOSPACE CODE BOX WITH COPY BUTTON -->
+              <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px; padding: 0.4rem 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <span style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1.05rem; font-weight: 800; color: #0f172a; letter-spacing: 2px;">
+                  ${code}
+                </span>
+                <button type="button" onclick="navigator.clipboard.writeText('${code}'); Utils.showToast('Kode ${code} berhasil disalin!', 'success');" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 2px 5px; font-size: 0.82rem;" title="Salin Kode">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+
+              <div style="margin-top: 0.65rem; font-size: 0.68rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                ID Card & E-Presensi Resmi Lapangan
+              </div>
+            </div>
           </div>
 
           <!-- SCANNER TIPS -->
-          <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.6rem 0.85rem; border-radius: 12px; font-size: 0.74rem; margin-top: 0.6rem; display: flex; align-items: center; gap: 0.5rem; text-align: left; max-width: 340px;">
-            <i class="fa-solid fa-lightbulb" style="color: #f59e0b; font-size: 1rem; flex-shrink: 0;"></i>
-            <span>Tunjukkan layar HP ini ke Panitia / Juri untuk Check-In & Check-Out presensi kegiatan secara otomatis.</span>
-          </div>
-
-          <!-- ACTION BUTTON: CETAK / LIHAT ID CARD LENGKAP -->
-          <div style="margin-top: 0.85rem; display: flex; gap: 0.5rem; justify-content: center; width: 100%; max-width: 320px;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${data.id || 0})" style="border-radius: 12px; font-weight: 700; font-size: 0.8rem; width: 100%; justify-content: center; color: #b91c1c; border-color: #f87171; background: #fff1f2; padding: 0.55rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-              <i class="fa-solid fa-id-card"></i> Cetak / Unduh ID Card Lengkap
-            </button>
+          <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.72rem; margin-top: 0.85rem; display: flex; align-items: center; gap: 0.5rem; text-align: left; width: 100%;">
+            <i class="fa-solid fa-lightbulb" style="color: #f59e0b; font-size: 0.95rem; flex-shrink: 0;"></i>
+            <span>Tunjukkan layar ini ke Panitia / Juri untuk scan presensi, atau klik tombol <strong>Unduh ID Card Lengkap</strong> untuk menyimpan tanda pengenal resmi.</span>
           </div>
         </div>
       `;
 
-      // Download button logic
+      // Download button logic: Directly download Complete ID Card Badge
       const downloadBtn = document.getElementById('largeQrDownloadBtn');
       if (downloadBtn) {
         downloadBtn.onclick = () => {
-          Utils.downloadQRCode(code, `QR-Presensi-${code}`);
+          Utils.downloadCompleteIDCardBadge({
+            id: data.id || 0,
+            code: code,
+            full_name: name,
+            unit_name: unit,
+            level: level,
+            photo_url: photoUrl
+          }, `ID-Card-${code}`);
         };
       }
     } catch (err) {
@@ -13203,7 +13254,7 @@ const App = {
       modalBody.innerHTML = `
         <div style="padding: 1.5rem; color: #ef4444; text-align: center;">
           <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-          <p style="font-weight: 700;">Gagal memuat QR Code Presensi.</p>
+          <p style="font-weight: 700;">Gagal memuat ID Card & QR Code Presensi.</p>
           <p style="font-size: 0.8rem; color: #64748b;">${Utils.escapeHtml(err.message || 'Terjadi kesalahan sistem.')}</p>
         </div>
       `;
