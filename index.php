@@ -3,6 +3,9 @@
 // JUMBARA PMR 2026 - MAIN ENTRY POINT (STRUCTURED NATIVE PHP & MYSQL)
 // ==========================================================================
 
+// Set Zona Waktu Default ke WIB (Asia/Jakarta, UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 

@@ -179,9 +179,10 @@ if ($method === 'POST' && $action === 'scan') {
         }
     }
 
-    // 6. RECORD ATTENDANCE (Explicitly record NOW() in MySQL +07:00 WIB session)
-    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, timestamp, scanned_at) VALUES (?, ?, ?, ?, NOW(), NOW())");
-    $stmtAtt->execute([$eventId, $part['id'], $type, $user['username']]);
+    // 6. RECORD ATTENDANCE (Explicitly record current WIB Asia/Jakarta timestamp)
+    $nowJakarta = date('Y-m-d H:i:s');
+    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, timestamp, scanned_at) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta, $nowJakarta]);
 
     $actionText = ($type === 'masuk') ? 'PRESENSI MASUK (Check-In)' : (($type === 'keluar') ? 'PRESENSI KELUAR (Check-Out)' : strtoupper($type));
 
@@ -206,11 +207,11 @@ if ($method === 'GET' && $action === 'my_attendance') {
     }
 
     $stmtAtt = $pdo->prepare("
-        SELECT a.*, e.title AS event_title, e.location AS event_location, e.event_date
+        SELECT a.*, COALESCE(a.scanned_at, a.timestamp) AS scanned_at, e.title AS event_title, e.location AS event_location, e.event_date
         FROM attendance a
         JOIN events e ON a.event_id = e.id
         WHERE a.participant_id = ?
-        ORDER BY a.scanned_at ASC
+        ORDER BY COALESCE(a.scanned_at, a.timestamp) ASC
     ");
     $stmtAtt->execute([$part['id']]);
     $rows = $stmtAtt->fetchAll();
@@ -258,7 +259,7 @@ if ($method === 'GET' && $action === 'registered_participants') {
     if (!$event) jsonResponse(['error' => 'Kegiatan tidak ditemukan.'], 404);
 
     // Fetch attendance status map for this event
-    $stmtAtt = $pdo->prepare("SELECT participant_id, status, scanned_at FROM attendance WHERE event_id = ? ORDER BY id ASC");
+    $stmtAtt = $pdo->prepare("SELECT participant_id, status, COALESCE(scanned_at, timestamp) AS scanned_at FROM attendance WHERE event_id = ? ORDER BY id ASC");
     $stmtAtt->execute([$eventId]);
     $attRows = $stmtAtt->fetchAll();
     
@@ -425,12 +426,12 @@ if ($method === 'GET') {
     $totalLogs = (int)$stmtCount->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT a.*, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
+        SELECT a.*, COALESCE(a.scanned_at, a.timestamp) AS scanned_at, p.full_name, p.code AS participant_code, p.level, p.photo_url, un.name AS unit_name 
         FROM attendance a 
         JOIN participants p ON a.participant_id = p.id 
         JOIN units un ON p.unit_id = un.id 
         WHERE a.event_id = ? 
-        ORDER BY a.scanned_at DESC
+        ORDER BY COALESCE(a.scanned_at, a.timestamp) DESC
         LIMIT $limit OFFSET $offset
     ");
     $stmt->execute([$eventId]);

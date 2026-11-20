@@ -7855,9 +7855,9 @@ const App = {
         }
         const st = (l.status || '').toLowerCase();
         if ((st === 'masuk' || st === 'hadir') && !participantLogsMap[pid].jam_masuk) {
-          participantLogsMap[pid].jam_masuk = l.scanned_at;
+          participantLogsMap[pid].jam_masuk = l.scanned_at || l.timestamp;
         } else if (st === 'keluar' && !participantLogsMap[pid].jam_keluar) {
-          participantLogsMap[pid].jam_keluar = l.scanned_at;
+          participantLogsMap[pid].jam_keluar = l.scanned_at || l.timestamp;
         }
       });
 
