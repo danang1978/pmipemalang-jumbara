@@ -13459,6 +13459,7 @@ const App = {
         subTitleEl.textContent = `${data.full_name || 'Peserta'} • ${unitName}`;
       }
 
+      this.syncModalIDCardControls();
       this.renderModalIDCardContent();
     } catch (err) {
       if (modalContent) {
@@ -13469,24 +13470,143 @@ const App = {
 
   changeModalIDCardSize(size) {
     this.currentModalCardSize = size;
+    if (size === 'a4_event_large' || size === 'f4_event_large') {
+      this.currentModalCardScale = 100;
+    } else if (size === 'a4_event_jumbo') {
+      this.currentModalCardScale = 113;
+    } else if (size === 'a4_event_medium') {
+      this.currentModalCardScale = 80;
+    } else if (size === 'a4_atm' || size === 'atm_single') {
+      this.currentModalCardScale = 58;
+    }
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
   },
 
-  onModalIDCardScaleChange(val) {},
-  stepModalIDCardScale(step) {},
-  resetModalIDCardScale() {},
-  syncModalIDCardControls() {},
+  onModalIDCardScaleChange(val) {
+    this.currentModalCardScale = parseInt(val, 10) || 100;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  stepModalIDCardScale(step) {
+    let next = (this.currentModalCardScale || 100) + step;
+    if (next < 50) next = 50;
+    if (next > 135) next = 135;
+    this.currentModalCardScale = next;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  resetModalIDCardScale() {
+    this.currentModalCardScale = 100;
+    this.syncModalIDCardControls();
+    this.renderModalIDCardContent();
+  },
+
+  syncModalIDCardControls() {
+    const size = this.currentModalCardSize || 'a4_event_large';
+    const scale = this.currentModalCardScale || 100;
+    const info = this.getCardDimensionInfo(size, scale);
+
+    const slider = document.getElementById('modalIdCardScaleSlider');
+    if (slider) slider.value = scale;
+
+    const btnText = document.getElementById('modalIdCardScaleBtnText');
+    if (btnText) btnText.textContent = `${scale}%`;
+
+    const dimText = document.getElementById('modalIdCardDimensionText');
+    if (dimText) dimText.textContent = info.dimText;
+
+    const badgeEl = document.getElementById('modalIdCardSizeBadge');
+    if (badgeEl) {
+      if (size === 'a4_event_large') badgeEl.textContent = `${info.dimText} (Standar Lanyard / B3-B4)`;
+      else if (size === 'a4_event_jumbo') badgeEl.textContent = `${info.dimText} (Jumbo A6 / 1/4 A4)`;
+      else if (size === 'a4_event_medium') badgeEl.textContent = `${info.dimText} (Sedang / Card Case B2)`;
+      else if (size === 'a4_atm') badgeEl.textContent = `${info.dimText} (Ukuran Kartu ATM/KTP)`;
+      else if (size === 'f4_event_large') badgeEl.textContent = `${info.dimText} (Kertas Folio / F4)`;
+      else if (size === 'atm_single') badgeEl.textContent = `${info.dimText} (Kartu Tunggal PVC)`;
+      else badgeEl.textContent = info.dimText;
+    }
+
+    const helpEl = document.getElementById('modalIdCardSizeHelp');
+    if (helpEl) {
+      if (size === 'a4_event_large') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tanda pengenal standar besar resmi panitia & peserta (lanyard B3/B4). Nama, pasfoto, dan kontingen tercetak besar & terbaca jelas dari jarak jauh.';
+      } else if (size === 'a4_event_jumbo') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format ekstra besar 1/4 kertas A4 (A6). Sangat jelas untuk juri lapangan, panitia inti, atau peserta yang membutuhkan visibilitas maksimal.';
+      } else if (size === 'a4_event_medium') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format sedang pas untuk card case plastik mika B2 (80 × 126 mm).';
+      } else if (size === 'a4_atm') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format seukuran kartu ATM/KTP (5.4 × 8.6 cm). Pas dimasukkan ke dompet atau card holder standar ATM.';
+      } else if (size === 'f4_event_large') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Dicetak pada kertas panjang F4 / Folio dengan kartu standar besar.';
+      } else if (size === 'atm_single') {
+        helpEl.innerHTML = '<i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> Format kartu tunggal khusus mesin cetak kartu plastik PVC direct-to-card atau simpan file 1 kartu.';
+      }
+    }
+  },
 
   renderModalIDCardContent() {
     const modalContent = document.getElementById('idCardModalContent');
     if (!modalContent || !this.currentModalCardData) return;
 
     const data = this.currentModalCardData;
-    const cardHtml = this.generateIDCardHtml(data);
+    const size = this.currentModalCardSize || 'a4_event_large';
+    const scale = this.currentModalCardScale || 100;
+    const info = this.getCardDimensionInfo(size, scale);
+
+    const cardInnerHtml = this.generateIDCardHtml(data);
+
+    if (size === 'atm_single') {
+      modalContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+          <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-credit-card" style="color: #0284c7;"></i> Pratinjau Kartu Tunggal (Ukuran Fisik: ${info.dimText}):
+          </div>
+          <div class="idcard-atm-frame" style="box-shadow: 0 10px 30px rgba(0,0,0,0.18); border-radius: 12px; overflow: hidden;">
+            ${cardInnerHtml}
+          </div>
+          <div style="margin-top: 10px; font-size: 0.73rem; color: #475569; font-weight: 700; background: #ffffff; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            💳 Dimensi Fisik: <strong style="color: #0284c7;">${info.dimText}</strong> (Standar Kartu ATM / PVC)
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Hitung rasio preview fit agar kartu muat sempurna di dalam kolom tanpa overflow vertikal
+    const cardPxH = info.hMm * 3.779527559;
+    const cardPxW = info.wMm * 3.779527559;
+    const previewFitScale = Math.min(1.0, 345 / cardPxH);
+    const boxW = Math.round(cardPxW * previewFitScale);
+    const boxH = Math.round(cardPxH * previewFitScale);
 
     modalContent.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; overflow: hidden;">
-        <div style="box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-radius: 12px; overflow: hidden; display: flex; justify-content: center;">
-          ${cardHtml}
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 8px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-scissors" style="color: #0284c7;"></i> Pratinjau Kertas dengan Garis Potong (Ukuran Fisik: ${info.dimText}):
+        </div>
+        <div style="background: #ffffff; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); display: inline-flex; flex-direction: column; align-items: center; justify-content: center; max-width: 100%; box-sizing: border-box;">
+          <div style="width: ${boxW}px; height: ${boxH}px; position: relative; margin: 0 auto;">
+            <div style="transform: scale(${previewFitScale}); transform-origin: top left; width: ${info.wMm}mm; height: ${info.hMm}mm; position: absolute; top: 0; left: 0;">
+              <div class="idcard-sheet-item" style="width: ${info.wMm}mm; height: ${info.hMm}mm; margin: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
+                <div class="cutting-guide"></div>
+                <div class="crop-corner tl"></div>
+                <div class="crop-corner tr"></div>
+                <div class="crop-corner bl"></div>
+                <div class="crop-corner br"></div>
+                <div class="idcard-sheet-frame" style="width: ${info.wMm}mm; height: ${info.hMm}mm;">
+                  <div class="idcard-scale-wrapper" style="width: 350px; height: ${info.baseH}px; transform: scale(${info.scale}); transform-origin: top left;">
+                    ${cardInnerHtml}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.73rem; color: #475569; font-weight: 700; background: #ffffff; padding: 4px 14px; border-radius: 20px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          🖨️ Hasil Cetak Kertas: <strong style="color: #0284c7;">${info.dimText}</strong> (Skala: ${info.scalePercent}%)
         </div>
       </div>
     `;
