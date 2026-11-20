@@ -21,9 +21,10 @@ if ($method === 'GET' && $action === 'me') {
         SELECT p.*, un.name AS unit_name, un.code AS unit_code 
         FROM participants p 
         LEFT JOIN units un ON p.unit_id = un.id 
-        WHERE p.user_id = ?
+        WHERE p.user_id = ? OR (p.email != '' AND p.email = ?) OR (p.code != '' AND p.code = ?)
+        ORDER BY p.id DESC LIMIT 1
     ");
-    $stmt->execute([$user['id']]);
+    $stmt->execute([$user['id'], $user['email'] ?? '', $user['username'] ?? '']);
     $part = $stmt->fetch();
     if (!$part) {
         $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'pendamping') ? 'PDP-2026-' : (($user['role'] === 'panitia') ? 'PNT-2026-' : 'JMB-2026-'));
@@ -36,12 +37,12 @@ if ($method === 'GET' && $action === 'me') {
             'full_name' => $user['full_name'] ?? $user['username'],
             'registration_type' => ucfirst($user['role']),
             'registration_code' => $code,
-            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : 'Umum')),
+            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : ($user['role'] === 'panitia' ? 'Panitia Pelaksana' : 'Umum'))),
             'status' => 'verified_kabupaten',
             'sub_categories' => [],
-            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : 'Kontingen PMI')),
+            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : ($user['role'] === 'panitia' ? 'Panitia Pelaksana Jumbara PMI' : 'Kontingen PMI'))),
             'qr_code_base64' => $qrUrl,
-            'photo_url' => null
+            'photo_url' => $user['photo_url'] ?? null
         ]);
     }
     if (isset($part['sub_categories']) && is_string($part['sub_categories'])) {
@@ -58,20 +59,30 @@ if ($method === 'GET' && $action === 'me') {
 if ($method === 'GET' && $action === 'idcard') {
     $user = requireUser(['kabupaten', 'unit', 'peserta', 'panitia', 'admin', 'penilai', 'juri', 'peninjau', 'pendamping']);
     if (!$id) {
-        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'pendamping') ? 'PDP-2026-' : 'JMB-2026-');
+        $stmtP = $pdo->prepare("SELECT id FROM participants WHERE user_id = ? OR (email != '' AND email = ?) OR (code != '' AND code = ?) ORDER BY id DESC LIMIT 1");
+        $stmtP->execute([$user['id'], $user['email'] ?? '', $user['username'] ?? '']);
+        $matchedPartId = $stmtP->fetchColumn();
+        if ($matchedPartId) {
+            $id = $matchedPartId;
+        }
+    }
+    if (!$id) {
+        $prefix = ($user['role'] === 'peninjau') ? 'PNJ-2026-' : (($user['role'] === 'pendamping') ? 'PDP-2026-' : (($user['role'] === 'panitia') ? 'PNT-2026-' : 'JMB-2026-'));
         $code = $prefix . str_pad($user['id'], 4, '0', STR_PAD_LEFT);
         $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . urlencode($code);
+        $level = ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : ($user['role'] === 'panitia' ? 'Panitia Pelaksana' : 'Umum')));
+        $unitName = $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : ($user['role'] === 'panitia' ? 'Panitia Pelaksana Jumbara PMI' : 'Kontingen PMI')));
         jsonResponse([
             'id' => 0,
             'code' => $code,
             'user_id' => $user['id'],
             'full_name' => $user['full_name'] ?? $user['username'],
             'registration_type' => ucfirst($user['role']),
-            'level' => ($user['role'] === 'peninjau' ? 'Peninjau' : ($user['role'] === 'pendamping' ? 'Pendamping' : 'Umum')),
-            'unit_name' => $user['unit_name'] ?? ($user['role'] === 'peninjau' ? 'Peninjau PMI Kabupaten' : ($user['role'] === 'pendamping' ? 'Pendamping Kontingen' : 'Kontingen PMI')),
+            'level' => $level,
+            'unit_name' => $unitName,
             'status' => 'verified_kabupaten',
             'qr_code_base64' => $qrUrl,
-            'photo_url' => null
+            'photo_url' => $user['photo_url'] ?? null
         ]);
     }
 

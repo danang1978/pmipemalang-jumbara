@@ -3704,6 +3704,9 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                  <i class="fa-solid fa-id-card"></i>
+                </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
                   <i class="fa-solid fa-key"></i>
                 </button>
@@ -4185,6 +4188,9 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                  <i class="fa-solid fa-id-card"></i>
+                </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
                   <i class="fa-solid fa-key"></i>
                 </button>
@@ -4710,6 +4716,9 @@ const App = {
               </div>
 
               <div class="jkn-header-actions">
+                <button type="button" class="jkn-icon-action" onclick="App.openPanitiaQRCodeModal()" title="ID Card & QR Presensi Saya">
+                  <i class="fa-solid fa-id-card"></i>
+                </button>
                 <button type="button" class="jkn-icon-action" onclick="App.openChangePasswordModal()" title="Ganti Password">
                   <i class="fa-solid fa-key"></i>
                 </button>
@@ -4750,11 +4759,11 @@ const App = {
                   </div>
                 </div>
 
-                <div class="jkn-avatar-wrap">
-                  <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #b91c1c, #7f1d1d); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.5rem; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                    <i class="fa-solid fa-id-card-clip"></i>
+                <div class="jkn-avatar-wrap" onclick="App.openPanitiaQRCodeModal()" style="cursor: pointer;" title="Klik untuk lihat QR Code Presensi & ID Card Panitia">
+                  <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #b91c1c, #7f1d1d); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1.55rem; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(185,28,28,0.35); transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-id-card"></i>
                   </div>
-                  <span class="jkn-status-dot status-green" title="Panitia Aktif"></span>
+                  <span class="jkn-status-dot status-green" title="Panitia Aktif - Klik untuk buka QR Presensi & ID Card"></span>
                 </div>
               </div>
 
@@ -4767,12 +4776,15 @@ const App = {
               </div>
 
               <!-- Quick Action Bar -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.85rem;">
-                <button type="button" class="btn btn-sm" onclick="App.switchPanitiaMobileTab('presensi')" style="background: #dc2626; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.4rem; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                  <i class="fa-solid fa-qrcode"></i> Scan Presensi QR
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45rem; margin-top: 0.85rem;">
+                <button type="button" class="btn btn-sm" onclick="App.switchPanitiaMobileTab('presensi')" style="background: #dc2626; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(220,38,38,0.25);">
+                  <i class="fa-solid fa-qrcode"></i> Scan Presensi
                 </button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="App.switchPanitiaMobileTab('peserta')" style="color: #b91c1c; border-color: #dc2626; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.4rem; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                  <i class="fa-solid fa-users-line"></i> Cek Data Peserta
+                <button type="button" class="btn btn-sm" onclick="App.openPanitiaQRCodeModal()" style="background: #991b1b; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(153,27,27,0.25);">
+                  <i class="fa-solid fa-id-card"></i> ID Card QR
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.switchPanitiaMobileTab('peserta')" style="color: #b91c1c; border-color: #dc2626; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                  <i class="fa-solid fa-users-line"></i> Cek Peserta
                 </button>
               </div>
             </div>
@@ -4789,7 +4801,15 @@ const App = {
                   <span class="jkn-grid-label">Presensi QR</span>
                 </div>
 
-                <!-- 2. Cek Peserta -->
+                <!-- 2. ID Card & QR Presensi Panitia -->
+                <div class="jkn-grid-item" onclick="App.openPanitiaQRCodeModal()">
+                  <div class="jkn-icon-circle jkn-circle-indigo">
+                    <i class="fa-solid fa-id-card"></i>
+                  </div>
+                  <span class="jkn-grid-label">ID Card</span>
+                </div>
+
+                <!-- 3. Cek Peserta -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('peserta')">
                   <div class="jkn-icon-circle jkn-circle-indigo">
                     <i class="fa-solid fa-users-line"></i>
@@ -4797,7 +4817,7 @@ const App = {
                   <span class="jkn-grid-label">Cek Peserta</span>
                 </div>
 
-                <!-- 3. Input Nilai -->
+                <!-- 4. Input Nilai -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('nilai')">
                   <div class="jkn-icon-circle jkn-circle-cyan">
                     <i class="fa-solid fa-pen-to-square"></i>
@@ -4805,7 +4825,8 @@ const App = {
                   <span class="jkn-grid-label">Input Nilai</span>
                 </div>
 
-                <!-- 4. Rundown Acara -->
+                <!-- ROW 2 -->
+                <!-- 5. Rundown Acara -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('agenda')">
                   <div class="jkn-icon-circle jkn-circle-emerald">
                     <i class="fa-solid fa-calendar-check"></i>
@@ -4813,8 +4834,7 @@ const App = {
                   <span class="jkn-grid-label">Rundown</span>
                 </div>
 
-                <!-- ROW 2 -->
-                <!-- 5. Klasemen Skor -->
+                <!-- 6. Klasemen Skor -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('medali')">
                   <div class="jkn-icon-circle jkn-circle-amber">
                     <i class="fa-solid fa-ranking-star"></i>
@@ -4822,7 +4842,7 @@ const App = {
                   <span class="jkn-grid-label">Klasemen Skor</span>
                 </div>
 
-                <!-- 6. Peta Buperta -->
+                <!-- 7. Peta Buperta -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('lokasi')">
                   <div class="jkn-icon-circle jkn-circle-green">
                     <i class="fa-solid fa-map-location-dot"></i>
@@ -4830,20 +4850,12 @@ const App = {
                   <span class="jkn-grid-label">Peta Buperta</span>
                 </div>
 
-                <!-- 7. Juknis Kegiatan -->
+                <!-- 8. Juknis Kegiatan -->
                 <div class="jkn-grid-item" onclick="App.switchPanitiaMobileTab('materi')">
                   <div class="jkn-icon-circle jkn-circle-blue">
                     <i class="fa-solid fa-book-bookmark"></i>
                   </div>
                   <span class="jkn-grid-label">Juknis</span>
-                </div>
-
-                <!-- 8. Keamanan & Sandi -->
-                <div class="jkn-grid-item" onclick="App.openChangePasswordModal()">
-                  <div class="jkn-icon-circle jkn-circle-purple">
-                    <i class="fa-solid fa-key"></i>
-                  </div>
-                  <span class="jkn-grid-label">Ganti Sandi</span>
                 </div>
               </div>
             </div>
@@ -5131,6 +5143,33 @@ const App = {
       this.loadPesertaMobileMaterials('panitiaMaterialsContainer');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  async openPanitiaQRCodeModal() {
+    const user = this.currentUser || {};
+    let partData = null;
+    try {
+      partData = await API.getParticipantMe();
+    } catch (e) {
+      partData = null;
+    }
+
+    const code = (partData && partData.code) ? partData.code : (user.participant_code || user.code || user.username || ('PNT-2026-' + String(user.id || '001').padStart(4, '0')));
+    const name = (partData && partData.full_name) ? partData.full_name : (user.full_name || user.username || 'Panitia Pelaksana');
+    const unit = (partData && partData.unit_name) ? partData.unit_name : (user.unit_name || 'PMI KABUPATEN PEMALANG');
+    const level = (partData && partData.level) ? partData.level : 'Panitia Pelaksana Jumbara';
+    const photoUrl = (partData && partData.photo_url) ? partData.photo_url : (user.photo_url || null);
+    const partId = (partData && partData.id) ? partData.id : 0;
+
+    await this.openLargeQRCodeModal({
+      id: partId,
+      code: code,
+      full_name: name,
+      unit_name: unit,
+      level: level,
+      role: 'Panitia Pelaksana',
+      photo_url: photoUrl
+    });
   },
 
   async searchPanitiaPeserta(query) {
@@ -13142,6 +13181,13 @@ const App = {
             <i class="fa-solid fa-lightbulb" style="color: #f59e0b; font-size: 1rem; flex-shrink: 0;"></i>
             <span>Tunjukkan layar HP ini ke Panitia / Juri untuk Check-In & Check-Out presensi kegiatan secara otomatis.</span>
           </div>
+
+          <!-- ACTION BUTTON: CETAK / LIHAT ID CARD LENGKAP -->
+          <div style="margin-top: 0.85rem; display: flex; gap: 0.5rem; justify-content: center; width: 100%; max-width: 320px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="App.openIDCardModal(${data.id || 0})" style="border-radius: 12px; font-weight: 700; font-size: 0.8rem; width: 100%; justify-content: center; color: #b91c1c; border-color: #f87171; background: #fff1f2; padding: 0.55rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-id-card"></i> Cetak / Unduh ID Card Lengkap
+            </button>
+          </div>
         </div>
       `;
 
@@ -13149,14 +13195,7 @@ const App = {
       const downloadBtn = document.getElementById('largeQrDownloadBtn');
       if (downloadBtn) {
         downloadBtn.onclick = () => {
-          const link = document.createElement('a');
-          link.href = qrUrl;
-          link.download = `QR-Presensi-${code}.png`;
-          link.target = '_blank';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          Utils.showToast('Membuka unduhan QR Code...', 'info');
+          Utils.downloadQRCode(code, `QR-Presensi-${code}`);
         };
       }
     } catch (err) {
@@ -16451,6 +16490,7 @@ const App = {
         } else if (role === 'panitia') {
           list.innerHTML = `
             <li><a href="javascript:void(0)" onclick="App.switchPanitiaMobileTab('home')"><i class="fa-solid fa-house"></i> Beranda Panitia</a></li>
+            <li><a href="javascript:void(0)" onclick="App.openPanitiaQRCodeModal()"><i class="fa-solid fa-id-card"></i> ID Card & QR Presensi Saya</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPanitiaMobileTab('presensi')"><i class="fa-solid fa-qrcode"></i> Scan Presensi QR</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPanitiaMobileTab('peserta')"><i class="fa-solid fa-users-line"></i> Cari Data Peserta</a></li>
             <li><a href="javascript:void(0)" onclick="App.switchPanitiaMobileTab('nilai')"><i class="fa-solid fa-pen-to-square"></i> Fasilitasi Nilai Pos</a></li>

@@ -183,6 +183,34 @@ const Utils = {
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(text)}`;
   },
 
+  // Download QR Code as PNG image file
+  downloadQRCode(code, filename) {
+    const text = String(code || 'JMB-2026-0001');
+    const fname = (filename || `QR-Presensi-${text}`).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+
+    const triggerDownload = (dataUrl) => {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = fname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      Utils.showToast(`Berhasil mengunduh QR Code ${text}`, 'success');
+    };
+
+    if (typeof window !== 'undefined' && window.QRCode && typeof window.QRCode.toDataURL === 'function') {
+      window.QRCode.toDataURL(text, { width: 400, margin: 2, errorCorrectionLevel: 'H' }, (err, url) => {
+        if (!err && url) {
+          triggerDownload(url);
+          return;
+        }
+        triggerDownload(this.getQRCodeUrl(text, 400));
+      });
+    } else {
+      triggerDownload(this.getQRCodeUrl(text, 400));
+    }
+  },
+
   // Export JSON array to downloadable Excel (.xls) file with HTML Spreadsheet formatting
   exportToXLS(filename, rows, title = 'Data Export JUMBARA 2026') {
     if (!rows || !rows.length) {
