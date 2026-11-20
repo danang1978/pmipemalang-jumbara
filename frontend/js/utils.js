@@ -211,6 +211,57 @@ const Utils = {
     }
   },
 
+  // Download DOM ID Card element as high-resolution PNG image
+  async downloadIDCardElementAsImage(cardEl, filename, fallbackData) {
+    if (!cardEl) return;
+    const fname = (filename || 'ID-Card').replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+
+    const triggerDownload = (url) => {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast('ID Card Lengkap berhasil diunduh!', 'success');
+    };
+
+    const h2c = (typeof window !== 'undefined' && window.html2canvas) ? window.html2canvas : (typeof html2canvas !== 'undefined' ? html2canvas : null);
+
+    if (h2c) {
+      try {
+        const canvas = await h2c(cardEl, {
+          scale: 3, // 3x high-resolution crisp print quality
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              triggerDownload(url);
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } else {
+              triggerDownload(canvas.toDataURL('image/png', 1.0));
+            }
+          }, 'image/png', 1.0);
+        } else {
+          triggerDownload(canvas.toDataURL('image/png', 1.0));
+        }
+        return;
+      } catch (e) {
+        console.warn('html2canvas failed, using fallback badge generator:', e);
+      }
+    }
+
+    if (fallbackData) {
+      this.downloadCompleteIDCardBadge(fallbackData, fname);
+    }
+  },
+
   // Download Complete Official ID Card Badge as high-resolution PNG image
   downloadCompleteIDCardBadge(cardData, filename) {
     if (!cardData) return;
@@ -219,6 +270,8 @@ const Utils = {
     const unit = String(cardData.unit_name || 'PMI KABUPATEN PEMALANG').trim();
     const level = String(cardData.level || cardData.registration_type || 'Peserta').trim();
     const photoUrl = cardData.photo_url || null;
+    const appLogoUrl = cardData.app_logo || (typeof App !== 'undefined' && App.appSettings?.app_logo) || 'uploads/logo_1791009905.jpg';
+    const eventLogoUrl = cardData.event_logo || (typeof App !== 'undefined' && App.appSettings?.event_logo) || 'frontend/images/logo-jumbara-xii.png';
     const fname = (filename || `ID-Card-${code}`).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
 
     const triggerDownload = (url) => {
@@ -255,7 +308,7 @@ const Utils = {
       });
     };
 
-    Promise.all([getQRDataUrl(), loadImg(photoUrl)]).then(([qrDataUrl, photoImg]) => {
+    Promise.all([getQRDataUrl(), loadImg(photoUrl), loadImg(appLogoUrl), loadImg(eventLogoUrl)]).then(([qrDataUrl, photoImg, appLogoImg, eventLogoImg]) => {
       const qrImg = new Image();
       qrImg.crossOrigin = 'anonymous';
       qrImg.onload = () => {
@@ -299,16 +352,22 @@ const Utils = {
         ctx.fillStyle = headerGrad;
         ctx.fillRect(0, 0, 720, 180);
 
-        // Red Cross Logo (PMI)
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(360, 42, 22, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#dc2626';
-        // Horizontal bar
-        ctx.fillRect(360 - 13, 42 - 4.5, 26, 9);
-        // Vertical bar
-        ctx.fillRect(360 - 4.5, 42 - 13, 9, 26);
+        // Official Logo PMI & Event Logo from Pengaturan
+        if (appLogoImg) {
+          ctx.drawImage(appLogoImg, 720 - 90, 18, 64, 64);
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(674, 50, 22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#dc2626';
+          ctx.fillRect(674 - 13, 50 - 4.5, 26, 9);
+          ctx.fillRect(674 - 4.5, 50 - 13, 9, 26);
+        }
+
+        if (eventLogoImg) {
+          ctx.drawImage(eventLogoImg, 26, 18, 70, 64);
+        }
 
         // Header Texts
         ctx.textAlign = 'center';
@@ -340,14 +399,12 @@ const Utils = {
           ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
           ctx.closePath();
           ctx.clip();
-          // Draw image centered & aspect cover
           const minDim = Math.min(photoImg.width, photoImg.height);
           const sx = (photoImg.width - minDim) / 2;
           const sy = (photoImg.height - minDim) / 2;
           ctx.drawImage(photoImg, sx, sy, minDim, minDim, 360 - photoR, photoY - photoR, photoR * 2, photoR * 2);
           ctx.restore();
         } else {
-          // Silhouette Avatar
           ctx.fillStyle = '#f1f5f9';
           ctx.beginPath();
           ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
@@ -357,17 +414,14 @@ const Utils = {
           ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
           ctx.clip();
           ctx.fillStyle = '#cbd5e1';
-          // Head
           ctx.beginPath();
           ctx.arc(360, photoY - 10, 24, 0, Math.PI * 2);
           ctx.fill();
-          // Shoulders
           ctx.beginPath();
           ctx.arc(360, photoY + 54, 46, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
-        // Border ring around photo
         ctx.strokeStyle = '#b91c1c';
         ctx.lineWidth = 4;
         ctx.beginPath();
