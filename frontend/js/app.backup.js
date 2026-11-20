@@ -4781,7 +4781,7 @@ const App = {
                   <i class="fa-solid fa-qrcode"></i> Scan Presensi
                 </button>
                 <button type="button" class="btn btn-sm" onclick="App.openPanitiaQRCodeModal()" style="background: #991b1b; color: #ffffff; border: none; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(153,27,27,0.25);">
-                  <i class="fa-solid fa-id-card"></i> ID Card QR
+                  <i class="fa-solid fa-qrcode"></i> QR Presensi
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="App.switchPanitiaMobileTab('peserta')" style="color: #b91c1c; border-color: #dc2626; font-weight: 700; border-radius: 10px; padding: 0.6rem 0.35rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
                   <i class="fa-solid fa-users-line"></i> Cek Peserta
@@ -4801,8 +4801,8 @@ const App = {
                   <span class="jkn-grid-label">Presensi QR</span>
                 </div>
 
-                <!-- 2. ID Card & QR Presensi Panitia -->
-                <div class="jkn-grid-item" onclick="App.openPanitiaQRCodeModal()">
+                <!-- 2. ID Card Resmi Panitia -->
+                <div class="jkn-grid-item" onclick="App.openPanitiaIDCardModal()">
                   <div class="jkn-icon-circle jkn-circle-indigo">
                     <i class="fa-solid fa-id-card"></i>
                   </div>
@@ -5170,6 +5170,33 @@ const App = {
       role: 'Panitia Pelaksana',
       photo_url: photoUrl
     });
+  },
+
+  async openPanitiaIDCardModal() {
+    const user = this.currentUser || {};
+    let partData = null;
+    try {
+      partData = await API.getParticipantMe();
+    } catch (e) {
+      partData = null;
+    }
+
+    if (partData && partData.id) {
+      await this.openIDCardModal(partData.id);
+    } else {
+      this.currentModalCardData = {
+        id: user.id || 1,
+        code: user.participant_code || user.code || user.username || ('PNT-2026-' + String(user.id || '001').padStart(4, '0')),
+        full_name: user.full_name || user.username || 'Panitia Pelaksana',
+        unit_name: user.unit_name || 'PMI KABUPATEN PEMALANG',
+        level: 'Panitia Pelaksana',
+        registration_type: 'Panitia',
+        photo_url: user.photo_url || null
+      };
+      this.openModal('idCardModal');
+      this.syncModalIDCardControls();
+      this.renderModalIDCardContent();
+    }
   },
 
   async searchPanitiaPeserta(query) {
@@ -13118,7 +13145,7 @@ const App = {
     modalBody.innerHTML = `
       <div style="padding: 2.5rem 1rem; text-align: center;">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #b91c1c; margin-bottom: 0.85rem;"></i>
-        <p style="color: #64748b; font-weight: 600; font-size: 0.9rem;">Menyiapkan ID Card Resmi...</p>
+        <p style="color: #64748b; font-weight: 600; font-size: 0.9rem;">Menyiapkan QR Code Presensi...</p>
       </div>
     `;
     this.openModal('largeQrModal');
@@ -13130,20 +13157,24 @@ const App = {
 
       let data = customData;
       if (!data) {
-        data = await API.getParticipantMe();
+        try {
+          data = await API.getParticipantMe();
+        } catch (e) {
+          data = null;
+        }
       }
 
-      const code = data.code || data.registration_code || (this.currentUser ? 'PNT-2026-' + String(this.currentUser.id || 1).padStart(4, '0') : 'JMB-2026-0001');
-      const name = data.full_name || (this.currentUser ? this.currentUser.full_name || this.currentUser.username : 'Peserta Jumbara');
-      const unit = data.unit_name || (this.currentUser ? this.currentUser.unit_name || 'PMI KABUPATEN PEMALANG' : 'Kontingen PMI');
-      const level = data.level || (data.registration_type || 'Peserta');
-      const regType = data.registration_type || (level.toLowerCase().includes('panitia') ? 'Panitia' : (level.toLowerCase().includes('peninjau') ? 'Peninjau' : (level.toLowerCase().includes('pendamping') ? 'Pendamping' : 'Peserta')));
-      const photoUrl = data.photo_url || (this.currentUser ? this.currentUser.photo_url : null);
-      const qrUrl = data.qr_code_base64 || Utils.getQRCodeUrl(code, 350);
+      const u = this.currentUser || {};
+      const code = (data && (data.code || data.registration_code)) || (u.participant_code || u.code || (u.username && u.username.startsWith('PNT') ? u.username : ('PNT-2026-' + String(u.id || 1).padStart(4, '0'))));
+      const name = (data && data.full_name) || u.full_name || u.username || 'Peserta Jumbara';
+      const unit = (data && data.unit_name) || u.unit_name || 'PMI KABUPATEN PEMALANG';
+      const level = (data && (data.level || data.registration_type)) || (u.role === 'panitia' ? 'Panitia Pelaksana' : (u.role === 'admin' ? 'Administrator' : 'Peserta Jumbara'));
+      const regType = (data && data.registration_type) || (level.toLowerCase().includes('panitia') ? 'Panitia' : (level.toLowerCase().includes('peninjau') ? 'Peninjau' : (level.toLowerCase().includes('pendamping') ? 'Pendamping' : 'Peserta')));
+      const photoUrl = (data && data.photo_url) || u.photo_url || null;
+      const qrUrl = (data && data.qr_code_base64) || Utils.getQRCodeUrl(code, 400);
 
-      const cardData = {
-        ...data,
-        id: data.id || 0,
+      const qrPayload = {
+        id: (data && data.id) || 0,
         code: code,
         full_name: name,
         unit_name: unit,
@@ -13153,63 +13184,59 @@ const App = {
         qr_code_base64: qrUrl
       };
 
-      const cardHtml = this.generateIDCardHtml(cardData);
-
       modalBody.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
           <!-- RADAR PULSING STATUS -->
-          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.35rem 0.85rem; border-radius: 9999px; margin-bottom: 0.75rem; box-shadow: 0 2px 6px rgba(16,185,129,0.12);">
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.35rem 0.85rem; border-radius: 9999px; margin-bottom: 0.85rem; box-shadow: 0 2px 6px rgba(16,185,129,0.12);">
             <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 0 3.5px rgba(16,185,129,0.25);"></span>
             <span style="color: #047857; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
               Siap Di-Scan Presensi Lapangan
             </span>
           </div>
 
-          <!-- OFFICIAL ID CARD TEMPLATE (PERSIS SEPERTI DI ADMIN) -->
-          <div id="largeQrCardContainer" style="display: flex; justify-content: center; width: 100%; overflow: hidden;">
-            ${cardHtml}
+          <!-- QR CODE BESAR & JELAS -->
+          <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 20px; padding: 14px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); display: inline-flex; justify-content: center; align-items: center; margin-bottom: 0.85rem;">
+            <img src="${qrUrl}" alt="QR Presensi ${Utils.escapeHtml(code)}" style="width: 250px; height: 250px; object-fit: contain; display: block; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
           </div>
 
-          <!-- MONOSPACE CODE QUICK COPY -->
-          <div style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 12px; padding: 0.4rem 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
-            <span style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1.05rem; font-weight: 800; color: #0f172a; letter-spacing: 2px;">
-              ${code}
+          <!-- KODE MONOSPACE QUICK COPY -->
+          <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px; padding: 0.45rem 1rem; display: inline-flex; align-items: center; gap: 0.6rem; margin-bottom: 0.85rem;">
+            <span style="font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 2px;">
+              ${Utils.escapeHtml(code)}
             </span>
-            <button type="button" onclick="navigator.clipboard.writeText('${code}'); Utils.showToast('Kode ${code} berhasil disalin!', 'success');" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 2px 5px; font-size: 0.82rem;" title="Salin Kode">
+            <button type="button" onclick="navigator.clipboard.writeText('${code}'); Utils.showToast('Kode ${code} berhasil disalin!', 'success');" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 2px 6px; font-size: 0.85rem;" title="Salin Kode">
               <i class="fa-regular fa-copy"></i>
             </button>
           </div>
 
-          <!-- SCANNER TIPS -->
-          <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.72rem; margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem; text-align: left; max-width: 360px; width: 100%;">
+          <!-- DATA SEDIKIT (NAMA, ROLE/LEVEL, UNIT) -->
+          <div style="width: 100%; max-width: 320px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; text-align: center;">
+            <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem; line-height: 1.3;">
+              ${Utils.escapeHtml(name)}
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+              <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; border: 1px solid #fecaca;">
+                ${Utils.escapeHtml(level)}
+              </span>
+            </div>
+            <div style="font-size: 0.78rem; font-weight: 600; color: #64748b; line-height: 1.3;">
+              <i class="fa-solid fa-building-columns" style="color: #94a3b8; margin-right: 3px;"></i> ${Utils.escapeHtml(unit)}
+            </div>
+          </div>
+
+          <!-- PETUNJUK SCANNER -->
+          <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.5rem 0.8rem; border-radius: 12px; font-size: 0.72rem; display: flex; align-items: center; gap: 0.5rem; text-align: left; max-width: 340px; width: 100%;">
             <i class="fa-solid fa-lightbulb" style="color: #f59e0b; font-size: 0.95rem; flex-shrink: 0;"></i>
-            <span>Tunjukkan layar ini ke Panitia / Juri untuk scan presensi, atau klik tombol <strong>Unduh ID Card Lengkap</strong> untuk menyimpan kartu resmi.</span>
+            <span>Arahkan layar ponsel ini ke scanner panitia pos kegiatan untuk verifikasi presensi cepat.</span>
           </div>
         </div>
       `;
 
-      // Download button logic: Directly download Complete ID Card Badge
+      // Download button logic: Unduh Gambar QR Resmi (Fokus Scanner)
       const downloadBtn = document.getElementById('largeQrDownloadBtn');
       if (downloadBtn) {
-        downloadBtn.onclick = async () => {
-          const cardEl = modalBody.querySelector('.pmi-template-card');
-          const origBtnHtml = downloadBtn.innerHTML;
-          downloadBtn.disabled = true;
-          downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan ID Card...';
-
-          try {
-            if (cardEl) {
-              await Utils.downloadIDCardElementAsImage(cardEl, `ID-Card-${code}`, cardData);
-            } else {
-              Utils.downloadCompleteIDCardBadge(cardData, `ID-Card-${code}`);
-            }
-          } catch (e) {
-            console.error('Failed to download ID card as image:', e);
-            Utils.downloadCompleteIDCardBadge(cardData, `ID-Card-${code}`);
-          } finally {
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = origBtnHtml;
-          }
+        downloadBtn.onclick = () => {
+          Utils.downloadQRCodeWithIdentity(qrPayload, `QR-Presensi-${code}`);
         };
       }
     } catch (err) {
@@ -13217,7 +13244,7 @@ const App = {
       modalBody.innerHTML = `
         <div style="padding: 1.5rem; color: #ef4444; text-align: center;">
           <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
-          <p style="font-weight: 700;">Gagal memuat ID Card & QR Code Presensi.</p>
+          <p style="font-weight: 700;">Gagal memuat QR Code Presensi.</p>
           <p style="font-size: 0.8rem; color: #64748b;">${Utils.escapeHtml(err.message || 'Terjadi kesalahan sistem.')}</p>
         </div>
       `;
@@ -14745,16 +14772,6 @@ const App = {
             
             <!-- Background Image Asli (IMG tag agar PASTI TERCETAK di semua browser tanpa tergantung setting background graphics) -->
             <img src="${s.idcard_template}" class="pmi-card-bg-img" alt="Background ID Card" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none;">
-
-            <!-- Logo dari Pengaturan (Logo Kegiatan di Kiri, Logo PMI Pengaturan di Kanan) -->
-            <div class="pmi-card-header-logos" style="position: absolute; top: 10px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center; z-index: 15; pointer-events: none;">
-              <div class="pmi-event-logo-box" style="display: flex; align-items: center;">
-                ${eventLogo ? `<img src="${eventLogo}" alt="Logo Kegiatan" style="height: 38px; max-width: 85px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));">` : ''}
-              </div>
-              <div class="pmi-app-logo-box" style="display: flex; align-items: center;">
-                ${appLogo ? `<img src="${appLogo}" alt="Logo PMI" style="height: 38px; max-width: 85px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));">` : ''}
-              </div>
-            </div>
 
             <!-- Category Band Bar Full Width (Position Absolute so slider Y moves it freely anywhere on the card) -->
             <div class="pmi-category-band-yellow" style="position: absolute; top: ${catY}px; left: 0; width: 100%; z-index: 10; background: ${catBg}; color: ${catTextColor};">

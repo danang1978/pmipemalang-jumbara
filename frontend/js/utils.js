@@ -211,6 +211,175 @@ const Utils = {
     }
   },
 
+  // Download QR Code Presensi with clear QR code & basic participant data (Fokus Scanner)
+  downloadQRCodeWithIdentity(data, filename) {
+    if (!data) return;
+    const code = String(data.code || 'JMB-2026-0001');
+    const name = String(data.full_name || 'Peserta').trim();
+    const unit = String(data.unit_name || 'PMI KABUPATEN PEMALANG').trim();
+    const level = String(data.level || 'Peserta').trim();
+    const fname = (filename || `QR-Presensi-${code}`).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+
+    const triggerDownload = (url) => {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`QR Code Presensi ${code} berhasil diunduh!`, 'success');
+    };
+
+    const getQRDataUrl = () => {
+      return new Promise((resolve) => {
+        if (typeof window !== 'undefined' && window.QRCode && typeof window.QRCode.toDataURL === 'function') {
+          window.QRCode.toDataURL(code, { width: 400, margin: 2, errorCorrectionLevel: 'H' }, (err, url) => {
+            if (!err && url) resolve(url);
+            else resolve(this.getQRCodeUrl(code, 400));
+          });
+        } else {
+          resolve(this.getQRCodeUrl(code, 400));
+        }
+      });
+    };
+
+    getQRDataUrl().then((qrDataUrl) => {
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 760;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const roundRect = (c, x, y, w, h, r, fill, stroke) => {
+          c.beginPath();
+          c.moveTo(x + r, y);
+          c.lineTo(x + w - r, y);
+          c.quadraticCurveTo(x + w, y, x + w, y + r);
+          c.lineTo(x + w, y + h - r);
+          c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+          c.lineTo(x + r, y + h);
+          c.quadraticCurveTo(x, y + h, x, y + h - r);
+          c.lineTo(x, y + r);
+          c.quadraticCurveTo(x, y, x + r, y);
+          c.closePath();
+          if (fill) c.fill();
+          if (stroke) c.stroke();
+        };
+
+        // Clip rounded card
+        ctx.save();
+        roundRect(ctx, 0, 0, 640, 760, 24, false, false);
+        ctx.clip();
+
+        // White background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 640, 760);
+
+        // Header Gradient Banner
+        const grad = ctx.createLinearGradient(0, 0, 640, 90);
+        grad.addColorStop(0, '#7f1d1d');
+        grad.addColorStop(0.5, '#b91c1c');
+        grad.addColorStop(1, '#dc2626');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 640, 90);
+
+        // Header Title
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '1.5px';
+        ctx.fillText('PALANG MERAH INDONESIA KABUPATEN PEMALANG', 320, 38);
+
+        ctx.fillStyle = '#fef08a';
+        ctx.font = '900 18px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.fillText('QR CODE PRESENSI JUMBARA PMR XII 2026', 320, 66);
+
+        // Golden Accent Line
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(0, 86, 640, 4);
+
+        // Large Crisp QR Code Box
+        const qrBoxW = 400;
+        const qrBoxH = 400;
+        const qrBoxX = (640 - qrBoxW) / 2;
+        const qrBoxY = 115;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        roundRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 20, true, true);
+
+        // Draw QR Code Image (360x360 px, razor-sharp)
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrImg, qrBoxX + 20, qrBoxY + 20, 360, 360);
+
+        // Monospaced Code Box
+        const codeBoxW = 320;
+        const codeBoxH = 46;
+        const codeBoxX = (640 - codeBoxW) / 2;
+        const codeBoxY = 535;
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, codeBoxX, codeBoxY, codeBoxW, codeBoxH, 12, true, true);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 24px "JetBrains Mono", Courier, monospace';
+        ctx.letterSpacing = '2px';
+        ctx.fillText(code, 320, codeBoxY + 31);
+
+        // Data Sedikit: Nama
+        ctx.fillStyle = '#0f172a';
+        let nameSize = 24;
+        if (name.length > 30) nameSize = 19;
+        else if (name.length > 22) nameSize = 21;
+        ctx.font = `900 ${nameSize}px Inter, -apple-system, sans-serif`;
+        ctx.fillText(name, 320, 620);
+
+        // Data Sedikit: Role & Unit
+        ctx.fillStyle = '#475569';
+        ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+        const roleAndUnit = `${level.toUpperCase()} • ${unit}`;
+        ctx.fillText(roleAndUnit, 320, 650);
+
+        // Footer Banner
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 700, 640, 60);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px Inter, -apple-system, sans-serif';
+        ctx.letterSpacing = '1.5px';
+        ctx.fillText('KARTU E-PRESENSI RESMI SCANNER LAPANGAN', 320, 736);
+
+        ctx.restore();
+
+        // Border
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        roundRect(ctx, 1, 1, 638, 758, 24, false, true);
+
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              triggerDownload(url);
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } else {
+              triggerDownload(canvas.toDataURL('image/png', 1.0));
+            }
+          }, 'image/png', 1.0);
+        } else {
+          triggerDownload(canvas.toDataURL('image/png', 1.0));
+        }
+      };
+      qrImg.src = qrDataUrl;
+    }).catch((err) => {
+      console.error('Error in downloadQRCodeWithIdentity:', err);
+      this.downloadQRCode(code, fname);
+    });
+  },
+
   // Download DOM ID Card element as high-resolution PNG image
   async downloadIDCardElementAsImage(cardEl, filename, fallbackData) {
     if (!cardEl) return;

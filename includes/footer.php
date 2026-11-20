@@ -527,29 +527,29 @@ $settings = getAppSettings();
     </div>
   </div>
 
-  <!-- Modal 4.5: ID Card Lengkap & QR Code Presensi Resmi -->
+  <!-- Modal 4.5: QR Code Presensi Resmi (Fokus Scanner Lapangan) -->
   <div class="modal" id="largeQrModal">
-    <div class="modal-dialog" style="max-width: 440px; margin: 1.5rem auto;">
+    <div class="modal-dialog" style="max-width: 400px; margin: 1.5rem auto;">
       <div class="modal-content" style="border-radius: 24px; overflow: hidden; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
         <div class="modal-header" style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #991b1b 100%); color: #ffffff; padding: 1rem 1.25rem; border: none;">
           <div style="display: flex; align-items: center; gap: 0.6rem;">
             <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
-              <i class="fa-solid fa-id-badge" style="color: #ffffff; font-size: 1.15rem;"></i>
+              <i class="fa-solid fa-qrcode" style="color: #ffffff; font-size: 1.15rem;"></i>
             </div>
             <div>
-              <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">ID Card & QR Code Presensi</h3>
-              <p style="margin: 0; font-size: 0.68rem; color: #fecdd3; margin-top: 2px;">JUMBARA PMR XII PMI KABUPATEN PEMALANG</p>
+              <h3 class="modal-title" style="color: #ffffff; font-size: 0.95rem; font-weight: 800; margin: 0;">QR Code Presensi Resmi</h3>
+              <p style="margin: 0; font-size: 0.68rem; color: #fecdd3; margin-top: 2px;">SCANNER PRESENSI JUMBARA PMR KABUPATEN PEMALANG</p>
             </div>
           </div>
           <button class="modal-close" onclick="App.closeModal('largeQrModal')" style="color: #ffffff; opacity: 0.85;">&times;</button>
         </div>
-        <div class="modal-body" id="largeQrModalBody" style="background: #f8fafc; padding: 1.25rem 1rem; text-align: center;"></div>
-        <div class="modal-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <div class="modal-body" id="largeQrModalBody" style="background: #ffffff; padding: 1.5rem 1.25rem; text-align: center;"></div>
+        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
           <button type="button" class="btn btn-outline btn-sm" onclick="App.closeModal('largeQrModal')" style="border-radius: 12px; font-weight: 700;">
             <i class="fa-solid fa-xmark"></i> Tutup
           </button>
           <button type="button" id="largeQrDownloadBtn" class="btn btn-primary btn-sm" style="border-radius: 12px; font-weight: 800; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); border: none; padding: 0.55rem 1rem; box-shadow: 0 4px 12px rgba(185,28,28,0.25); display: inline-flex; align-items: center; gap: 0.45rem;">
-            <i class="fa-solid fa-download"></i> Unduh ID Card Lengkap
+            <i class="fa-solid fa-download"></i> Unduh Gambar QR
           </button>
         </div>
       </div>
