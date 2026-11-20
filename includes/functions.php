@@ -52,6 +52,82 @@ function jsonResponse($data, $statusCode = 200) {
     exit;
 }
 
+/**
+ * Eksekusi operasi database di dalam transaksi InnoDB secara aman dan kebal Deadlock (1213 / SQLSTATE 40001).
+ * Otomatis melakukan rollback dan retry hingga $maxRetries kali dengan jeda waktu acak (jittered exponential backoff)
+ * jika terjadi persaingan akses / lock contention saat pendaftaran, presensi, atau penilaian serentak berbarengan.
+ *
+ * @param PDO $pdo
+ * @param callable $callback function(PDO $pdo): mixed
+ * @param int $maxRetries
+ * @return mixed
+ * @throws \Throwable
+ */
+function runInTransaction(PDO $pdo, callable $callback, int $maxRetries = 5) {
+    $attempt = 0;
+    while (true) {
+        $attempt++;
+        try {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $pdo->beginTransaction();
+            $result = $callback($pdo);
+
+            // Jika callback mengembalikan tanda rollback (misal validasi kuota penuh), batalkan transaksi tanpa retry
+            if (is_array($result) && !empty($result['__rollback'])) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                return $result;
+            }
+
+            if ($pdo->inTransaction()) {
+                $pdo->commit();
+            }
+            return $result;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            $isDeadlock = false;
+            $sqlState = (string)$e->getCode();
+            $errMsg = $e->getMessage();
+
+            if ($e instanceof \PDOException) {
+                $driverCode = (int)($e->errorInfo[1] ?? 0);
+                // 1213 = Deadlock found when trying to get lock
+                // 1205 = Lock wait timeout exceeded; try restarting transaction
+                // 40001 = Serialization failure / Deadlock
+                if ($driverCode === 1213 || $driverCode === 1205 || $sqlState === '40001') {
+                    $isDeadlock = true;
+                }
+            }
+
+            if (!$isDeadlock && (
+                strpos($errMsg, '1213') !== false ||
+                stripos($errMsg, 'deadlock') !== false ||
+                strpos($errMsg, '1205') !== false ||
+                stripos($errMsg, 'lock wait timeout') !== false ||
+                $sqlState === '40001'
+            )) {
+                $isDeadlock = true;
+            }
+
+            // Jika deadlock / timeout terdeteksi dan batas retry belum habis, jeda acak (jitter) lalu ulangi transaksi
+            if ($isDeadlock && $attempt < $maxRetries) {
+                // Jitter acak: 35ms s/d 120ms dikali nomor attempt agar thread yang bersaing tidak saling bertubrukan lagi
+                usleep(mt_rand(35000, 120000) * $attempt);
+                continue;
+            }
+
+            // Jika bukan deadlock atau sudah mencapai batas retry maksimal, lempar exception
+            throw $e;
+        }
+    }
+}
+
 // Get JSON Input Helper
 function getJsonInput() {
     $raw = file_get_contents('php://input');

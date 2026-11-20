@@ -17194,14 +17194,18 @@ const App = {
       this.renderRegistrationSuccessDetailView(participantData);
 
     } catch (err) {
+      let displayMsg = err.message || 'Gagal mendaftar. Silakan periksa kembali data Anda.';
+      if (displayMsg.includes('1213') || displayMsg.toLowerCase().includes('deadlock') || displayMsg.includes('40001')) {
+        displayMsg = 'Server sedang memproses lonjakan pendaftaran serentak. Silakan klik tombol "Kirim Pendaftaran Resmi" sekali lagi.';
+      }
       if (msgContainer) {
         msgContainer.innerHTML = `
           <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
-            ⚠️ ${Utils.escapeHtml(err.message || 'Gagal mendaftar. Silakan periksa kembali data Anda.')}
+            ⚠️ ${Utils.escapeHtml(displayMsg)}
           </div>
         `;
       }
-      Utils.showToast(err.message || 'Gagal mendaftar', 'error');
+      Utils.showToast(displayMsg, 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;

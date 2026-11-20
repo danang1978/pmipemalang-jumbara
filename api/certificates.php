@@ -135,32 +135,28 @@ if ($method === 'POST' && $action === 'generate_numbers') {
         $stmtP->execute($params);
         $participants = $stmtP->fetchAll(PDO::FETCH_ASSOC);
 
-        $counter = $startNo;
-        $updatedCount = 0;
-
-        $pdo->beginTransaction();
-        $stmtUp = $pdo->prepare("UPDATE participants SET certificate_number = ? WHERE id = ?");
-
-        foreach ($participants as $p) {
-            if ($force || empty($p['certificate_number'])) {
-                $formattedNo = sprintf('%04d', $counter);
-                $certNum = str_replace('{NO}', $formattedNo, $pattern);
-                $stmtUp->execute([$certNum, $p['id']]);
-                $updatedCount++;
-                $counter++;
+        $updatedCount = runInTransaction($pdo, function($pdo) use ($participants, $force, $startNo, $pattern) {
+            $counter = $startNo;
+            $uCount = 0;
+            $stmtUp = $pdo->prepare("UPDATE participants SET certificate_number = ? WHERE id = ?");
+            foreach ($participants as $p) {
+                if ($force || empty($p['certificate_number'])) {
+                    $formattedNo = sprintf('%04d', $counter);
+                    $certNum = str_replace('{NO}', $formattedNo, $pattern);
+                    $stmtUp->execute([$certNum, $p['id']]);
+                    $uCount++;
+                    $counter++;
+                }
             }
-        }
-        $pdo->commit();
+            return $uCount;
+        });
 
         jsonResponse([
             'message' => "Berhasil memicu pembuatan nomor piagam secara masal!",
             'total_processed' => count($participants),
             'total_updated' => $updatedCount
         ]);
-    } catch (\PDOException $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+    } catch (\Throwable $e) {
         jsonResponse([
             'error' => 'Gagal memproses nomor piagam: ' . $e->getMessage()
         ], 500);

@@ -143,26 +143,33 @@ if ($method === 'POST' && $action === 'save_unit_event_registrations') {
         ], 400);
     }
 
-    // 1. Delete existing unit registrations for this event
-    $stmtDel = $pdo->prepare("
-        DELETE FROM event_registrations 
-        WHERE event_id = ? AND participant_id IN (SELECT id FROM participants WHERE unit_id = ?)
-    ");
-    $stmtDel->execute([$eventId, $unitId]);
+    // Atomic event registrations update with anti-deadlock retry
+    try {
+        runInTransaction($pdo, function($pdo) use ($eventId, $unitId, $participantIds) {
+            // 1. Delete existing unit registrations for this event
+            $stmtDel = $pdo->prepare("
+                DELETE FROM event_registrations 
+                WHERE event_id = ? AND participant_id IN (SELECT id FROM participants WHERE unit_id = ?)
+            ");
+            $stmtDel->execute([$eventId, $unitId]);
 
-    // 2. Insert new participant registrations
-    if (!empty($participantIds)) {
-        $stmtIns = $pdo->prepare("INSERT INTO event_registrations (event_id, participant_id) VALUES (?, ?)");
-        foreach ($participantIds as $pid) {
-            if ($pid > 0) {
-                $stmtIns->execute([$eventId, $pid]);
+            // 2. Insert new participant registrations
+            if (!empty($participantIds)) {
+                $stmtIns = $pdo->prepare("INSERT INTO event_registrations (event_id, participant_id) VALUES (?, ?)");
+                foreach ($participantIds as $pid) {
+                    if ($pid > 0) {
+                        $stmtIns->execute([$eventId, $pid]);
+                    }
+                }
             }
-        }
-    }
+        });
 
-    jsonResponse([
-        'message' => 'Pendaftaran peserta kontingen unit untuk kegiatan ini berhasil diperbarui!'
-    ]);
+        jsonResponse([
+            'message' => 'Pendaftaran peserta kontingen unit untuk kegiatan ini berhasil diperbarui!'
+        ]);
+    } catch (\Throwable $e) {
+        jsonResponse(['error' => 'Gagal memperbarui pendaftaran kegiatan: ' . $e->getMessage()], 500);
+    }
 }
 
 if ($method === 'POST') {

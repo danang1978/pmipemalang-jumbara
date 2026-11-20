@@ -123,119 +123,146 @@ if ($method === 'POST' && $action === 'scan') {
         ], 400);
     }
 
-    // 5. CHECK PREVIOUS ATTENDANCE RECORD (Masuk / Keluar)
-    $stmtCheckLast = $pdo->prepare("
-        SELECT *, 
-               DATE_FORMAT(
-                   CASE 
-                       WHEN HOUR(scanned_at) < 10 
-                       THEN DATE_ADD(scanned_at, INTERVAL 7 HOUR)
-                       ELSE scanned_at
-                   END, 
-                   '%Y-%m-%d %H:%i:%s'
-               ) AS scanned_at_wib 
-        FROM attendance 
-        WHERE event_id = ? AND participant_id = ? 
-        ORDER BY id DESC LIMIT 1
-    ");
-    $stmtCheckLast->execute([$eventId, $part['id']]);
-    $lastAttendance = $stmtCheckLast->fetch();
+    // 5. ATOMIC ATTENDANCE TRANSACTION WITH AUTOMATIC DEADLOCK RETRY
+    try {
+        $txResult = runInTransaction($pdo, function($pdo) use ($eventId, $part, $code, $event, $type, $user) {
+            // Check previous attendance record (Masuk / Keluar)
+            $stmtCheckLast = $pdo->prepare("
+                SELECT *, 
+                       DATE_FORMAT(
+                           CASE 
+                               WHEN HOUR(scanned_at) < 10 
+                               THEN DATE_ADD(scanned_at, INTERVAL 7 HOUR)
+                               ELSE scanned_at
+                           END, 
+                           '%Y-%m-%d %H:%i:%s'
+                       ) AS scanned_at_wib 
+                FROM attendance 
+                WHERE event_id = ? AND participant_id = ? 
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmtCheckLast->execute([$eventId, $part['id']]);
+            $lastAttendance = $stmtCheckLast->fetch();
 
-    $formattedLastTime = '';
-    if ($lastAttendance) {
-        $rawTime = $lastAttendance['scanned_at_wib'] ?? $lastAttendance['scanned_at'] ?? null;
-        if ($rawTime) {
-            $ts = strtotime($rawTime);
-            if ($ts !== false) {
-                $formattedLastTime = date('H:i', $ts) . ' WIB, ' . date('d-m-Y', $ts);
+            $formattedLastTime = '';
+            if ($lastAttendance) {
+                $rawTime = $lastAttendance['scanned_at_wib'] ?? $lastAttendance['scanned_at'] ?? null;
+                if ($rawTime) {
+                    $ts = strtotime($rawTime);
+                    if ($ts !== false) {
+                        $formattedLastTime = date('H:i', $ts) . ' WIB, ' . date('d-m-Y', $ts);
+                    }
+                }
+                if (!$formattedLastTime) {
+                    $formattedLastTime = date('H:i') . ' WIB, ' . date('d-m-Y');
+                }
             }
-        }
-        if (!$formattedLastTime) {
-            $formattedLastTime = date('H:i') . ' WIB, ' . date('d-m-Y');
-        }
-    }
 
-    if ($type === 'masuk') {
-        // Check if participant is currently checked-in at another event without checking out
-        $stmtActiveOther = $pdo->prepare("
-            SELECT a.event_id, a.status, 
-                   DATE_FORMAT(
-                       CASE 
-                           WHEN HOUR(a.scanned_at) < 10 
-                           THEN DATE_ADD(a.scanned_at, INTERVAL 7 HOUR)
-                           ELSE a.scanned_at
-                       END, 
-                       '%Y-%m-%d %H:%i:%s'
-                   ) AS scanned_at, 
-                   e.title AS event_title 
-            FROM attendance a 
-            JOIN events e ON a.event_id = e.id 
-            WHERE a.participant_id = ? AND a.event_id != ? 
-            AND a.id IN (
-                SELECT MAX(id) FROM attendance WHERE participant_id = ? GROUP BY event_id
-            )
-            AND a.status IN ('masuk', 'hadir')
-            ORDER BY a.id DESC LIMIT 1
-        ");
-        $stmtActiveOther->execute([$part['id'], $eventId, $part['id']]);
-        $activeOther = $stmtActiveOther->fetch();
+            if ($type === 'masuk') {
+                // Check if participant is currently checked-in at another event without checking out
+                $stmtActiveOther = $pdo->prepare("
+                    SELECT a.event_id, a.status, 
+                           DATE_FORMAT(
+                               CASE 
+                                   WHEN HOUR(a.scanned_at) < 10 
+                                   THEN DATE_ADD(a.scanned_at, INTERVAL 7 HOUR)
+                                   ELSE a.scanned_at
+                               END, 
+                               '%Y-%m-%d %H:%i:%s'
+                           ) AS scanned_at, 
+                           e.title AS event_title 
+                    FROM attendance a 
+                    JOIN events e ON a.event_id = e.id 
+                    WHERE a.participant_id = ? AND a.event_id != ? 
+                    AND a.id IN (
+                        SELECT MAX(id) FROM attendance WHERE participant_id = ? GROUP BY event_id
+                    )
+                    AND a.status IN ('masuk', 'hadir')
+                    ORDER BY a.id DESC LIMIT 1
+                ");
+                $stmtActiveOther->execute([$part['id'], $eventId, $part['id']]);
+                $activeOther = $stmtActiveOther->fetch();
 
-        if ($activeOther) {
-            $otherTime = '';
-            $rawOtherTime = $activeOther['scanned_at'] ?? null;
-            if (!empty($rawOtherTime)) {
-                $ts = strtotime($rawOtherTime);
-                if ($ts) $otherTime = ' pada pukul ' . date('H:i', $ts) . ' WIB';
+                if ($activeOther) {
+                    $otherTime = '';
+                    $rawOtherTime = $activeOther['scanned_at'] ?? null;
+                    if (!empty($rawOtherTime)) {
+                        $ts = strtotime($rawOtherTime);
+                        if ($ts) $otherTime = ' pada pukul ' . date('H:i', $ts) . ' WIB';
+                    }
+                    return [
+                        '__rollback' => true,
+                        'error' => 'Presensi Ditolak: Peserta ' . $part['full_name'] . ' (' . $code . ') MASIH TERCATAT MASUK pada kegiatan lain ("' . $activeOther['event_title'] . '"' . $otherTime . '). Peserta harus Presensi Keluar (Check-Out) dari kegiatan sebelumnya terlebih dahulu!',
+                        'participant' => $part,
+                        'event' => $event,
+                        'active_other_event' => $activeOther
+                    ];
+                }
+
+                if ($lastAttendance && ($lastAttendance['status'] === 'masuk' || $lastAttendance['status'] === 'hadir')) {
+                    return [
+                        '__rollback' => true,
+                        'error' => 'Peserta ' . $part['full_name'] . ' (' . $code . ') SUDAH melakukan Presensi Masuk sebelumnya pada kegiatan ini pada ' . $formattedLastTime . '!',
+                        'participant' => $part,
+                        'event' => $event,
+                        'attendance' => $lastAttendance
+                    ];
+                }
+            } else if ($type === 'keluar') {
+                if (!$lastAttendance || ($lastAttendance['status'] !== 'masuk' && $lastAttendance['status'] !== 'hadir')) {
+                    return [
+                        '__rollback' => true,
+                        'error' => 'Presensi Ditolak: Peserta ' . $part['full_name'] . ' (' . $code . ') BELUM melakukan Presensi Masuk untuk kegiatan ini!',
+                        'participant' => $part,
+                        'event' => $event
+                    ];
+                }
+                if ($lastAttendance['status'] === 'keluar') {
+                    return [
+                        '__rollback' => true,
+                        'error' => 'Peserta ' . $part['full_name'] . ' (' . $code . ') SUDAH melakukan Presensi Keluar sebelumnya pada ' . $formattedLastTime . '!',
+                        'participant' => $part,
+                        'event' => $event,
+                        'attendance' => $lastAttendance
+                    ];
+                }
             }
-            jsonResponse([
-                'error' => 'Presensi Ditolak: Peserta ' . $part['full_name'] . ' (' . $code . ') MASIH TERCATAT MASUK pada kegiatan lain ("' . $activeOther['event_title'] . '"' . $otherTime . '). Peserta harus Presensi Keluar (Check-Out) dari kegiatan sebelumnya terlebih dahulu!',
-                'participant' => $part,
-                'event' => $event,
-                'active_other_event' => $activeOther
-            ], 400);
+
+            // 6. RECORD ATTENDANCE (Explicitly record current WIB Asia/Jakarta timestamp)
+            $dtNow = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            $nowJakarta = $dtNow->format('Y-m-d H:i:s');
+            $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, scanned_at) VALUES (?, ?, ?, ?, ?)");
+            $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta]);
+
+            return [
+                'success' => true,
+                'nowJakarta' => $nowJakarta,
+                'timestamp' => $dtNow->format('H:i:s') . ' WIB, ' . $dtNow->format('d-m-Y')
+            ];
+        });
+
+        if (!empty($txResult['error'])) {
+            jsonResponse($txResult, 400);
         }
 
-        if ($lastAttendance && ($lastAttendance['status'] === 'masuk' || $lastAttendance['status'] === 'hadir')) {
-            jsonResponse([
-                'error' => 'Peserta ' . $part['full_name'] . ' (' . $code . ') SUDAH melakukan Presensi Masuk sebelumnya pada kegiatan ini pada ' . $formattedLastTime . '!',
-                'participant' => $part,
-                'event' => $event,
-                'attendance' => $lastAttendance
-            ], 400);
+        $actionText = ($type === 'masuk') ? 'PRESENSI MASUK (Check-In)' : (($type === 'keluar') ? 'PRESENSI KELUAR (Check-Out)' : strtoupper($type));
+
+        jsonResponse([
+            'message' => 'BERHASIL! ' . $actionText . ' untuk ' . $part['full_name'] . ' (' . $code . ') pada kegiatan "' . $event['title'] . '".',
+            'participant' => $part,
+            'event' => $event,
+            'type' => $type,
+            'timestamp' => $txResult['timestamp'] ?? (date('H:i:s') . ' WIB, ' . date('d-m-Y'))
+        ]);
+    } catch (\Throwable $e) {
+        $errMsg = $e->getMessage();
+        if (strpos($errMsg, '1213') !== false || stripos($errMsg, 'deadlock') !== false) {
+            $userMsg = 'Sistem sedang memproses presensi antrean padat secara serentak. Silakan scan ulang kode peserta.';
+        } else {
+            $userMsg = 'Gagal memproses presensi: ' . $errMsg;
         }
-    } else if ($type === 'keluar') {
-        if (!$lastAttendance || ($lastAttendance['status'] !== 'masuk' && $lastAttendance['status'] !== 'hadir')) {
-            jsonResponse([
-                'error' => 'Presensi Ditolak: Peserta ' . $part['full_name'] . ' (' . $code . ') BELUM melakukan Presensi Masuk untuk kegiatan ini!',
-                'participant' => $part,
-                'event' => $event
-            ], 400);
-        }
-        if ($lastAttendance['status'] === 'keluar') {
-            jsonResponse([
-                'error' => 'Peserta ' . $part['full_name'] . ' (' . $code . ') SUDAH melakukan Presensi Keluar sebelumnya pada ' . $formattedLastTime . '!',
-                'participant' => $part,
-                'event' => $event,
-                'attendance' => $lastAttendance
-            ], 400);
-        }
+        jsonResponse(['error' => $userMsg], 500);
     }
-
-    // 6. RECORD ATTENDANCE (Explicitly record current WIB Asia/Jakarta timestamp)
-    $dtNow = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
-    $nowJakarta = $dtNow->format('Y-m-d H:i:s');
-    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, scanned_at) VALUES (?, ?, ?, ?, ?)");
-    $stmtAtt->execute([$eventId, $part['id'], $type, $user['username'], $nowJakarta]);
-
-    $actionText = ($type === 'masuk') ? 'PRESENSI MASUK (Check-In)' : (($type === 'keluar') ? 'PRESENSI KELUAR (Check-Out)' : strtoupper($type));
-
-    jsonResponse([
-        'message' => 'BERHASIL! ' . $actionText . ' untuk ' . $part['full_name'] . ' (' . $code . ') pada kegiatan "' . $event['title'] . '".',
-        'participant' => $part,
-        'event' => $event,
-        'type' => $type,
-        'timestamp' => $dtNow->format('H:i:s') . ' WIB, ' . $dtNow->format('d-m-Y')
-    ]);
 }
 
 if ($method === 'GET' && $action === 'my_attendance') {

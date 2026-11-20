@@ -799,15 +799,15 @@ if ($method === 'DELETE') {
         }
     }
 
-    $pdo->beginTransaction();
     try {
-        if (!empty($part['user_id'])) {
-            $stmtDelU = $pdo->prepare("DELETE FROM users WHERE id = ?");
-            $stmtDelU->execute([$part['user_id']]);
-        }
-        $stmtDelP = $pdo->prepare("DELETE FROM participants WHERE id = ?");
-        $stmtDelP->execute([$partId]);
-        $pdo->commit();
+        runInTransaction($pdo, function($pdo) use ($part, $partId) {
+            if (!empty($part['user_id'])) {
+                $stmtDelU = $pdo->prepare("DELETE FROM users WHERE id = ?");
+                $stmtDelU->execute([$part['user_id']]);
+            }
+            $stmtDelP = $pdo->prepare("DELETE FROM participants WHERE id = ?");
+            $stmtDelP->execute([$partId]);
+        });
 
         logActivity('delete_participant', 'participants', "Menghapus data peserta: {$part['full_name']} ({$part['code']})", [
             'participant_id' => $partId,
@@ -817,8 +817,7 @@ if ($method === 'DELETE') {
         ]);
 
         jsonResponse(['message' => 'Data peserta dan akun pengguna berhasil dihapus.']);
-    } catch (Exception $e) {
-        $pdo->rollBack();
+    } catch (\Throwable $e) {
         jsonResponse(['error' => 'Gagal menghapus data peserta: ' . $e->getMessage()], 500);
     }
 }

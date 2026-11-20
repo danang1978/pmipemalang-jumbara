@@ -337,117 +337,133 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($input['email'] ?? '');
 
     try {
-        $pdo->beginTransaction();
+        $txResult = runInTransaction($pdo, function($pdo) use (
+            $level, $unitId, $username, $password, $email, $userRole, $fullName, $phoneDigits,
+            $registrationType, $religion, $isDisabled, $disabilityType, $address,
+            $schoolAddress, $schoolPhone, $photoUrl, $assignmentLetterUrl,
+            $className, $lastEducation, $organizations, $parentName, $parentAddress,
+            $parentPhone, $parentJob, $input
+        ) {
+            // Dynamic Unsur Quota Check inside transaction to eliminate race conditions
+            $stmtUnsur = $pdo->prepare("SELECT name, quota FROM unsur_categories WHERE LOWER(name) = LOWER(?)");
+            $stmtUnsur->execute([$level]);
+            $unsurData = $stmtUnsur->fetch();
 
-        // Dynamic Unsur Quota Check inside transaction to eliminate race conditions
-        $stmtUnsur = $pdo->prepare("SELECT name, quota FROM unsur_categories WHERE LOWER(name) = LOWER(?)");
-        $stmtUnsur->execute([$level]);
-        $unsurData = $stmtUnsur->fetch();
+            if ($unsurData && (int)$unsurData['quota'] > 0) {
+                $quotaLimit = (int)$unsurData['quota'];
+                $stmtCount = $pdo->prepare("
+                    SELECT COUNT(*) FROM participants 
+                    WHERE unit_id = ? AND LOWER(level) = LOWER(?) AND status != 'rejected'
+                ");
+                $stmtCount->execute([$unitId, $level]);
+                $currentCount = (int)$stmtCount->fetchColumn();
 
-        if ($unsurData && (int)$unsurData['quota'] > 0) {
-            $quotaLimit = (int)$unsurData['quota'];
-            $stmtCount = $pdo->prepare("
-                SELECT COUNT(*) FROM participants 
-                WHERE unit_id = ? AND LOWER(level) = LOWER(?) AND status != 'rejected'
-            ");
-            $stmtCount->execute([$unitId, $level]);
-            $currentCount = (int)$stmtCount->fetchColumn();
-
-            if ($currentCount >= $quotaLimit) {
-                $pdo->rollBack();
-                jsonResponse([
-                    'error' => "Gagal Pendaftaran: Kuota untuk Unsur '{$unsurData['name']}' pada kontingen Anda telah penuh (Maksimal {$quotaLimit} orang per kontingen)."
-                ], 400);
-            }
-        }
-
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-        // 1. Simpan Akun Pengguna Baru (dengan penanganan tangguh kolom role agar kebal terhadap Warning 1265 Data truncated)
-        try {
-            $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
-        } catch (\PDOException $eUser) {
-            $errMsg = $eUser->getMessage();
-            $errCode = (int)($eUser->errorInfo[1] ?? 0);
-            if (strpos($errMsg, "column 'role'") !== false || $eUser->getCode() === '01000' || $errCode === 1265) {
-                try {
-                    // Coba perbaiki skema kolom role menjadi VARCHAR(50) jika sebelumnya ENUM sempit
-                    $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'peserta'");
-                    $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
-                } catch (\Throwable $eRetryUser) {
-                    // Fallback jika database hosting membatasi hak akses ALTER TABLE (skema ENUM tanpa nilai role baru):
-                    // Akun tetap dibuat menggunakan role standar 'peserta', data asli tersimpan di participants.registration_type
-                    $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmtUser->execute([$username, $hashedPassword, $email ?: null, 'peserta', $unitId, $fullName, $phoneDigits ?: null]);
+                if ($currentCount >= $quotaLimit) {
+                    return [
+                        '__rollback' => true,
+                        'error' => "Gagal Pendaftaran: Kuota untuk Unsur '{$unsurData['name']}' pada kontingen Anda telah penuh (Maksimal {$quotaLimit} orang per kontingen)."
+                    ];
                 }
-            } else {
-                throw $eUser;
             }
-        }
-        $userId = $pdo->lastInsertId();
 
-        $codePrefixMap = [
-            'Peserta' => 'JMB-2026-',
-            'Panitia' => 'PNT-2026-',
-            'Peninjau' => 'PNJ-2026-',
-            'Pendamping' => 'PDP-2026-',
-            'Tamu Undangan' => 'TMU-2026-',
-            'Media' => 'MDA-2026-'
-        ];
-        $codePrefix = $codePrefixMap[$registrationType] ?? 'JMB-2026-';
-        $participantCode = $codePrefix . str_pad($userId, 4, '0', STR_PAD_LEFT);
-        $subCategories = json_encode($input['sub_categories'] ?? []);
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-        // 2. Simpan Biodata Lengkap Peserta / Pembina Pendamping
-        $stmtPart = $pdo->prepare("
-            INSERT INTO participants (
-                code, user_id, unit_id, school_address, school_phone, full_name, nisn, level,
-                class_name, last_education, organizations, registration_type, religion,
-                is_disabled, disability_type, address, birth_place, birth_date, gender,
-                blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone,
-                parent_job, photo_url, assignment_letter_url, sub_categories, status, email
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?
-            )
-        ");
+            // 1. Simpan Akun Pengguna Baru (dengan penanganan tangguh kolom role agar kebal terhadap Warning 1265 Data truncated)
+            try {
+                $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
+            } catch (\PDOException $eUser) {
+                $errMsg = $eUser->getMessage();
+                $errCode = (int)($eUser->errorInfo[1] ?? 0);
+                if (strpos($errMsg, "column 'role'") !== false || $eUser->getCode() === '01000' || $errCode === 1265) {
+                    try {
+                        // Coba perbaiki skema kolom role menjadi VARCHAR(50) jika sebelumnya ENUM sempit
+                        $pdo->exec("ALTER TABLE `users` MODIFY COLUMN `role` VARCHAR(50) NOT NULL DEFAULT 'peserta'");
+                        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                        $stmtUser->execute([$username, $hashedPassword, $email ?: null, $userRole, $unitId, $fullName, $phoneDigits ?: null]);
+                    } catch (\Throwable $eRetryUser) {
+                        // Fallback jika database hosting membatasi hak akses ALTER TABLE (skema ENUM tanpa nilai role baru):
+                        // Akun tetap dibuat menggunakan role standar 'peserta', data asli tersimpan di participants.registration_type
+                        $stmtUser = $pdo->prepare("INSERT INTO users (username, password, email, role, unit_id, full_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                        $stmtUser->execute([$username, $hashedPassword, $email ?: null, 'peserta', $unitId, $fullName, $phoneDigits ?: null]);
+                    }
+                } else {
+                    throw $eUser;
+                }
+            }
+            $userId = (int)$pdo->lastInsertId();
 
-        try {
-            $stmtPart->execute([
-                $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName, $input['nisn'] ?? null, $level,
-                $className ?: null, $lastEducation ?: null, $organizations ?: null, $registrationType, $religion,
-                $isDisabled, $disabilityType, $address ?: null, $input['birth_place'] ?? null, $input['birth_date'] ?? null, $input['gender'] ?? 'L',
-                $input['blood_type'] ?? 'O', $input['phone'] ?? null, $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null,
-                $parentJob ?: null, $photoUrl, $assignmentLetterUrl, $subCategories, 'pending_unit', $email ?: null
-            ]);
-        } catch (\PDOException $ePart) {
-            $errMsgPart = $ePart->getMessage();
-            $errCodePart = (int)($ePart->errorInfo[1] ?? 0);
-            if (strpos($errMsgPart, "column 'level'") !== false || strpos($errMsgPart, "column 'registration_type'") !== false || $ePart->getCode() === '01000' || $errCodePart === 1265) {
-                try {
-                    $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `level` VARCHAR(100) NOT NULL DEFAULT 'Wira'");
-                    $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `registration_type` VARCHAR(50) NOT NULL DEFAULT 'Peserta'");
-                    $stmtPart->execute([
-                        $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName, $input['nisn'] ?? null, $level,
-                        $className ?: null, $lastEducation ?: null, $organizations ?: null, $registrationType, $religion,
-                        $isDisabled, $disabilityType, $address ?: null, $input['birth_place'] ?? null, $input['birth_date'] ?? null, $input['gender'] ?? 'L',
-                        $input['blood_type'] ?? 'O', $input['phone'] ?? null, $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null,
-                        $parentJob ?: null, $photoUrl, $assignmentLetterUrl, $subCategories, 'pending_unit', $email ?: null
-                    ]);
-                } catch (\Throwable $eRetryPart) {
+            $codePrefixMap = [
+                'Peserta' => 'JMB-2026-',
+                'Panitia' => 'PNT-2026-',
+                'Peninjau' => 'PNJ-2026-',
+                'Pendamping' => 'PDP-2026-',
+                'Tamu Undangan' => 'TMU-2026-',
+                'Media' => 'MDA-2026-'
+            ];
+            $codePrefix = $codePrefixMap[$registrationType] ?? 'JMB-2026-';
+            $participantCode = $codePrefix . str_pad($userId, 4, '0', STR_PAD_LEFT);
+            $subCategories = json_encode($input['sub_categories'] ?? []);
+
+            // 2. Simpan Biodata Lengkap Peserta / Pembina Pendamping
+            $stmtPart = $pdo->prepare("
+                INSERT INTO participants (
+                    code, user_id, unit_id, school_address, school_phone, full_name, nisn, level,
+                    class_name, last_education, organizations, registration_type, religion,
+                    is_disabled, disability_type, address, birth_place, birth_date, gender,
+                    blood_type, phone, emergency_contact, parent_name, parent_address, parent_phone,
+                    parent_job, photo_url, assignment_letter_url, sub_categories, status, email
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?
+                )
+            ");
+
+            try {
+                $stmtPart->execute([
+                    $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName, $input['nisn'] ?? null, $level,
+                    $className ?: null, $lastEducation ?: null, $organizations ?: null, $registrationType, $religion,
+                    $isDisabled, $disabilityType, $address ?: null, $input['birth_place'] ?? null, $input['birth_date'] ?? null, $input['gender'] ?? 'L',
+                    $input['blood_type'] ?? 'O', $input['phone'] ?? null, $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null,
+                    $parentJob ?: null, $photoUrl, $assignmentLetterUrl, $subCategories, 'pending_unit', $email ?: null
+                ]);
+            } catch (\PDOException $ePart) {
+                $errMsgPart = $ePart->getMessage();
+                $errCodePart = (int)($ePart->errorInfo[1] ?? 0);
+                if (strpos($errMsgPart, "column 'level'") !== false || strpos($errMsgPart, "column 'registration_type'") !== false || $ePart->getCode() === '01000' || $errCodePart === 1265) {
+                    try {
+                        $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `level` VARCHAR(100) NOT NULL DEFAULT 'Wira'");
+                        $pdo->exec("ALTER TABLE `participants` MODIFY COLUMN `registration_type` VARCHAR(50) NOT NULL DEFAULT 'Peserta'");
+                        $stmtPart->execute([
+                            $participantCode, $userId, $unitId, $schoolAddress ?: null, $schoolPhone ?: null, $fullName, $input['nisn'] ?? null, $level,
+                            $className ?: null, $lastEducation ?: null, $organizations ?: null, $registrationType, $religion,
+                            $isDisabled, $disabilityType, $address ?: null, $input['birth_place'] ?? null, $input['birth_date'] ?? null, $input['gender'] ?? 'L',
+                            $input['blood_type'] ?? 'O', $input['phone'] ?? null, $input['emergency_contact'] ?? null, $parentName ?: null, $parentAddress ?: null, $parentPhone ?: null,
+                            $parentJob ?: null, $photoUrl, $assignmentLetterUrl, $subCategories, 'pending_unit', $email ?: null
+                        ]);
+                    } catch (\Throwable $eRetryPart) {
+                        throw $ePart;
+                    }
+                } else {
                     throw $ePart;
                 }
-            } else {
-                throw $ePart;
             }
+
+            return [
+                'userId' => $userId,
+                'participantCode' => $participantCode
+            ];
+        });
+
+        if (!empty($txResult['error'])) {
+            jsonResponse(['error' => $txResult['error']], 400);
         }
 
-        $pdo->commit();
+        $userId = $txResult['userId'];
+        $participantCode = $txResult['participantCode'];
 
         // Fetch unit name for WhatsApp and Email notifications
         $stmtUnit = $pdo->prepare("SELECT name FROM units WHERE id = ?");
@@ -520,9 +536,14 @@ if ($action === 'register-peserta' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'created_at' => date('d M Y, H:i') . ' WIB'
             ]
         ]);
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        jsonResponse(['error' => 'Gagal mendaftar: ' . $e->getMessage()], 500);
+    } catch (\Throwable $e) {
+        $errMsg = $e->getMessage();
+        if (strpos($errMsg, '1213') !== false || stripos($errMsg, 'deadlock') !== false) {
+            $userMsg = 'Sistem sedang memproses banyak pendaftaran serentak. Silakan klik tombol "Kirim Pendaftaran Resmi" sekali lagi.';
+        } else {
+            $userMsg = 'Gagal mendaftar: ' . $errMsg;
+        }
+        jsonResponse(['error' => $userMsg], 500);
     }
 }
 

@@ -39,29 +39,23 @@ if ($method === 'POST' && $action === 'save_event_aspects') {
         jsonResponse(['error' => 'ID Kegiatan wajib diisi.'], 400);
     }
 
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-    $pdo->beginTransaction();
     try {
-        $stmtDel = $pdo->prepare("DELETE FROM event_aspects WHERE event_id = ?");
-        $stmtDel->execute([$eventId]);
+        runInTransaction($pdo, function($pdo) use ($eventId, $aspects) {
+            $stmtDel = $pdo->prepare("DELETE FROM event_aspects WHERE event_id = ?");
+            $stmtDel->execute([$eventId]);
 
-        $stmtIns = $pdo->prepare("INSERT INTO event_aspects (event_id, aspect_name, max_score, weight) VALUES (?, ?, ?, ?)");
-        foreach ($aspects as $asp) {
-            $name = trim($asp['aspect_name'] ?? '');
-            $maxScore = (float)($asp['max_score'] ?? 100);
-            $weight = (float)($asp['weight'] ?? 1.0);
-            if (!empty($name)) {
-                $stmtIns->execute([$eventId, $name, $maxScore, $weight]);
+            $stmtIns = $pdo->prepare("INSERT INTO event_aspects (event_id, aspect_name, max_score, weight) VALUES (?, ?, ?, ?)");
+            foreach ($aspects as $asp) {
+                $name = trim($asp['aspect_name'] ?? '');
+                $maxScore = (float)($asp['max_score'] ?? 100);
+                $weight = (float)($asp['weight'] ?? 1.0);
+                if (!empty($name)) {
+                    $stmtIns->execute([$eventId, $name, $maxScore, $weight]);
+                }
             }
-        }
-        $pdo->commit();
+        });
         jsonResponse(['message' => 'Aspek penilaian kegiatan berhasil disimpan!']);
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+    } catch (\Throwable $e) {
         jsonResponse(['error' => 'Gagal menyimpan aspek penilaian: ' . $e->getMessage()], 500);
     }
 }
@@ -371,55 +365,66 @@ if ($method === 'POST') {
     else if ($totalScore >= 80.0) $grade = 'Perak';
     else if ($totalScore >= 70.0) $grade = 'Perunggu';
 
-    $pdo->beginTransaction();
     try {
-        if ($scoreId > 0) {
-            $stmt = $pdo->prepare("
-                UPDATE scores SET 
-                event_id = ?, unit_id = ?, participant_id = ?, target_type = ?, 
-                category_type = ?, branch_name = ?, pmr_level = ?, score_val = ?, 
-                grade = ?, judge_name = ?, notes = ?, evaluator_user_id = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([
-                $eventId, $unitId, $participantId, $targetType,
-                $cat, $branch, $level, $totalScore,
-                $grade, $judgeName, $notes, $user['id'], $scoreId
-            ]);
-        } else {
-            $stmt = $pdo->prepare("
-                INSERT INTO scores 
-                (event_id, unit_id, participant_id, target_type, category_type, branch_name, pmr_level, score_val, grade, judge_name, notes, evaluator_user_id, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
-            ");
-            $stmt->execute([
-                $eventId, $unitId, $participantId, $targetType,
-                $cat, $branch, $level, $totalScore,
-                $grade, $judgeName, $notes, $user['id']
-            ]);
-            $scoreId = (int)$pdo->lastInsertId();
-        }
-
-        // Save aspect breakdown
-        if (!empty($aspectScores) && is_array($aspectScores)) {
-            $pdo->prepare("DELETE FROM score_aspect_details WHERE score_id = ?")->execute([$scoreId]);
-            $stmtAsp = $pdo->prepare("INSERT INTO score_aspect_details (score_id, aspect_id, score_val) VALUES (?, ?, ?)");
-            foreach ($aspectScores as $aspId => $val) {
-                $stmtAsp->execute([$scoreId, (int)$aspId, (float)$val]);
+        $savedScoreId = runInTransaction($pdo, function($pdo) use (
+            $scoreId, $eventId, $unitId, $participantId, $targetType,
+            $cat, $branch, $level, $totalScore, $grade, $judgeName,
+            $notes, $user, $aspectScores
+        ) {
+            $curScoreId = $scoreId;
+            if ($curScoreId > 0) {
+                $stmt = $pdo->prepare("
+                    UPDATE scores SET 
+                    event_id = ?, unit_id = ?, participant_id = ?, target_type = ?, 
+                    category_type = ?, branch_name = ?, pmr_level = ?, score_val = ?, 
+                    grade = ?, judge_name = ?, notes = ?, evaluator_user_id = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([
+                    $eventId, $unitId, $participantId, $targetType,
+                    $cat, $branch, $level, $totalScore,
+                    $grade, $judgeName, $notes, $user['id'], $curScoreId
+                ]);
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO scores 
+                    (event_id, unit_id, participant_id, target_type, category_type, branch_name, pmr_level, score_val, grade, judge_name, notes, evaluator_user_id, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+                ");
+                $stmt->execute([
+                    $eventId, $unitId, $participantId, $targetType,
+                    $cat, $branch, $level, $totalScore,
+                    $grade, $judgeName, $notes, $user['id']
+                ]);
+                $curScoreId = (int)$pdo->lastInsertId();
             }
-        }
 
-        $pdo->commit();
+            // Save aspect breakdown
+            if (!empty($aspectScores) && is_array($aspectScores)) {
+                $pdo->prepare("DELETE FROM score_aspect_details WHERE score_id = ?")->execute([$curScoreId]);
+                $stmtAsp = $pdo->prepare("INSERT INTO score_aspect_details (score_id, aspect_id, score_val) VALUES (?, ?, ?)");
+                foreach ($aspectScores as $aspId => $val) {
+                    $stmtAsp->execute([$curScoreId, (int)$aspId, (float)$val]);
+                }
+            }
+
+            return $curScoreId;
+        });
 
         jsonResponse([
             'message' => 'Penilaian kegiatan berhasil disimpan oleh ' . htmlspecialchars($judgeName) . '! Medali: ' . $grade,
-            'score_id' => $scoreId,
+            'score_id' => $savedScoreId,
             'score_val' => $totalScore,
             'grade' => $grade
         ]);
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        jsonResponse(['error' => 'Gagal menyimpan penilaian: ' . $e->getMessage()], 500);
+    } catch (\Throwable $e) {
+        $errMsg = $e->getMessage();
+        if (strpos($errMsg, '1213') !== false || stripos($errMsg, 'deadlock') !== false) {
+            $userMsg = 'Sistem sedang memproses banyak input nilai secara bersamaan. Silakan tekan tombol simpan nilai sekali lagi.';
+        } else {
+            $userMsg = 'Gagal menyimpan penilaian: ' . $errMsg;
+        }
+        jsonResponse(['error' => $userMsg], 500);
     }
 }
 

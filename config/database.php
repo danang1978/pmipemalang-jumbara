@@ -107,11 +107,17 @@ function getPDOConnection() {
             }
         }
 
-        // Pastikan Timezone MySQL Session adalah WIB (Asia/Jakarta, UTC+7)
+        // Pastikan Timezone MySQL Session adalah WIB (Asia/Jakarta, UTC+7) dan optimasi isolasi anti-deadlock
         if ($pdo) {
             try {
                 $pdo->exec("SET time_zone = '+07:00'");
             } catch (\Throwable $eTz) {}
+
+            try {
+                // Gunakan READ COMMITTED untuk menonaktifkan gap locking pada InnoDB (menghilangkan akar penyebab deadlock 1213)
+                $pdo->exec("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED");
+                $pdo->exec("SET SESSION innodb_lock_wait_timeout = 25");
+            } catch (\Throwable $eIso) {}
         }
 
         // --- SELF-HEALING DATABASE SCHEMA (Mencegah SQLSTATE[01000] Warning 1265 Data truncated) ---
@@ -140,6 +146,24 @@ function getPDOConnection() {
                 // Cegah error 1054 Unknown column jika ada query yang memanggil timestamp
                 $pdo->exec("ALTER TABLE `attendance` ADD COLUMN `timestamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP");
             } catch (\Throwable $eAttTz) {}
+
+            // Compound Indexes untuk optimasi konkurensi tinggi & eliminasi gap locks
+            $indexesToEnsure = [
+                "ALTER TABLE `participants` ADD INDEX `idx_part_unit_level_status` (`unit_id`, `level`, `status`)",
+                "ALTER TABLE `participants` ADD INDEX `idx_part_code` (`code`)",
+                "ALTER TABLE `participants` ADD INDEX `idx_part_user_id` (`user_id`)",
+                "ALTER TABLE `attendance` ADD INDEX `idx_att_event_part` (`event_id`, `participant_id`)",
+                "ALTER TABLE `attendance` ADD INDEX `idx_att_scanned_at` (`scanned_at`)",
+                "ALTER TABLE `scores` ADD INDEX `idx_scores_event_unit_part` (`event_id`, `unit_id`, `participant_id`)",
+                "ALTER TABLE `scores` ADD INDEX `idx_scores_unit_id` (`unit_id`)",
+                "ALTER TABLE `event_registrations` ADD INDEX `idx_er_event_part` (`event_id`, `participant_id`)",
+                "ALTER TABLE `score_aspect_details` ADD INDEX `idx_sad_score_id` (`score_id`)"
+            ];
+            foreach ($indexesToEnsure as $idxSql) {
+                try {
+                    $pdo->exec($idxSql);
+                } catch (\Throwable $eIdx) {}
+            }
 
             // Otomatis koreksi data presensi yang sempat tersimpan dalam zona waktu UTC (+00:00) ke WIB (Asia/Jakarta, +07:00)
             try {
