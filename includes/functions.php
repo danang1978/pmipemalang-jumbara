@@ -3,6 +3,9 @@
 // HELPER FUNCTIONS & SESSION MANAGEMENT
 // ==========================================================================
 
+// Set Default Timezone PHP ke Waktu Indonesia Barat (WIB, Asia/Jakarta, UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 if (!ob_get_level()) {
     ob_start();
 }

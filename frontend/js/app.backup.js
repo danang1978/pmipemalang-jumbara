@@ -7879,21 +7879,13 @@ const App = {
             </thead>
             <tbody>
               ${pairedLogs.map(p => {
-        const formatTime = (ts) => {
-          if (!ts) return null;
-          const d = new Date(ts);
-          return {
-            time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
-            date: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-          };
-        };
-
-        const masuk = formatTime(p.jam_masuk);
-        const keluar = formatTime(p.jam_keluar);
+        const masuk = Utils.formatPresensiTime(p.jam_masuk);
+        const keluar = Utils.formatPresensiTime(p.jam_keluar);
 
         let duration = '-';
         if (p.jam_masuk && p.jam_keluar) {
-          const diffMs = new Date(p.jam_keluar) - new Date(p.jam_masuk);
+          const parseDate = (s) => (typeof s === 'string' && s.includes(' ') && !s.includes('T')) ? new Date(s.replace(' ', 'T')) : new Date(s);
+          const diffMs = parseDate(p.jam_keluar) - parseDate(p.jam_masuk);
           if (diffMs > 0) {
             const hrs = Math.floor(diffMs / 3600000);
             const mins = Math.floor((diffMs % 3600000) / 60000);
@@ -7945,21 +7937,13 @@ const App = {
       const mobileCardsHtml = `
         <div class="presensi-mobile-log-cards">
           ${pairedLogs.map(p => {
-        const formatTime = (ts) => {
-          if (!ts) return null;
-          const d = new Date(ts);
-          return {
-            time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
-            date: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-          };
-        };
-
-        const masuk = formatTime(p.jam_masuk);
-        const keluar = formatTime(p.jam_keluar);
+        const masuk = Utils.formatPresensiTime(p.jam_masuk);
+        const keluar = Utils.formatPresensiTime(p.jam_keluar);
 
         let duration = '-';
         if (p.jam_masuk && p.jam_keluar) {
-          const diffMs = new Date(p.jam_keluar) - new Date(p.jam_masuk);
+          const parseDate = (s) => (typeof s === 'string' && s.includes(' ') && !s.includes('T')) ? new Date(s.replace(' ', 'T')) : new Date(s);
+          const diffMs = parseDate(p.jam_keluar) - parseDate(p.jam_masuk);
           if (diffMs > 0) {
             const hrs = Math.floor(diffMs / 3600000);
             const mins = Math.floor((diffMs % 3600000) / 60000);
@@ -8050,20 +8034,13 @@ const App = {
           
           <div style="display: flex; flex-direction: column; gap: 0.85rem;">
             ${history.map(item => {
-        const formatTime = (ts) => {
-          if (!ts) return null;
-          const d = new Date(ts);
-          const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-          const date = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-          return { time, date };
-        };
-
-        const masuk = formatTime(item.jam_masuk);
-        const keluar = formatTime(item.jam_keluar);
+        const masuk = Utils.formatPresensiTime(item.jam_masuk);
+        const keluar = Utils.formatPresensiTime(item.jam_keluar);
 
         let durationStr = '-';
         if (item.jam_masuk && item.jam_keluar) {
-          const diffMs = new Date(item.jam_keluar) - new Date(item.jam_masuk);
+          const parseDate = (s) => (typeof s === 'string' && s.includes(' ') && !s.includes('T')) ? new Date(s.replace(' ', 'T')) : new Date(s);
+          const diffMs = parseDate(item.jam_keluar) - parseDate(item.jam_masuk);
           if (diffMs > 0) {
             const hrs = Math.floor(diffMs / 3600000);
             const mins = Math.floor((diffMs % 3600000) / 60000);

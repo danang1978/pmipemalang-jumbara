@@ -3,6 +3,9 @@
 // API ATTENDANCE (PRESENSI MASUK & KELUAR QR SCANNER DENGAN VALIDASI EVENT)
 // ==========================================================================
 
+// Pastikan Zona Waktu PHP di seluruh sistem menggunakan Waktu Indonesia Barat (WIB, Asia/Jakarta, UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 require_once __DIR__ . '/../includes/functions.php';
 
 $pdo = getPDOConnection();
@@ -108,15 +111,15 @@ if ($method === 'POST' && $action === 'scan') {
 
     $formattedLastTime = '';
     if ($lastAttendance) {
-        $rawTime = $lastAttendance['scanned_at'] ?? $lastAttendance['created_at'] ?? null;
+        $rawTime = $lastAttendance['scanned_at'] ?? $lastAttendance['timestamp'] ?? null;
         if ($rawTime) {
             $ts = strtotime($rawTime);
             if ($ts !== false) {
-                $formattedLastTime = date('H:i, d-m-Y', $ts);
+                $formattedLastTime = date('H:i', $ts) . ' WIB, ' . date('d-m-Y', $ts);
             }
         }
         if (!$formattedLastTime) {
-            $formattedLastTime = date('H:i, d-m-Y');
+            $formattedLastTime = date('H:i') . ' WIB, ' . date('d-m-Y');
         }
     }
 
@@ -140,7 +143,7 @@ if ($method === 'POST' && $action === 'scan') {
             $otherTime = '';
             if (!empty($activeOther['scanned_at'])) {
                 $ts = strtotime($activeOther['scanned_at']);
-                if ($ts) $otherTime = ' pada jam ' . date('H:i', $ts);
+                if ($ts) $otherTime = ' pada pukul ' . date('H:i', $ts) . ' WIB';
             }
             jsonResponse([
                 'error' => 'Presensi Ditolak: Peserta ' . $part['full_name'] . ' (' . $code . ') MASIH TERCATAT MASUK pada kegiatan lain ("' . $activeOther['event_title'] . '"' . $otherTime . '). Peserta harus Presensi Keluar (Check-Out) dari kegiatan sebelumnya terlebih dahulu!',
@@ -176,8 +179,8 @@ if ($method === 'POST' && $action === 'scan') {
         }
     }
 
-    // 6. RECORD ATTENDANCE
-    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by) VALUES (?, ?, ?, ?)");
+    // 6. RECORD ATTENDANCE (Explicitly record NOW() in MySQL +07:00 WIB session)
+    $stmtAtt = $pdo->prepare("INSERT INTO attendance (event_id, participant_id, status, scanned_by, timestamp, scanned_at) VALUES (?, ?, ?, ?, NOW(), NOW())");
     $stmtAtt->execute([$eventId, $part['id'], $type, $user['username']]);
 
     $actionText = ($type === 'masuk') ? 'PRESENSI MASUK (Check-In)' : (($type === 'keluar') ? 'PRESENSI KELUAR (Check-Out)' : strtoupper($type));
@@ -187,7 +190,7 @@ if ($method === 'POST' && $action === 'scan') {
         'participant' => $part,
         'event' => $event,
         'type' => $type,
-        'timestamp' => date('H:i:s, d-m-Y')
+        'timestamp' => date('H:i:s') . ' WIB, ' . date('d-m-Y')
     ]);
 }
 

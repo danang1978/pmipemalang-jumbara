@@ -130,6 +130,28 @@ const Utils = {
     });
   },
 
+  // Format Attendance / Presensi Timestamp strictly to WIB (UTC+7)
+  formatPresensiTime(ts) {
+    if (!ts) return null;
+    if (typeof ts === 'string') {
+      const sqlMatch = ts.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (sqlMatch && !ts.endsWith('Z')) {
+        const [_, y, m, d, hh, mm] = sqlMatch;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return {
+          time: `${hh}:${mm} WIB`,
+          date: `${parseInt(d, 10)} ${months[parseInt(m, 10) - 1] || ''}`
+        };
+      }
+    }
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return null;
+    return {
+      time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB',
+      date: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
+    };
+  },
+
   // Escape HTML to prevent XSS
   escapeHtml(str) {
     if (!str) return '';

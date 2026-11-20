@@ -5,6 +5,9 @@
 // Bebas konflik saat update git push & git pull!
 // ==========================================================================
 
+// Set Default Timezone PHP ke Waktu Indonesia Barat (WIB, Asia/Jakarta, UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 // 1. Prioritas Utama: Muat konfigurasi manual khusus jika ada (database.local.php)
 if (file_exists(__DIR__ . '/database.local.php')) {
     require_once __DIR__ . '/database.local.php';
@@ -54,7 +57,7 @@ function getPDOConnection() {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, time_zone = '+07:00'"
         ];
 
         try {
@@ -102,6 +105,13 @@ function getPDOConnection() {
                 echo json_encode(['error' => $errMsg]);
                 exit;
             }
+        }
+
+        // Pastikan Timezone MySQL Session adalah WIB (Asia/Jakarta, UTC+7)
+        if ($pdo) {
+            try {
+                $pdo->exec("SET time_zone = '+07:00'");
+            } catch (\Throwable $eTz) {}
         }
 
         // --- SELF-HEALING DATABASE SCHEMA (Mencegah SQLSTATE[01000] Warning 1265 Data truncated) ---
