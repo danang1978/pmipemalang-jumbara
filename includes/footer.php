@@ -572,6 +572,10 @@ $settings = getAppSettings();
         </div>
         <div class="modal-body" style="background: #ffffff; padding: 1.25rem;">
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem 0.5rem; text-align: center;">
+            <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.printCurrentParticipantIDCard();">
+              <div class="jkn-icon-circle jkn-circle-indigo"><i class="fa-solid fa-id-card"></i></div>
+              <span class="jkn-menu-label">Unduh ID Card</span>
+            </div>
             <div class="jkn-menu-item" onclick="App.closeModal('menuLainnyaModal'); App.downloadRegistrationFormPDF();">
               <div class="jkn-icon-circle jkn-circle-sky"><i class="fa-solid fa-file-pdf"></i></div>
               <span class="jkn-menu-label">Unduh PDF</span>

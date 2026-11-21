@@ -28,7 +28,7 @@ const App = {
     event_logo: 'frontend/images/logo-jumbara-xii.png',
     app_favicon: 'frontend/favicon.svg',
     app_kop: '',
-    reg_deadline: '2026-10-14T23:59',
+    reg_deadline: '2026-11-24T23:59',
     reg_active: '1',
     jumbotron_images: [
       'frontend/images/jumbotron-tema1-cerdas.jpg',
@@ -185,6 +185,9 @@ const App = {
       const settings = await API.getSettings();
       if (settings && Object.keys(settings).length) {
         this.appSettings = { ...this.appSettings, ...settings };
+        try {
+          localStorage.setItem('jumbara_cached_settings', JSON.stringify(this.appSettings));
+        } catch (e) {}
       }
       this.applySettingsToDOM();
     } catch (e) {
@@ -273,9 +276,82 @@ const App = {
         img.src = s.event_logo;
       });
     }
+
+    // 3. Dynamic Jumbotron Title & Subtitle Update
+    const jumbotronTitleEl = document.getElementById('jumbotronTitle');
+    const jumbotronSubtitleEl = document.getElementById('jumbotronSubtitle');
+    if (jumbotronTitleEl && s.jumbotron_title) jumbotronTitleEl.textContent = s.jumbotron_title;
+    if (jumbotronSubtitleEl && s.jumbotron_subtitle) jumbotronSubtitleEl.textContent = s.jumbotron_subtitle;
+
+    // 4. Dynamic Hero Registration Badge & Action Buttons Update
+    this.updateHeroRegistrationStatus();
+  },
+
+  updateHeroRegistrationStatus() {
+    const s = this.appSettings;
+    const badgeContainer = document.getElementById('heroDeadlineBadgeContainer');
+    const btnsContainer = document.getElementById('heroActionBtns');
+    if (!badgeContainer && !btnsContainer) return;
+
+    const deadlineStr = s.reg_deadline || '2026-11-24T23:59';
+    const deadlineDate = new Date(deadlineStr);
+    const now = new Date();
+    const isOpen = (s.reg_active === '1' || s.reg_active === 1 || s.reg_active === true) && (now < deadlineDate);
+
+    if (badgeContainer) {
+      if (isOpen) {
+        badgeContainer.innerHTML = `
+          <div class="reg-deadline-banner" id="countdownBannerContainer">
+            <span class="live-pulse-dot"></span>
+            <i class="fa-solid fa-clock"></i>
+            <span>Sisa Waktu Pendaftaran: <strong id="cdTimeStr">-- Hari -- Jam -- Mnt</strong></span>
+          </div>
+        `;
+        this.startCountdownTimer(deadlineStr);
+      } else {
+        if (this.countdownIntervalId) {
+          clearInterval(this.countdownIntervalId);
+          this.countdownIntervalId = null;
+        }
+        const formattedDate = !isNaN(deadlineDate.getTime())
+          ? deadlineDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : deadlineStr;
+        badgeContainer.innerHTML = `
+          <div class="reg-closed-alert">
+            <i class="fa-solid fa-lock"></i>
+            <span>Pendaftaran Mandiri Ditutup (Batas Akhir: ${formattedDate})</span>
+          </div>
+        `;
+      }
+    }
+
+    if (btnsContainer) {
+      let regBtnHtml = '';
+      if (isOpen) {
+        regBtnHtml = `<button class="btn btn-primary btn-sm" onclick="App.openRegisterModal()">${Icons.userPlus(14)} Daftar</button>`;
+      } else {
+        regBtnHtml = `<button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="fa-solid fa-lock"></i> Ditutup</button>`;
+      }
+      btnsContainer.innerHTML = `
+        ${regBtnHtml}
+        <button class="btn btn-secondary btn-sm" onclick="App.openLoginModal()">${Icons.login(14)} Login</button>
+      `;
+    }
   },
 
   initLocalCaches() {
+    try {
+      const storedSettings = localStorage.getItem('jumbara_cached_settings');
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed && typeof parsed === 'object') {
+          this.appSettings = { ...this.appSettings, ...parsed };
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load local settings cache:', e);
+    }
+
     try {
       const storedUnits = localStorage.getItem('jumbara_cached_units');
       if (storedUnits) {
@@ -2669,12 +2745,78 @@ const App = {
     }
   },
 
-  printCurrentParticipantIDCard() {
-    if (this.currentParticipantCardData && this.currentParticipantCardData.id) {
-      this.openIDCardModal(this.currentParticipantCardData.id);
-      return;
+  async printCurrentParticipantIDCard() {
+    try {
+      if (!this.currentParticipantCardData || !this.currentParticipantCardData.id) {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast('Menyiapkan kartu peserta...', 'info');
+        }
+        const profile = await API.getParticipantMe();
+        if (profile && profile.id) {
+          const cardData = await API.getParticipantIDCard(profile.id);
+          this.currentParticipantCardData = cardData;
+        }
+      }
+      if (this.currentParticipantCardData && this.currentParticipantCardData.id) {
+        await this.openIDCardModal(this.currentParticipantCardData.id);
+      } else {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast('Data ID Card tidak dapat dimuat.', 'error');
+        }
+      }
+    } catch (err) {
+      console.warn('Error in printCurrentParticipantIDCard:', err);
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast('Gagal membuka kartu: ' + err.message, 'error');
+      }
     }
-    window.print();
+  },
+
+  async downloadCurrentParticipantIDCardImage() {
+    try {
+      if (!this.currentParticipantCardData || !this.currentParticipantCardData.id) {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast('Menyiapkan kartu peserta...', 'info');
+        }
+        const profile = await API.getParticipantMe();
+        if (profile && profile.id) {
+          const cardData = await API.getParticipantIDCard(profile.id);
+          this.currentParticipantCardData = cardData;
+        }
+      }
+
+      const data = this.currentParticipantCardData;
+      if (!data) {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast('Data ID Card belum tersedia.', 'warning');
+        }
+        return;
+      }
+
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast('Mengunduh gambar ID Card...', 'info');
+      }
+
+      const container = document.getElementById('pesertaMobileIDCardContainer') || 
+                        document.getElementById('peninjauMobileIDCardContainer') || 
+                        document.getElementById('idCardModalContent');
+      const cardEl = container ? container.querySelector('.idcard-wrapper, .pmi-template-card, .idcard-item, .idcard-badge-container') : null;
+      const code = String(data.code || 'ID-Card');
+      const fname = `ID-Card-${code}`;
+
+      if (cardEl && typeof Utils !== 'undefined' && typeof Utils.downloadIDCardElementAsImage === 'function') {
+        await Utils.downloadIDCardElementAsImage(cardEl, fname, data);
+      } else if (typeof Utils !== 'undefined' && typeof Utils.downloadCompleteIDCardBadge === 'function') {
+        Utils.downloadCompleteIDCardBadge(data, fname);
+      } else {
+        this.openIDCardInNewWindow();
+      }
+    } catch (err) {
+      console.warn('Error in downloadCurrentParticipantIDCardImage:', err);
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast('Gagal mengunduh ID Card: ' + err.message, 'error');
+      }
+    }
   },
 
   async loadPesertaMobileMaterials() {
@@ -3184,22 +3326,29 @@ const App = {
                   <i class="fa-solid fa-file-shield" style="color: #0284c7;"></i> 3. Berkas Dokumen Registrasi
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
-                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 12px; text-align: center;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-top: 0.5rem;">
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.65rem 0.4rem; border-radius: 12px; text-align: center;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #475569; margin-bottom: 0.4rem;">Pas Foto 3x4</div>
-                    <img src="${profile.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Foto" style="width: 55px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid #cbd5e1; margin: 0 auto 0.4rem auto; display: block;">
+                    <img src="${profile.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}" alt="Foto" style="width: 48px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #cbd5e1; margin: 0 auto 0.4rem auto; display: block;">
                     <span style="font-size: 0.68rem; color: #16a34a; font-weight: 700;">✓ Tersimpan</span>
                   </div>
 
-                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <div style="font-size: 0.72rem; font-weight: 800; color: #475569; margin-bottom: 0.4rem;">Surat Tugas PMR</div>
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.65rem 0.4rem; border-radius: 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #475569; margin-bottom: 0.4rem;">Surat Tugas</div>
                     ${profile.assignment_letter_url ? `
-                      <a href="${profile.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 8px;">
-                        <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Lihat Berkas
+                      <a href="${profile.assignment_letter_url}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.3rem 0.45rem; border-radius: 8px;">
+                        <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Lihat
                       </a>
                     ` : `
-                      <span style="font-size: 0.72rem; color: #94a3b8; font-style: italic;">Belum Diunggah</span>
+                      <span style="font-size: 0.7rem; color: #94a3b8; font-style: italic;">Belum Ada</span>
                     `}
+                  </div>
+
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.65rem 0.4rem; border-radius: 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #475569; margin-bottom: 0.4rem;">Kartu Peserta</div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.printCurrentParticipantIDCard()" style="font-size: 0.7rem; padding: 0.3rem 0.45rem; border-radius: 8px; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff;">
+                      <i class="fa-solid fa-download"></i> Unduh
+                    </button>
                   </div>
                 </div>
 
@@ -3344,6 +3493,11 @@ const App = {
                       <i class="fa-solid fa-id-card"></i> Lihat ID Card
                     </button>
                   </div>
+                  <div style="width: 100%; margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.printCurrentParticipantIDCard()" style="width: 100%; font-weight: 800; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; border-color: #4f46e5; color: #4f46e5; background: #eef2ff;">
+                      <i class="fa-solid fa-download"></i> Unduh / Cetak ID Card (PDF)
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -3405,13 +3559,36 @@ const App = {
                   </div>
                 </div>
 
+                <!-- ACTION BUTTONS: UNDUH ID CARD & CETAK PDF -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; margin-bottom: 0.85rem;">
+                  <!-- TOMBOL UTAMA: UNDUH GAMBAR & CETAK PDF -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%;">
+                    <button type="button" class="btn btn-primary" onclick="App.downloadCurrentParticipantIDCardImage()" style="font-weight: 800; border-radius: 12px; padding: 0.7rem 0.5rem; justify-content: center; font-size: 0.82rem; background: #0284c7; border-color: #0284c7; box-shadow: 0 4px 12px rgba(2,132,199,0.25);">
+                      <i class="fa-solid fa-download"></i> Unduh Gambar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="App.printCurrentParticipantIDCard()" style="font-weight: 800; border-radius: 12px; padding: 0.7rem 0.5rem; justify-content: center; font-size: 0.82rem; background: #4f46e5; border-color: #4f46e5; box-shadow: 0 4px 12px rgba(79,70,229,0.25);">
+                      <i class="fa-solid fa-print"></i> Cetak / PDF
+                    </button>
+                  </div>
+                  
+                  <!-- TOMBOL SEKUNDER: TAB BARU & FORMULIR BUKTI -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%;">
+                    <button type="button" class="btn btn-outline" onclick="App.openIDCardInNewWindow()" style="font-weight: 700; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; border-color: #0284c7; color: #0284c7;">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Tab Baru
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="App.downloadRegistrationFormPDF()" style="font-weight: 700; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; border-color: #cbd5e1; color: #475569;">
+                      <i class="fa-solid fa-file-pdf" style="color: #dc2626;"></i> Bukti Daftar
+                    </button>
+                  </div>
+                </div>
+
                 <!-- NAVIGATION BUTTONS: KEMBALI / PRESENSI -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%;">
-                  <button type="button" class="btn btn-primary" onclick="App.switchPesertaMobileTab('presensi')" style="font-weight: 800; border-radius: 12px; padding: 0.65rem; justify-content: center; font-size: 0.8rem; background: #0284c7; border-color: #0284c7;">
+                  <button type="button" class="btn btn-outline" onclick="App.switchPesertaMobileTab('presensi')" style="font-weight: 800; border-radius: 12px; padding: 0.65rem; justify-content: center; font-size: 0.8rem; border-color: #10b981; color: #059669;">
                     <i class="fa-solid fa-qrcode"></i> QR Presensi
                   </button>
                   <button type="button" class="btn btn-outline" onclick="App.switchPesertaMobileTab('home')" style="font-weight: 800; border-radius: 12px; padding: 0.65rem; justify-content: center; font-size: 0.8rem; border-color: #cbd5e1; color: #475569;">
-                    <i class="fa-solid fa-house"></i> Beranda
+                    <i class="fa-solid fa-house"></i> Beranda Utama
                   </button>
                 </div>
               </div>
@@ -4053,8 +4230,28 @@ const App = {
                   <span><i class="fa-solid fa-id-card" style="color: #059669;"></i> Kartu Tanda Pengenal Peninjau</span>
                   <span style="background: #d1fae5; color: #065f46; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">E-ID Card</span>
                 </div>
-                <div id="peninjauMobileIDCardContainer" style="padding-top: 0.5rem;">
+                <div id="peninjauMobileIDCardContainer" style="padding-top: 0.5rem; display: flex; justify-content: center; width: 100%;">
                   <!-- Will be populated by loadPeninjauMobileIDCard() -->
+                </div>
+
+                <!-- ACTION BUTTONS: UNDUH & CETAK ID CARD PENINJAU -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%; margin-top: 1rem;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%;">
+                    <button type="button" class="btn btn-primary" onclick="App.downloadCurrentParticipantIDCardImage()" style="font-weight: 800; border-radius: 12px; padding: 0.7rem 0.5rem; justify-content: center; font-size: 0.82rem; background: #059669; border-color: #059669; box-shadow: 0 4px 12px rgba(5,150,105,0.25);">
+                      <i class="fa-solid fa-download"></i> Unduh Gambar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="App.printCurrentParticipantIDCard()" style="font-weight: 800; border-radius: 12px; padding: 0.7rem 0.5rem; justify-content: center; font-size: 0.82rem; background: #0284c7; border-color: #0284c7; box-shadow: 0 4px 12px rgba(2,132,199,0.25);">
+                      <i class="fa-solid fa-print"></i> Cetak / PDF
+                    </button>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%;">
+                    <button type="button" class="btn btn-outline" onclick="App.openIDCardInNewWindow()" style="font-weight: 700; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; border-color: #059669; color: #059669;">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Tab Baru
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="App.switchPeninjauMobileTab('home')" style="font-weight: 700; border-radius: 12px; padding: 0.6rem 0.5rem; justify-content: center; font-size: 0.78rem; border-color: #cbd5e1; color: #475569;">
+                      <i class="fa-solid fa-house"></i> Beranda Peninjau
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -13997,14 +14194,15 @@ const App = {
   },
 
   triggerPrintIDCard() {
-    if (!this.currentModalCardData) {
+    const data = this.currentModalCardData || this.currentParticipantCardData;
+    if (!data) {
       Utils.showToast('Data kartu peserta belum siap.', 'warning');
       return;
     }
+    this.currentModalCardData = data;
     const sizeSelect = document.getElementById('modalIdCardSizeSelect');
     const size = sizeSelect ? sizeSelect.value : (this.currentModalCardSize || 'a4_event_large');
     this.currentModalCardSize = size;
-    const data = this.currentModalCardData;
     this.printIDCardInIsolatedIframe(data, size);
   },
 
@@ -14073,11 +14271,15 @@ const App = {
   },
 
   openIDCardInNewWindow() {
-    if (!this.currentModalCardData) return;
+    const data = this.currentModalCardData || this.currentParticipantCardData;
+    if (!data) {
+      this.printCurrentParticipantIDCard();
+      return;
+    }
+    this.currentModalCardData = data;
     const sizeSelect = document.getElementById('modalIdCardSizeSelect');
     const size = sizeSelect ? sizeSelect.value : (this.currentModalCardSize || 'a4_event_large');
     this.currentModalCardSize = size;
-    const data = this.currentModalCardData;
     const fullHtml = this.getPrintableIDCardDocument(data, size, true);
 
     const win = window.open('', '_blank', 'width=880,height=950');
