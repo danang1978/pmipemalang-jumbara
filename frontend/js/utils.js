@@ -394,8 +394,13 @@ const Utils = {
 
   // Download DOM ID Card element as high-resolution PNG image
   async downloadIDCardElementAsImage(cardEl, filename, fallbackData) {
-    if (!cardEl) return;
     const fname = (filename || 'ID-Card').replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
+
+    // Prioritaskan generator canvas resmi agar desain ID Card 100% konsisten resmi dan tidak terpotong atau beda desain
+    if (fallbackData && typeof this.downloadCompleteIDCardBadge === 'function') {
+      this.downloadCompleteIDCardBadge(fallbackData, fname);
+      return;
+    }
 
     const triggerDownload = (url) => {
       const link = document.createElement('a');
@@ -404,12 +409,12 @@ const Utils = {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      this.showToast('ID Card Lengkap berhasil diunduh!', 'success');
+      this.showToast('ID Card Resmi berhasil diunduh!', 'success');
     };
 
     const h2c = (typeof window !== 'undefined' && window.html2canvas) ? window.html2canvas : (typeof html2canvas !== 'undefined' ? html2canvas : null);
 
-    if (h2c) {
+    if (h2c && cardEl) {
       try {
         const canvas = await h2c(cardEl, {
           scale: 3, // 3x high-resolution crisp print quality
@@ -443,7 +448,7 @@ const Utils = {
     }
   },
 
-  // Download Complete Official ID Card Badge as high-resolution PNG image
+  // Download Complete Official ID Card as high-resolution PNG image (Desain 100% Resmi Sesuai ID Card Cetak)
   downloadCompleteIDCardBadge(cardData, filename) {
     if (!cardData) return;
     const code = String(cardData.code || cardData.registration_code || 'JMB-2026-0001');
@@ -451,8 +456,41 @@ const Utils = {
     const unit = String(cardData.unit_name || 'PMI KABUPATEN PEMALANG').trim();
     const level = String(cardData.level || cardData.registration_type || 'Peserta').trim();
     const photoUrl = cardData.photo_url || null;
-    const appLogoUrl = cardData.app_logo || (typeof App !== 'undefined' && App.appSettings?.app_logo) || 'uploads/logo_1791009905.jpg';
-    const eventLogoUrl = cardData.event_logo || (typeof App !== 'undefined' && App.appSettings?.event_logo) || 'frontend/images/logo-jumbara-xii.png';
+
+    const s = {
+      ...(typeof App !== 'undefined' ? (App.appSettings || {}) : {}),
+      ...(cardData.settings || {}),
+      ...(cardData || {})
+    };
+
+    const eventTitle = s.idcard_event_title || 'JUMBARA PMR IX';
+    const eventSubtitle = s.idcard_event_subtitle || 'PALANG MERAH INDONESIA TAHUN 2026';
+    const eventMotto = s.idcard_motto || '#JUMBARAPMR2026';
+    const eventDate = s.idcard_date || 'Kabupaten, 2026';
+    const appLogoUrl = s.app_logo || (typeof App !== 'undefined' && App.appSettings?.app_logo) || 'uploads/logo_1791009905.jpg';
+    const eventLogoUrl = s.event_logo || (typeof App !== 'undefined' && App.appSettings?.event_logo) || 'frontend/images/logo-jumbara-xii.png';
+    const templateBgUrl = s.idcard_template || null;
+
+    let categoryTitle = (cardData.registration_type && cardData.registration_type !== 'Peserta') ? cardData.registration_type : 'PESERTA';
+    if (categoryTitle.toUpperCase() === 'TAMU') {
+      categoryTitle = 'TAMU UNDANGAN';
+    }
+
+    let catBg = '#ffe600';
+    let catTextColor = '#000000';
+    const catUpper = categoryTitle.toUpperCase();
+    if (catUpper.includes('PANITIA')) {
+      catBg = '#0284c7'; catTextColor = '#ffffff';
+    } else if (catUpper.includes('PENINJAU')) {
+      catBg = '#059669'; catTextColor = '#ffffff';
+    } else if (catUpper.includes('PENDAMPING')) {
+      catBg = '#166534'; catTextColor = '#ffffff';
+    } else if (catUpper.includes('TAMU')) {
+      catBg = '#7e22ce'; catTextColor = '#ffffff';
+    } else if (catUpper.includes('MEDIA')) {
+      catBg = '#ea580c'; catTextColor = '#ffffff';
+    }
+
     const fname = (filename || `ID-Card-${code}`).replace(/[^a-zA-Z0-9_-]/g, '_') + '.png';
 
     const triggerDownload = (url) => {
@@ -462,18 +500,21 @@ const Utils = {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      this.showToast(`ID Card Lengkap ${code} berhasil diunduh!`, 'success');
+      this.showToast(`ID Card Resmi ${code} berhasil diunduh!`, 'success');
     };
 
     const getQRDataUrl = () => {
       return new Promise((resolve) => {
+        if (cardData.qr_code_base64) {
+          return resolve(cardData.qr_code_base64);
+        }
         if (typeof window !== 'undefined' && window.QRCode && typeof window.QRCode.toDataURL === 'function') {
-          window.QRCode.toDataURL(code, { width: 400, margin: 2, errorCorrectionLevel: 'H' }, (err, url) => {
+          window.QRCode.toDataURL(code, { width: 450, margin: 2, errorCorrectionLevel: 'H' }, (err, url) => {
             if (!err && url) resolve(url);
-            else resolve(this.getQRCodeUrl(code, 400));
+            else resolve(this.getQRCodeUrl(code, 450));
           });
         } else {
-          resolve(this.getQRCodeUrl(code, 400));
+          resolve(this.getQRCodeUrl(code, 450));
         }
       });
     };
@@ -484,18 +525,30 @@ const Utils = {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
+        img.onerror = () => {
+          // Retry without crossOrigin jika server static tidak mengirim CORS header
+          const fallbackImg = new Image();
+          fallbackImg.onload = () => resolve(fallbackImg);
+          fallbackImg.onerror = () => resolve(null);
+          fallbackImg.src = src;
+        };
         img.src = src;
       });
     };
 
-    Promise.all([getQRDataUrl(), loadImg(photoUrl), loadImg(appLogoUrl), loadImg(eventLogoUrl)]).then(([qrDataUrl, photoImg, appLogoImg, eventLogoImg]) => {
+    Promise.all([
+      getQRDataUrl(),
+      loadImg(photoUrl),
+      loadImg(appLogoUrl),
+      loadImg(eventLogoUrl),
+      loadImg(templateBgUrl)
+    ]).then(([qrDataUrl, photoImg, appLogoImg, eventLogoImg, templateImg]) => {
       const qrImg = new Image();
       qrImg.crossOrigin = 'anonymous';
       qrImg.onload = () => {
         const canvas = document.createElement('canvas');
-        canvas.width = 720;
-        canvas.height = 1140;
+        canvas.width = 700;
+        canvas.height = 1040;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
@@ -516,196 +569,430 @@ const Utils = {
           if (stroke) c.stroke();
         };
 
-        // Clip whole card with rounded corners
+        // Helper: wrap text into up to maxLines without overflowing
+        const wrapTextLines = (c, text, maxWidth, maxLines = 2) => {
+          if (!text) return [];
+          const words = text.trim().split(/\s+/);
+          const lines = [];
+          let currentLine = '';
+
+          for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            if (c.measureText(testLine).width <= maxWidth) {
+              currentLine = testLine;
+            } else {
+              if (currentLine) lines.push(currentLine);
+              currentLine = word;
+              if (lines.length === maxLines - 1) {
+                const rest = words.slice(i).join(' ');
+                lines.push(rest);
+                currentLine = '';
+                break;
+              }
+            }
+          }
+          if (currentLine && lines.length < maxLines) {
+            lines.push(currentLine);
+          }
+
+          return lines.map(line => {
+            let str = line;
+            while (c.measureText(str).width > maxWidth && str.length > 3) {
+              str = str.slice(0, -1);
+            }
+            return str;
+          });
+        };
+
+        // Clip whole card with rounded corners (radius 16px)
         ctx.save();
-        roundRect(ctx, 0, 0, 720, 1140, 28, false, false);
+        roundRect(ctx, 0, 0, 700, 1040, 16, false, false);
         ctx.clip();
 
-        // 1. White Card Background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 720, 1140);
+        if (templateImg) {
+          // --- MODE TEMPLATE KUSTOM ---
+          ctx.drawImage(templateImg, 0, 0, 700, 1040);
 
-        // 2. Header Banner (Deep Crimson Gradient)
-        const headerGrad = ctx.createLinearGradient(0, 0, 720, 180);
-        headerGrad.addColorStop(0, '#7f1d1d');
-        headerGrad.addColorStop(0.5, '#b91c1c');
-        headerGrad.addColorStop(1, '#dc2626');
-        ctx.fillStyle = headerGrad;
-        ctx.fillRect(0, 0, 720, 180);
+          const catY = (parseInt(s.idcard_cat_y ?? 138, 10)) * 2;
+          const photoX = (parseInt(s.idcard_photo_x ?? 0, 10)) * 2 + 34;
+          const photoY = (parseInt(s.idcard_photo_y ?? 0, 10)) * 2 + 350;
+          const photoW = (parseInt(s.idcard_photo_w ?? 110, 10)) * 2;
+          const photoH = (parseInt(s.idcard_photo_h ?? 145, 10)) * 2;
+          const nameY = (parseInt(s.idcard_name_y ?? 0, 10)) * 2;
+          const unitY = (parseInt(s.idcard_unit_y ?? 0, 10)) * 2;
+          const qrX = (parseInt(s.idcard_qr_x ?? 0, 10)) * 2;
+          const qrY = (parseInt(s.idcard_qr_y ?? 0, 10)) * 2;
+          const qrSize = Math.max((parseInt(s.idcard_qr_size ?? 95, 10)) * 2, 190);
 
-        // Official Logo PMI & Event Logo from Pengaturan
-        if (appLogoImg) {
-          ctx.drawImage(appLogoImg, 720 - 90, 18, 64, 64);
-        } else {
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(674, 50, 22, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#dc2626';
-          ctx.fillRect(674 - 13, 50 - 4.5, 26, 9);
-          ctx.fillRect(674 - 4.5, 50 - 13, 9, 26);
-        }
+          // Yellow / Category Band
+          ctx.fillStyle = catBg;
+          ctx.fillRect(0, catY, 700, 68);
+          ctx.textAlign = 'center';
+          ctx.fillStyle = catTextColor;
+          ctx.font = '900 36px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(categoryTitle.toUpperCase(), 350, catY + 48);
 
-        if (eventLogoImg) {
-          ctx.drawImage(eventLogoImg, 26, 18, 70, 64);
-        }
+          // Photo 3x4
+          ctx.fillStyle = '#f8fafc';
+          roundRect(ctx, photoX, photoY, photoW, photoH, 8, true, false);
+          if (photoImg) {
+            ctx.save();
+            roundRect(ctx, photoX, photoY, photoW, photoH, 8, false, false);
+            ctx.clip();
+            const imgRatio = photoImg.width / photoImg.height;
+            const targetRatio = photoW / photoH;
+            let sw, sh, sx, sy;
+            if (imgRatio > targetRatio) {
+              sh = photoImg.height;
+              sw = photoImg.height * targetRatio;
+              sx = (photoImg.width - sw) / 2;
+              sy = 0;
+            } else {
+              sw = photoImg.width;
+              sh = photoImg.width / targetRatio;
+              sx = 0;
+              sy = (photoImg.height - sh) / 2;
+            }
+            ctx.drawImage(photoImg, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
+            ctx.restore();
+          }
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 3;
+          roundRect(ctx, photoX, photoY, photoW, photoH, 8, false, true);
 
-        // Header Texts
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Inter, -apple-system, sans-serif';
-        ctx.letterSpacing = '2px';
-        ctx.fillText('PALANG MERAH INDONESIA', 360, 90);
+          // Name, Unit, QR Code on right
+          const colX = photoX + photoW + 30;
+          const colW = 700 - colX - 34;
+          const rightEdge = colX + colW;
 
-        ctx.fillStyle = '#fecdd3';
-        ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
-        ctx.letterSpacing = '1px';
-        ctx.fillText('KABUPATEN PEMALANG', 360, 116);
-
-        ctx.fillStyle = '#fef08a';
-        ctx.font = '900 22px Inter, -apple-system, sans-serif';
-        ctx.letterSpacing = '1px';
-        ctx.fillText('JUMBARA PMR XII TAHUN 2026', 360, 148);
-
-        // Golden Accent Line
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(0, 176, 720, 4);
-
-        // 3. Photo / Avatar
-        const photoY = 270;
-        const photoR = 64;
-        if (photoImg) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.clip();
-          const minDim = Math.min(photoImg.width, photoImg.height);
-          const sx = (photoImg.width - minDim) / 2;
-          const sy = (photoImg.height - minDim) / 2;
-          ctx.drawImage(photoImg, sx, sy, minDim, minDim, 360 - photoR, photoY - photoR, photoR * 2, photoR * 2);
-          ctx.restore();
-        } else {
-          ctx.fillStyle = '#f1f5f9';
-          ctx.beginPath();
-          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
-          ctx.clip();
+          let nameFontSize = 32;
+          if (name.length > 35) nameFontSize = 21;
+          else if (name.length > 25) nameFontSize = 25;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = `800 ${nameFontSize}px Outfit, "Plus Jakarta Sans", sans-serif`;
+          const nameLines = wrapTextLines(ctx, name, colW, 2);
+          const nameStartY = photoY + 30 + nameY;
+          nameLines.forEach((l, i) => ctx.fillText(l, colX, nameStartY + i * (nameFontSize * 1.2)));
+          const nameLineY = nameStartY + (nameLines.length - 1) * (nameFontSize * 1.2) + 10;
           ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(colX, nameLineY, colW, 2);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'italic 600 13px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText('Nama / Name', rightEdge, nameLineY + 16);
+
+          let unitFontSize = 24;
+          if (unit.length > 35) unitFontSize = 18;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = `700 ${unitFontSize}px Outfit, "Plus Jakarta Sans", sans-serif`;
+          const unitLines = wrapTextLines(ctx, unit, colW, 2);
+          const unitStartY = nameLineY + 44 + unitY;
+          unitLines.forEach((l, i) => ctx.fillText(l, colX, unitStartY + i * (unitFontSize * 1.2)));
+          const unitLineY = unitStartY + (unitLines.length - 1) * (unitFontSize * 1.2) + 10;
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(colX, unitLineY, colW, 2);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'italic 600 13px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText('Asal / Unit / Kontingen', rightEdge, unitLineY + 16);
+
+          // QR Code
+          const qrActualX = colX + qrX;
+          const qrActualY = unitLineY + 24 + qrY;
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, qrActualX, qrActualY, qrSize, qrSize, 8, true, false);
+          ctx.drawImage(qrImg, qrActualX + 4, qrActualY + 4, qrSize - 8, qrSize - 8);
+
+        } else {
+          // --- MODE STANDAR RESMI PMI (JUMBARA OFFICIAL DESIGN) ---
+          // 1. White Background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 700, 1040);
+
+          // 2. Top Header (Height 130px)
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, 700, 130);
+          ctx.fillStyle = '#f1f5f9';
+          ctx.fillRect(0, 128, 700, 2);
+
+          // Event Logo (Left)
+          if (eventLogoImg) {
+            const maxLogoDim = 76;
+            const ratio = eventLogoImg.width / eventLogoImg.height;
+            let lw = maxLogoDim, lh = maxLogoDim;
+            if (ratio > 1) lh = maxLogoDim / ratio;
+            else lw = maxLogoDim * ratio;
+            ctx.drawImage(eventLogoImg, 24 + (maxLogoDim - lw) / 2, 26 + (maxLogoDim - lh) / 2, lw, lh);
+          } else {
+            ctx.fillStyle = '#ea580c';
+            ctx.beginPath();
+            ctx.arc(62, 64, 28, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Event Title & Subtitle
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '800 24px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(eventTitle, 114, 62);
+
+          ctx.fillStyle = '#475569';
+          ctx.font = '600 17px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(eventSubtitle, 114, 90);
+
+          // PMI Logo (Right)
+          if (appLogoImg) {
+            const maxPmiDim = 68;
+            const ratio = appLogoImg.width / appLogoImg.height;
+            let pw = maxPmiDim, ph = maxPmiDim;
+            if (ratio > 1) ph = maxPmiDim / ratio;
+            else pw = maxPmiDim * ratio;
+            ctx.drawImage(appLogoImg, 490 + (maxPmiDim - pw) / 2, 31 + (maxPmiDim - ph) / 2, pw, ph);
+          } else {
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(510, 40, 28, 50);
+            ctx.fillRect(499, 51, 50, 28);
+          }
+
+          // PMI Text (Right)
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '800 16px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText('PALANG', 572, 54);
+          ctx.fillText('MERAH', 572, 74);
+          ctx.fillText('INDONESIA', 572, 94);
+
+          // 3. Category Band (Yellow/Color Bar at y: 130, height: 68px)
+          ctx.fillStyle = catBg;
+          ctx.fillRect(0, 130, 700, 68);
+
+          ctx.fillStyle = 'rgba(0,0,0,0.08)';
+          ctx.fillRect(0, 196, 700, 2);
+
+          ctx.textAlign = 'center';
+          ctx.fillStyle = catTextColor;
+          ctx.font = '900 36px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(categoryTitle.toUpperCase(), 350, 178);
+
+          // 4. Body Content
+          // Left Column: Pas Foto 3x4 (x: 34, y: 228, w: 220, h: 290)
+          const photoX = 34;
+          const photoY = 228;
+          const photoW = 220;
+          const photoH = 290;
+
+          ctx.fillStyle = '#f8fafc';
+          roundRect(ctx, photoX, photoY, photoW, photoH, 8, true, false);
+
+          if (photoImg) {
+            ctx.save();
+            roundRect(ctx, photoX, photoY, photoW, photoH, 8, false, false);
+            ctx.clip();
+            const imgRatio = photoImg.width / photoImg.height;
+            const targetRatio = photoW / photoH;
+            let sw, sh, sx, sy;
+            if (imgRatio > targetRatio) {
+              sh = photoImg.height;
+              sw = photoImg.height * targetRatio;
+              sx = (photoImg.width - sw) / 2;
+              sy = 0;
+            } else {
+              sw = photoImg.width;
+              sh = photoImg.width / targetRatio;
+              sx = 0;
+              sy = (photoImg.height - sh) / 2;
+            }
+            ctx.drawImage(photoImg, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
+            ctx.restore();
+          } else {
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(photoX + photoW / 2, photoY + 110, 48, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(photoX + photoW / 2, photoY + 260, 100, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 3;
+          roundRect(ctx, photoX, photoY, photoW, photoH, 8, false, true);
+
+          // Right Column: Detail Peserta & QR Code
+          const colX = 280;
+          const colW = 386;
+          const rightEdge = colX + colW; // 666
+
+          // Nama Field
+          let nameFontSize = 32;
+          if (name.length > 35) nameFontSize = 21;
+          else if (name.length > 25) nameFontSize = 25;
+          else if (name.length > 18) nameFontSize = 28;
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = `800 ${nameFontSize}px Outfit, "Plus Jakarta Sans", sans-serif`;
+
+          const nameLines = wrapTextLines(ctx, name, colW, 2);
+          const nameStartY = 258;
+          const nameLineH = nameFontSize * 1.18;
+          nameLines.forEach((lineText, idx) => {
+            ctx.fillText(lineText, colX, nameStartY + idx * nameLineH);
+          });
+
+          const nameUnderlineY = nameStartY + (nameLines.length - 1) * nameLineH + 10;
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(colX, nameUnderlineY, colW, 2);
+
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'italic 600 13px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText('Nama / Name', rightEdge, nameUnderlineY + 16);
+
+          // Unit / Kontingen Field
+          let unitFontSize = 24;
+          if (unit.length > 35) unitFontSize = 18;
+          else if (unit.length > 24) unitFontSize = 21;
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = `700 ${unitFontSize}px Outfit, "Plus Jakarta Sans", sans-serif`;
+
+          const unitLines = wrapTextLines(ctx, unit, colW, 2);
+          const unitStartY = nameUnderlineY + 44;
+          const unitLineH = unitFontSize * 1.2;
+          unitLines.forEach((lineText, idx) => {
+            ctx.fillText(lineText, colX, unitStartY + idx * unitLineH);
+          });
+
+          const unitUnderlineY = unitStartY + (unitLines.length - 1) * unitLineH + 10;
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(colX, unitUnderlineY, colW, 2);
+
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'italic 600 13px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText('Kontingen / Unit', rightEdge, unitUnderlineY + 16);
+
+          // QR Code Container
+          const qrBoxSize = 200;
+          const qrBoxX = colX;
+          const qrBoxY = 530;
+
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 8, true, false);
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1.5;
+          roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 8, false, true);
+
+          if (qrImg) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(qrImg, qrBoxX + 6, qrBoxY + 6, qrBoxSize - 12, qrBoxSize - 12);
+          }
+
+          // Date & Location
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#334155';
+          ctx.font = 'italic 700 16px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(eventDate, rightEdge, qrBoxY + qrBoxSize - 8);
+
+          // 5. Footer Section (y: 890 to 1040, height: 150px)
+          const stripY = 890;
+          const stripH = 10;
+          const stripW = 700 / 4;
+          ctx.fillStyle = '#dc2626'; ctx.fillRect(0, stripY, stripW, stripH);
+          ctx.fillStyle = '#ef4444'; ctx.fillRect(stripW, stripY, stripW, stripH);
+          ctx.fillStyle = '#f87171'; ctx.fillRect(stripW * 2, stripY, stripW, stripH);
+          ctx.fillStyle = '#fca5a5'; ctx.fillRect(stripW * 3, stripY, stripW, stripH);
+
+          const footerGrad = ctx.createLinearGradient(0, 900, 0, 1040);
+          footerGrad.addColorStop(0, '#f8fafc');
+          footerGrad.addColorStop(1, '#f1f5f9');
+          ctx.fillStyle = footerGrad;
+          ctx.fillRect(0, 900, 700, 140);
+
+          // Candi Silhouette
+          ctx.save();
+          ctx.fillStyle = '#cbd5e1';
+          ctx.globalAlpha = 0.6;
           ctx.beginPath();
-          ctx.arc(360, photoY - 10, 24, 0, Math.PI * 2);
+          ctx.moveTo(0, 1040); ctx.lineTo(0, 1024); ctx.lineTo(30, 1016); ctx.lineTo(70, 1020);
+          ctx.lineTo(100, 1004); ctx.lineTo(130, 1016); ctx.lineTo(160, 996); ctx.lineTo(190, 1020);
+          ctx.lineTo(220, 1008); ctx.lineTo(260, 1024); ctx.lineTo(320, 1020); ctx.lineTo(320, 1040);
+          ctx.closePath();
           ctx.fill();
+
+          ctx.fillStyle = '#334155';
+          ctx.globalAlpha = 0.25;
           ctx.beginPath();
-          ctx.arc(360, photoY + 54, 46, 0, Math.PI * 2);
+          ctx.moveTo(20, 1040); ctx.lineTo(20, 996); ctx.lineTo(28, 990); ctx.lineTo(32, 970); ctx.lineTo(36, 990); ctx.lineTo(44, 996); ctx.lineTo(44, 1040);
+          ctx.moveTo(52, 1040); ctx.lineTo(52, 976); ctx.lineTo(60, 964); ctx.lineTo(64, 936); ctx.lineTo(68, 964); ctx.lineTo(76, 976); ctx.lineTo(76, 1040);
+          ctx.moveTo(84, 1040); ctx.lineTo(84, 990); ctx.lineTo(92, 980); ctx.lineTo(96, 956); ctx.lineTo(100, 980); ctx.lineTo(108, 990); ctx.lineTo(108, 1040);
           ctx.fill();
           ctx.restore();
+
+          // Motto / Hashtag
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '900 24px Outfit, "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(eventMotto, 34, 1014);
+
+          // 3 Mascots
+          const drawMascot = (mx, my, color, type) => {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(mx, my, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(mx, my, 22, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            if (type === 1) {
+              ctx.beginPath();
+              ctx.arc(mx, my - 5, 5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(mx, my + 9, 8, Math.PI, 0);
+              ctx.stroke();
+            } else if (type === 2) {
+              ctx.fillRect(mx - 2, my - 8, 4, 16);
+              ctx.fillRect(mx - 8, my - 2, 16, 4);
+            } else {
+              ctx.beginPath();
+              for (let i = 0; i < 5; i++) {
+                const a = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                const r = 8;
+                const px = mx + Math.cos(a) * r;
+                const py = my + Math.sin(a) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+              }
+              ctx.closePath();
+              ctx.fill();
+            }
+            ctx.restore();
+          };
+
+          drawMascot(570, 998, '#15803d', 1);
+          drawMascot(610, 998, '#dc2626', 2);
+          drawMascot(650, 998, '#0284c7', 3);
         }
-        ctx.strokeStyle = '#b91c1c';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(360, photoY, photoR, 0, Math.PI * 2);
-        ctx.stroke();
 
-        // 4. Name
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#0f172a';
-        let nameFontSize = 30;
-        if (name.length > 35) nameFontSize = 21;
-        else if (name.length > 25) nameFontSize = 24;
-        else if (name.length > 18) nameFontSize = 27;
-        ctx.font = `900 ${nameFontSize}px Inter, -apple-system, sans-serif`;
-        ctx.fillText(name, 360, 375);
-
-        // 5. Role / Level Pill Badge
-        let pillBg = '#f1f5f9';
-        let pillText = '#334155';
-        const lvlLower = level.toLowerCase();
-        if (lvlLower.includes('panitia')) {
-          pillBg = '#fee2e2'; pillText = '#991b1b';
-        } else if (lvlLower.includes('wira')) {
-          pillBg = '#e0f2fe'; pillText = '#0369a1';
-        } else if (lvlLower.includes('madya')) {
-          pillBg = '#dcfce7'; pillText = '#15803d';
-        } else if (lvlLower.includes('mula')) {
-          pillBg = '#fef3c7'; pillText = '#b45309';
-        } else if (lvlLower.includes('peninjau')) {
-          pillBg = '#f3e8ff'; pillText = '#7e22ce';
-        } else if (lvlLower.includes('pendamping')) {
-          pillBg = '#ffedd5'; pillText = '#c2410c';
-        }
-        ctx.font = 'bold 17px Inter, -apple-system, sans-serif';
-        const levelMeasure = ctx.measureText(level.toUpperCase());
-        const pillW = Math.max(220, levelMeasure.width + 48);
-        const pillH = 38;
-        ctx.fillStyle = pillBg;
-        roundRect(ctx, 360 - pillW / 2, 396, pillW, pillH, 19, true, false);
-        ctx.fillStyle = pillText;
-        ctx.fillText(level.toUpperCase(), 360, 421);
-
-        // 6. Unit / Kontingen
-        ctx.fillStyle = '#475569';
-        let unitFontSize = 20;
-        if (unit.length > 32) unitFontSize = 17;
-        ctx.font = `700 ${unitFontSize}px Inter, -apple-system, sans-serif`;
-        ctx.fillText(unit, 360, 465);
-
-        // 7. Large Clear QR Code Container (Tetapi Jelas QR Codenya)
-        const qrBoxW = 430;
-        const qrBoxH = 430;
-        const qrBoxX = (720 - qrBoxW) / 2;
-        const qrBoxY = 495;
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2;
-        roundRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 22, true, true);
-
-        // Draw the QR Code image at high sharpness
-        const qrImgSize = 370;
-        const qrImgX = (720 - qrImgSize) / 2;
-        const qrImgY = qrBoxY + (qrBoxH - qrImgSize) / 2;
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(qrImg, qrImgX, qrImgY, qrImgSize, qrImgSize);
-
-        // 8. Monospaced Code Box
-        const codeBoxW = 320;
-        const codeBoxH = 46;
-        const codeBoxX = (720 - codeBoxW) / 2;
-        const codeBoxY = 945;
-        ctx.fillStyle = '#f8fafc';
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 1.5;
-        roundRect(ctx, codeBoxX, codeBoxY, codeBoxW, codeBoxH, 12, true, true);
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 24px "JetBrains Mono", Courier, monospace';
-        ctx.letterSpacing = '2px';
-        ctx.fillText(code, 360, codeBoxY + 31);
-
-        // 9. Card Footer Banner
-        const footerH = 75;
-        const footerY = 1140 - footerH;
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, footerY, 720, footerH);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px Inter, -apple-system, sans-serif';
-        ctx.letterSpacing = '2px';
-        ctx.fillText('KARTU TANDA PENGENAL & PRESENSI RESMI', 360, footerY + 34);
-
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '600 13px Inter, -apple-system, sans-serif';
-        ctx.letterSpacing = '0.5px';
-        ctx.fillText('Palang Merah Indonesia Kabupaten Pemalang', 360, footerY + 56);
-
-        // Restore context clip
-        ctx.restore();
+        ctx.restore(); // restore clip
 
         // Outer border stroke
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 2;
-        roundRect(ctx, 1, 1, 718, 1138, 28, false, true);
+        roundRect(ctx, 1, 1, 698, 1038, 16, false, true);
 
         // Export to Blob & Trigger Download
         if (typeof canvas.toBlob === 'function') {
@@ -724,7 +1011,7 @@ const Utils = {
       };
       qrImg.src = qrDataUrl;
     }).catch((err) => {
-      console.error('Error generating complete ID Card badge:', err);
+      console.error('Error generating complete ID Card:', err);
       this.downloadQRCode(code, fname);
     });
   },

@@ -2797,16 +2797,11 @@ const App = {
         Utils.showToast('Mengunduh gambar ID Card...', 'info');
       }
 
-      const container = document.getElementById('pesertaMobileIDCardContainer') || 
-                        document.getElementById('peninjauMobileIDCardContainer') || 
-                        document.getElementById('idCardModalContent');
-      const cardEl = container ? container.querySelector('.idcard-wrapper, .pmi-template-card, .idcard-item, .idcard-badge-container') : null;
-      const code = String(data.code || 'ID-Card');
+      const code = String(data.code || data.registration_code || 'ID-Card');
       const fname = `ID-Card-${code}`;
 
-      if (cardEl && typeof Utils !== 'undefined' && typeof Utils.downloadIDCardElementAsImage === 'function') {
-        await Utils.downloadIDCardElementAsImage(cardEl, fname, data);
-      } else if (typeof Utils !== 'undefined' && typeof Utils.downloadCompleteIDCardBadge === 'function') {
+      // Langsung gunakan generator resmi canvas lengkap untuk menjamin 100% desain ID Card resmi
+      if (typeof Utils !== 'undefined' && typeof Utils.downloadCompleteIDCardBadge === 'function') {
         Utils.downloadCompleteIDCardBadge(data, fname);
       } else {
         this.openIDCardInNewWindow();
