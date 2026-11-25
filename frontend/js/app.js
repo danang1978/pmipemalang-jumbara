@@ -12684,6 +12684,15 @@ const App = {
             <button class="btn btn-secondary btn-sm" onclick="App.exportStandingsXLS()"><i class="fa-solid fa-file-excel"></i> Unduh Excel (.xls) Klasemen</button>
           </div>
 
+          <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4>Rekap Kuota & Unsur Kontingen (Excel .xls)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Export matriks rekapitulasi kuota dan sebaran unsur peserta seluruh kontingen unit dalam format spreadsheet Excel (.xls).</p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="btn btn-success btn-sm" onclick="App.exportUnsurMatrixXLS()"><i class="fa-solid fa-file-excel"></i> Unduh Matriks Kuota</button>
+              <button class="btn btn-outline btn-sm" onclick="App.exportUnsurMasterListXLS()"><i class="fa-solid fa-file-lines"></i> Unduh Daftar Unsur</button>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
@@ -18615,11 +18624,17 @@ const App = {
                     Kelola kategori Unsur (Kepala Markas, Ketua Bidang PMR, Koordinator Forpis, Koordinator Forel, Pegawai, PMR Mula/Madya/Wira, TSR) beserta kuota pendaftaran per kontingen sekolah.
                   </p>
                 </div>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
                   <button class="btn btn-outline btn-sm" style="border-color: #dc2626; color: #dc2626;" onclick="App.openPapanInformasiUnsurModal()">
                     <i class="fa-solid fa-chart-column"></i> Papan Informasi Unsur Fullscreen
                   </button>
-                  <button class="btn btn-success btn-sm" style="background: #059669; border-color: #059669; color: white;" onclick="App.openAddUnsurModal()">
+                  <button class="btn btn-success btn-sm" style="background: #059669; border-color: #059669; color: white; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="App.exportUnsurMatrixXLS()" title="Download Rekap Matriks Kuota Kontingen & Unsur format Excel (.xls)">
+                    <i class="fa-solid fa-file-excel"></i> Export Excel Matriks
+                  </button>
+                  <button class="btn btn-outline btn-sm" style="border-color: #059669; color: #059669; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="App.exportUnsurMasterListXLS()" title="Download Daftar Master Unsur & Kuota format Excel (.xls)">
+                    <i class="fa-solid fa-file-excel"></i> Export Excel Daftar Unsur
+                  </button>
+                  <button class="btn btn-primary btn-sm" onclick="App.openAddUnsurModal()">
                     <i class="fa-solid fa-plus-circle"></i> + Tambah Unsur Baru
                   </button>
                 </div>
@@ -18936,15 +18951,14 @@ const App = {
               ${unitOptionsHtml}
             </select>
           </div>
-          ${selectedUnitId ? `
-            <div style="font-size: 0.8rem; color: var(--primary); font-weight: 700;">
-              <i class="fa-solid fa-circle-info"></i> Menampilkan rincian terpakai & sisa kuota untuk unit terpilih.
-            </div>
-          ` : `
-            <div style="font-size: 0.8rem; color: var(--text-muted);">
-              Pilih unit sekolah pada dropdown untuk melihat status sisa kuota per unit.
-            </div>
-          `}
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-success btn-sm" onclick="App.exportUnsurMatrixXLS()" style="font-weight: 700; background: #059669; border-color: #059669; color: #fff; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;" title="Download Rekap Matriks Kuota Kontingen & Unsur format Excel (.xls)">
+              <i class="fa-solid fa-file-excel"></i> Export Matriks (.xls)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="App.exportUnsurMasterListXLS()" style="font-weight: 700; border-color: #059669; color: #059669; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;" title="Download Tabel Kuota Unsur format Excel (.xls)">
+              <i class="fa-solid fa-file-excel"></i> Export Unsur (.xls)
+            </button>
+          </div>
         </div>
       `;
 
@@ -19751,10 +19765,15 @@ const App = {
               <p style="margin: 0; font-size: 0.78rem; color: #94a3b8;">Display Monitoring Layar Penuh (Real-time Fullscreen Matrix)</p>
             </div>
             
-            <div style="display: flex; gap: 1rem; align-items: center; background: #0f172a; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #334155;">
-              <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">Total Kontingen: <strong style="color: #38bdf8; font-size: 0.95rem;">${units.length}</strong></span>
-              <span style="color: #475569;">|</span>
-              <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">Total Peserta: <strong style="color: #4ade80; font-size: 0.95rem;">${participants.length}</strong></span>
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-success btn-sm" onclick="App.exportUnsurMatrixXLS()" style="background: #059669; border-color: #059669; color: #fff; font-weight: 700; padding: 0.4rem 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border-radius: 6px; font-size: 0.8rem;" title="Export Rekap Matriks Kuota Kontingen ke Excel (.xls)">
+                <i class="fa-solid fa-file-excel"></i> Export Excel (.xls)
+              </button>
+              <div style="display: flex; gap: 1rem; align-items: center; background: #0f172a; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #334155;">
+                <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">Total Kontingen: <strong style="color: #38bdf8; font-size: 0.95rem;">${units.length}</strong></span>
+                <span style="color: #475569;">|</span>
+                <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">Total Peserta: <strong style="color: #4ade80; font-size: 0.95rem;">${participants.length}</strong></span>
+              </div>
             </div>
           </div>
 
@@ -19916,6 +19935,232 @@ const App = {
         document.exitFullscreen().catch(err => console.log(err));
       }
     }
+  },
+
+  // Export Rekapitulasi Matriks Unsur & Kuota Kontingen ke Excel (.xls)
+  async exportUnsurMatrixXLS() {
+    try {
+      Utils.showToast('Menyiapkan rekap matriks kuota kontingen untuk diexport...', 'info');
+
+      const [unsurRes, unitsRes, partRes] = await Promise.all([
+        API.getUnsur().catch(() => []),
+        API.getUnits().catch(() => []),
+        API.getParticipants({ limit: 5000, all: 'true' }).catch(() => ({ data: [] }))
+      ]);
+
+      const unsurList = Array.isArray(unsurRes) ? unsurRes : [];
+      const units = Array.isArray(unitsRes) ? unitsRes : (unitsRes.units || []);
+      const participants = Array.isArray(partRes) ? partRes : (partRes.data || []);
+
+      if (!units.length) {
+        Utils.showToast('Data kontingen unit belum tersedia.', 'warning');
+        return;
+      }
+
+      // Kolom Matriks Dinamis: Murni diambil dari kategori unsur master (unsur_categories)
+      const activeCols = [];
+      const colSet = new Set();
+
+      unsurList.forEach(u => {
+        const rawName = (u.name || '').trim();
+        const upName = rawName.toUpperCase();
+        if (rawName && !colSet.has(upName)) {
+          activeCols.push({
+            id: u.id,
+            key: upName,
+            label: rawName,
+            quota: Number(u.quota) || 0,
+            desc: u.description || ''
+          });
+          colSet.add(upName);
+        }
+      });
+
+      if (!activeCols.length) {
+        Utils.showToast('Kategori unsur belum diatur pada Master Unsur.', 'warning');
+        return;
+      }
+
+      // Group participant counts by unit_id and matching unsur key
+      const matrix = {};
+
+      participants.forEach(p => {
+        if (p.status === 'rejected') return;
+        const uid = p.unit_id;
+        if (!matrix[uid]) matrix[uid] = {};
+
+        const rawUnsur = (p.level || p.registration_type || p.category || '').toUpperCase().trim();
+        if (!rawUnsur) return;
+
+        let matchedKey = null;
+
+        for (const col of activeCols) {
+          if (rawUnsur === col.key) {
+            matchedKey = col.key;
+            break;
+          }
+        }
+
+        if (!matchedKey) {
+          const cleanRaw = rawUnsur.replace(/[^A-Z0-9]/g, '');
+          for (const col of activeCols) {
+            const cleanKey = col.key.replace(/[^A-Z0-9]/g, '');
+            if (cleanKey && cleanKey === cleanRaw) {
+              matchedKey = col.key;
+              break;
+            }
+          }
+        }
+
+        if (!matchedKey) {
+          for (const col of activeCols) {
+            if (col.key.includes(rawUnsur) || rawUnsur.includes(col.key)) {
+              matchedKey = col.key;
+              break;
+            }
+          }
+        }
+
+        if (!matchedKey) {
+          for (const col of activeCols) {
+            const descUp = (col.desc || '').toUpperCase();
+            if ((rawUnsur.includes('WIRA') || rawUnsur.includes('MADYA') || rawUnsur.includes('MULA')) &&
+                (col.key.includes('PMR') || descUp.includes(rawUnsur) || descUp.includes('PMR'))) {
+              matchedKey = col.key;
+              break;
+            }
+          }
+        }
+
+        if (matchedKey) {
+          matrix[uid][matchedKey] = (matrix[uid][matchedKey] || 0) + 1;
+        }
+      });
+
+      // Calculate column totals
+      const colTotals = {};
+      activeCols.forEach(col => colTotals[col.key] = 0);
+
+      const rows = units.map((u, rowIdx) => {
+        const row = {
+          'No': rowIdx + 1,
+          'Kode Unit': u.code || '-',
+          'Nama Kontingen / Unit': u.name,
+          'Kategori / Tingkat': u.level_category || '-'
+        };
+
+        let unitTotal = 0;
+        let isComplete = true;
+        let hasAny = false;
+
+        activeCols.forEach(col => {
+          const cnt = matrix[u.id] ? (matrix[u.id][col.key] || 0) : 0;
+          colTotals[col.key] += cnt;
+          unitTotal += cnt;
+
+          if (cnt > 0) hasAny = true;
+          if (col.quota > 0 && cnt < col.quota) isComplete = false;
+
+          const colHeader = col.quota > 0 ? `${col.label} (Maks ${col.quota})` : `${col.label} (Tanpa Batas)`;
+          row[colHeader] = cnt;
+        });
+
+        row['Total Peserta'] = unitTotal;
+
+        let statusText = 'Belum Ada Peserta';
+        if (isComplete && hasAny) {
+          statusText = 'Lengkap / Target Terpenuhi';
+        } else if (hasAny) {
+          statusText = 'Terisi Sebagian';
+        }
+        row['Status Kuota'] = statusText;
+
+        return row;
+      });
+
+      // Baris Total Ringkasan
+      const totalRow = {
+        'No': 'TOTAL',
+        'Kode Unit': '-',
+        'Nama Kontingen / Unit': `TOTAL (${units.length} KONTINGEN)`,
+        'Kategori / Tingkat': '-'
+      };
+
+      let grandTotalPeserta = 0;
+      activeCols.forEach(col => {
+        const tot = colTotals[col.key] || 0;
+        grandTotalPeserta += tot;
+        const colHeader = col.quota > 0 ? `${col.label} (Maks ${col.quota})` : `${col.label} (Tanpa Batas)`;
+        totalRow[colHeader] = tot;
+      });
+
+      totalRow['Total Peserta'] = grandTotalPeserta;
+      totalRow['Status Kuota'] = '-';
+      rows.push(totalRow);
+
+      Utils.exportToXLS(
+        'rekap_matriks_unsur_kontingen_kuota_jumbara_2026',
+        rows,
+        'REKAPITULASI MATRIKS KUOTA & UNSUR KONTINGEN PESERTA JUMBARA PMR 2026'
+      );
+    } catch (err) {
+      console.error('Error exporting unsur matrix:', err);
+      Utils.showToast('Gagal mengekspor matriks unsur: ' + err.message, 'error');
+    }
+  },
+
+  // Export Daftar Master Unsur & Kuota ke Excel (.xls)
+  async exportUnsurMasterListXLS() {
+    try {
+      Utils.showToast('Menyiapkan daftar master unsur & kuota untuk diexport...', 'info');
+      const unitSelectEl = document.getElementById('filterUnsurUnitId');
+      const selectedUnitId = unitSelectEl ? unitSelectEl.value : null;
+
+      const unsurs = await API.getUnsur(selectedUnitId || null);
+      if (!unsurs || !unsurs.length) {
+        Utils.showToast('Data unsur kosong.', 'warning');
+        return;
+      }
+
+      let selectedUnitName = 'Semua Unit (Statistik Global)';
+      if (selectedUnitId && this.cachedUnits) {
+        const u = this.cachedUnits.find(unit => String(unit.id) === String(selectedUnitId));
+        if (u) selectedUnitName = u.name;
+      }
+
+      const rows = unsurs.map((u, idx) => {
+        const row = {
+          'No': idx + 1,
+          'Nama Unsur Kontingen': u.name,
+          'Batas Kuota / Unit': u.quota > 0 ? `Maks ${u.quota} Orang / Unit` : 'Tanpa Batas (Bebas)'
+        };
+
+        if (selectedUnitId) {
+          row['Unit Kontingen'] = selectedUnitName;
+          row['Kuota Terpakai'] = `${u.used_quota || 0} Orang`;
+          row['Sisa Kuota'] = u.quota > 0 ? `${u.remaining_quota ?? 0} Orang` : 'Tanpa Batas';
+          row['Status Kuota'] = u.quota > 0 ? (u.is_full ? 'KUOTA PENUH' : 'TERSEDIA') : 'TANPA BATAS';
+        } else {
+          row['Total Pendaftar Aktif Global'] = `${u.total_global || 0} Orang`;
+        }
+
+        row['Keterangan Deskripsi'] = u.description || '-';
+        return row;
+      });
+
+      const title = selectedUnitId
+        ? `DAFTAR KUOTA UNSUR KONTINGEN - ${selectedUnitName.toUpperCase()}`
+        : 'MASTER DATA UNSUR KONTINGEN & BATAS KUOTA JUMBARA 2026';
+
+      Utils.exportToXLS('master_unsur_kuota_jumbara_2026', rows, title);
+    } catch (err) {
+      console.error('Error exporting master unsur list:', err);
+      Utils.showToast('Gagal mengekspor data unsur: ' + err.message, 'error');
+    }
+  },
+
+  exportUnsurXLS() {
+    return this.exportUnsurMatrixXLS();
   },
 
   handleLogout() {
