@@ -13,10 +13,10 @@ const App = {
     jumbotron_title: 'JUMBARA XII PMR PMI KABUPATEN PEMALANG',
     jumbotron_subtitle: 'Ajang Jumpa Bakti Gembira Palang Merah Remaja - Cerdas, Ceria, Bersahabat',
     event_dates: '15 - 17 Oktober 2026',
-    event_location: 'Buperta Utama PMI Kabupaten',
-    event_location_address: 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-    event_map_embed: 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
-    event_map_url: 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
+    event_location: 'Bumi Perkemahan PTPN IX Semugih',
+    event_location_address: 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354',
+    event_map_embed: 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411',
+    event_map_url: 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang',
     contact_phone: '(021) 555-PMR-2026',
     contact_email: 'sekretariat@jumbara-pmi.or.id',
     contact_address: 'Jl. Palang Merah No. 1, Markas PMI Kabupaten',
@@ -238,7 +238,7 @@ const App = {
       mapVenueAddressEl.textContent = s.event_location_address || s.contact_address;
     }
     if (eventMapIframeEl && s.event_map_embed) {
-      const sanitizedUrl = Utils.sanitizeMapEmbedUrl(s.event_map_embed);
+      const sanitizedUrl = Utils.sanitizeMapEmbedUrl(s.event_map_embed, s);
       if (eventMapIframeEl.src !== sanitizedUrl) {
         eventMapIframeEl.src = sanitizedUrl;
       }
@@ -964,7 +964,7 @@ const App = {
             <div class="map-embed-wrapper" style="box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius: var(--radius-lg);">
               <iframe 
                 id="eventMapIframe"
-                src="${Utils.sanitizeMapEmbedUrl(s.event_map_embed)}"
+                src="${Utils.sanitizeMapEmbedUrl(s.event_map_embed, s)}"
                 allowfullscreen="" 
                 loading="lazy" 
                 referrerpolicy="no-referrer-when-downgrade"
@@ -977,10 +977,10 @@ const App = {
                   <i class="fa-solid fa-campground"></i> Informasi Venue
                 </div>
                 <h4 id="mapVenueTitle" style="font-size: 1.35rem; font-weight: 800; color: var(--secondary, #1e293b); margin-bottom: 0.75rem; letter-spacing: -0.3px;">
-                  ${Utils.escapeHtml(s.event_location || 'Buperta Utama PMI Kabupaten')}
+                  ${Utils.escapeHtml(s.event_location || 'Bumi Perkemahan PTPN IX Semugih')}
                 </h4>
                 <p id="mapVenueAddress" style="color: var(--text-muted, #64748b); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
-                  ${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang')}
+                  ${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354')}
                 </p>
                 <div style="border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1.25rem; margin-bottom: 1.5rem;">
                   <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; font-size: 0.9rem; color: var(--text-main, #334155);">
@@ -994,7 +994,7 @@ const App = {
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <a id="eventMapBtn" href="${s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; padding: 0.75rem 1rem; font-weight: 700;">
+                <a id="eventMapBtn" href="${s.event_map_url || 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; padding: 0.75rem 1rem; font-weight: 700;">
                   <i class="fa-solid fa-diamond-turn-right"></i> Buka Petunjuk Arah
                 </a>
                 <button type="button" class="btn btn-outline" onclick="App.copyLocationAddress()" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; font-weight: 600;">
@@ -1064,7 +1064,7 @@ const App = {
 
   copyLocationAddress() {
     const s = this.appSettings || {};
-    const textToCopy = s.event_location_address || s.contact_address || 'Jl. Gatot Subroto No. 23, Bojongbata, Kec. Pemalang, Kabupaten Pemalang';
+    const textToCopy = s.event_location_address || s.contact_address || 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354';
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(textToCopy).then(() => {
         Utils.showToast('Alamat lokasi kegiatan berhasil disalin ke clipboard!', 'success');
@@ -1073,6 +1073,41 @@ const App = {
       });
     } else {
       Utils.showToast('Alamat: ' + textToCopy, 'info');
+    }
+  },
+
+  cleanMapEmbedInput(inputEl) {
+    if (!inputEl || !inputEl.value) return;
+    const val = inputEl.value.trim();
+    if (val.includes('<iframe')) {
+      const m = val.match(/src=["']([^"']+)["']/i);
+      if (m && m[1]) {
+        inputEl.value = m[1].trim();
+        Utils.showToast('URL embed berhasil diekstrak dari tag iframe!', 'info');
+      }
+    }
+  },
+
+  applyMapPreset(type) {
+    const embedInput = document.getElementById('setEventMapEmbed');
+    const urlInput = document.getElementById('setEventMapUrl');
+    const locAddressInput = document.getElementById('setEventLocationAddress');
+    const locInput = document.getElementById('setEventLocation');
+
+    if (type === 'semugih') {
+      if (embedInput) embedInput.value = 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411';
+      if (urlInput) urlInput.value = 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang';
+      if (locAddressInput && (!locAddressInput.value || locAddressInput.value.includes('Markas') || locAddressInput.value.includes('Bojongbata') || locAddressInput.value.includes('Palang Merah'))) {
+        locAddressInput.value = 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354';
+      }
+      if (locInput && (!locInput.value || locInput.value.includes('Buperta Utama PMI'))) {
+        locInput.value = 'Bumi Perkemahan PTPN IX Semugih';
+      }
+      Utils.showToast('Peta & Lokasi PTPN IX Semugih berhasil diterapkan!', 'success');
+    } else if (type === 'markas') {
+      if (embedInput) embedInput.value = 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+      if (urlInput) urlInput.value = 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang';
+      Utils.showToast('Peta Markas PMI diterapkan.', 'info');
     }
   },
 
@@ -3694,7 +3729,7 @@ const App = {
                   </div>
 
                   <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.5rem;">
-                    <a href="${this.appSettings.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="font-weight: 800; border-radius: 10px; padding: 0.55rem; justify-content: center; font-size: 0.78rem; background: #059669; border-color: #059669;">
+                    <a href="${this.appSettings.event_map_url || 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="font-weight: 800; border-radius: 10px; padding: 0.55rem; justify-content: center; font-size: 0.78rem; background: #059669; border-color: #059669;">
                       <i class="fa-solid fa-diamond-turn-right"></i> Petunjuk Arah
                     </a>
                     <button type="button" class="btn btn-outline btn-sm" onclick="App.copyLocationAddress()" style="font-weight: 700; border-radius: 10px; padding: 0.55rem; justify-content: center; font-size: 0.78rem;">
@@ -3706,7 +3741,7 @@ const App = {
                 <!-- EMBED MAPS IFRAME RESPONSIVE MOBILE -->
                 <div style="border-radius: 14px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 0.85rem;">
                   <iframe 
-                    src="${Utils.sanitizeMapEmbedUrl(this.appSettings.event_map_embed)}"
+                    src="${Utils.sanitizeMapEmbedUrl(this.appSettings.event_map_embed, this.appSettings)}"
                     style="width: 100%; height: 200px; border: 0; display: block;"
                     allowfullscreen="" 
                     loading="lazy" 
@@ -10677,20 +10712,28 @@ const App = {
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
                 <div class="form-group" style="grid-column: 1 / -1;">
                   <label class="form-label">Alamat Lengkap Venue / Buperta Kegiatan *</label>
-                  <input type="text" id="setEventLocationAddress" value="${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang')}" required style="width: 100%;">
+                  <input type="text" id="setEventLocationAddress" value="${Utils.escapeHtml(s.event_location_address || s.contact_address || 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354')}" required style="width: 100%;">
                   <span class="form-help">Alamat detail yang ditampilkan pada kartu info lokasi dan saat pengguna menekan tombol "Salin Alamat".</span>
                 </div>
 
                 <div class="form-group" style="grid-column: 1 / -1;">
-                  <label class="form-label">URL Embed Peta Lokasi (iframe src) *</label>
-                  <input type="url" id="setEventMapEmbed" value="${Utils.escapeHtml(s.event_map_embed || 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437')}" required style="width: 100%;">
-                  <span class="form-help">URL Embed Peta interaktif (OpenStreetMap atau Google Maps Embed resmi format <code>/maps/embed?pb=...</code>). Bebas penolakan koneksi / SAMEORIGIN.</span>
+                  <label class="form-label">URL Embed Peta Lokasi (iframe src atau URL) *</label>
+                  <input type="text" id="setEventMapEmbed" value="${Utils.escapeHtml(s.event_map_embed || 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411')}" required style="width: 100%;" oninput="App.cleanMapEmbedInput(this)">
+                  <span class="form-help">URL Embed Peta interaktif (OpenStreetMap atau Google Maps Embed resmi format <code>/maps/embed?pb=...</code>). Otomatis mengekstrak URL jika Anda menempel kode iframe.</span>
+                  <div style="margin-top: 0.45rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-outline btn-xs" onclick="App.applyMapPreset('semugih')" style="font-size: 0.75rem; padding: 0.3rem 0.65rem; border-radius: 6px; color: #0284c7; border-color: #0284c7; font-weight: 600;">
+                      <i class="fa-solid fa-map-pin"></i> Terapkan Peta PTPN IX Semugih (Rekomendasi)
+                    </button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="App.applyMapPreset('markas')" style="font-size: 0.75rem; padding: 0.3rem 0.65rem; border-radius: 6px; color: #64748b; border-color: #cbd5e1;">
+                      <i class="fa-solid fa-building"></i> Peta Markas PMI
+                    </button>
+                  </div>
                 </div>
 
                 <div class="form-group" style="grid-column: 1 / -1;">
                   <label class="form-label">URL Petunjuk Arah Langsung Google Maps *</label>
-                  <input type="url" id="setEventMapUrl" value="${Utils.escapeHtml(s.event_map_url || 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang')}" required style="width: 100%;">
-                  <span class="form-help">Tautan langsung ke Google Maps saat tombol "Buka Petunjuk Arah" ditekan. Contoh: <code>https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang</code></span>
+                  <input type="url" id="setEventMapUrl" value="${Utils.escapeHtml(s.event_map_url || 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang')}" required style="width: 100%;">
+                  <span class="form-help">Tautan langsung ke Google Maps saat tombol "Buka Petunjuk Arah" ditekan. Contoh: <code>https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang</code></span>
                 </div>
               </div>
             </div>
@@ -10965,13 +11008,26 @@ const App = {
 
   async handleSaveSettings(e) {
     e.preventDefault();
+    let eventMapEmbed = document.getElementById('setEventMapEmbed')?.value.trim() || '';
+    if (eventMapEmbed.includes('<iframe')) {
+      const m = eventMapEmbed.match(/src=["']([^"']+)["']/i);
+      if (m && m[1]) eventMapEmbed = m[1].trim();
+    }
+    const eventLocation = document.getElementById('setEventLocation').value.trim();
+    const eventMapUrl = document.getElementById('setEventMapUrl')?.value.trim() || '';
+
+    // Smart auto-fix: If venue or map link is Semugih but embed is still Markas PMI or empty, upgrade embed to Semugih
+    if (!eventMapEmbed || (eventMapEmbed.includes('-6.911763') && (/semugih|moga|ptpn/i.test(eventLocation) || /semugih|moga|ptpn/i.test(eventMapUrl)))) {
+      eventMapEmbed = 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411';
+    }
+
     const payload = {
       app_name: document.getElementById('setAppName').value.trim(),
       organizer_name: document.getElementById('setOrganizerName').value.trim(),
-      event_location: document.getElementById('setEventLocation').value.trim(),
+      event_location: eventLocation,
       event_location_address: document.getElementById('setEventLocationAddress')?.value.trim() || '',
-      event_map_embed: document.getElementById('setEventMapEmbed')?.value.trim() || '',
-      event_map_url: document.getElementById('setEventMapUrl')?.value.trim() || '',
+      event_map_embed: eventMapEmbed,
+      event_map_url: eventMapUrl,
       event_dates: document.getElementById('setEventDates').value.trim(),
       contact_phone: document.getElementById('setContactPhone').value.trim(),
       contact_email: document.getElementById('setContactEmail').value.trim(),

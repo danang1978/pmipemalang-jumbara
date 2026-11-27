@@ -314,7 +314,23 @@ if ($method === 'POST') {
                 continue;
             }
 
+            // Sanitize & guarantee frameable map embed URL (convert Google share links / iframe code / Markas coordinates)
+            if ($f === 'event_map_embed') {
+                $val = resolveSmartMapEmbed($val, $input['event_location'] ?? '', $input['event_map_url'] ?? '');
+            }
+
             $stmt->execute([$f, $val]);
+        }
+    }
+
+    // If admin updated event_map_url or event_location to Semugih, ensure event_map_embed in DB is also synchronized
+    $locContext = ($input['event_location'] ?? '') . ' ' . ($input['event_map_url'] ?? '');
+    if (stripos($locContext, 'semugih') !== false || stripos($locContext, 'moga') !== false) {
+        $checkEmbedStmt = $pdo->query("SELECT `value` FROM settings WHERE `key` = 'event_map_embed'");
+        $currentEmbed = $checkEmbedStmt->fetchColumn();
+        if (!$currentEmbed || strpos($currentEmbed, '-6.911763') !== false || strpos($currentEmbed, '109.383437') !== false) {
+            $semugihOsm = 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411';
+            $stmt->execute(['event_map_embed', $semugihOsm]);
         }
     }
 

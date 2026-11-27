@@ -151,6 +151,77 @@ function requireUser($allowedRoles = []) {
     return $user;
 }
 
+/**
+ * Resolves map embed URL to guarantee a valid, frameable, non-refused iframe source.
+ * Converts Google Maps share links / coordinate links to clean OpenStreetMap embeds,
+ * strips iframe HTML wrappers, and defaults to PTPN IX Semugih venue.
+ */
+function resolveSmartMapEmbed($val, $location = '', $mapUrl = '') {
+    $defaultOsmSemugih = 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411';
+    
+    if (empty($val) || !is_string($val)) {
+        return $defaultOsmSemugih;
+    }
+    
+    $clean = trim($val);
+    if (stripos($clean, '<iframe') !== false) {
+        if (preg_match('/src=["\']([^"\']+)["\']/i', $clean, $m)) {
+            $clean = trim($m[1]);
+        }
+    }
+    
+    $locContext = ($location ?? '') . ' ' . ($mapUrl ?? '');
+    $isSemugihContext = (
+        stripos($locContext, 'semugih') !== false ||
+        stripos($locContext, 'moga') !== false ||
+        stripos($clean, 'semugih') !== false ||
+        stripos($clean, 'moga') !== false ||
+        stripos($locContext, 'ptpn') !== false
+    );
+    
+    $isOldMarkas = (
+        strpos($clean, '-6.911763') !== false ||
+        strpos($clean, '109.383437') !== false ||
+        strpos($clean, '109.378') !== false ||
+        stripos($clean, 'Markas') !== false
+    );
+    
+    // If embed still points to old Markas PMI while context is Semugih or default, upgrade to Semugih!
+    if ($isOldMarkas && ($isSemugihContext || empty($location) || stripos($location, 'Buperta') !== false)) {
+        return $defaultOsmSemugih;
+    }
+    
+    // Check if it's a Google Maps URL
+    $isGoogle = (stripos($clean, 'google.com') !== false || stripos($clean, 'goo.gl') !== false);
+    if ($isGoogle) {
+        $isOfficialEmbed = (stripos($clean, '/maps/embed') !== false);
+        $isRefused = (!$isOfficialEmbed || stripos($clean, 'output=embed') !== false || stripos($clean, 'iwloc=') !== false || stripos($clean, 'q=') !== false);
+        
+        if ($isRefused) {
+            // Check if coordinates exist in Google Maps URL (@lat,lon or q=lat,lon or ll=lat,lon)
+            if (preg_match('/(?:@|q=|ll=)(-?\d+\.\d+),(-?\d+\.\d+)/', $clean, $coords)) {
+                $lat = (float)$coords[1];
+                $lon = (float)$coords[2];
+                $minLon = $lon - 0.014;
+                $maxLon = $lon + 0.014;
+                $minLat = $lat - 0.011;
+                $maxLat = $lat + 0.011;
+                return sprintf(
+                    'https://www.openstreetmap.org/export/embed.html?bbox=%.3f%%2C%.3f%%2C%.3f%%2C%.3f&layer=mapnik&marker=%.5f%%2C%.5f',
+                    $minLon, $minLat, $maxLon, $maxLat, $lat, $lon
+                );
+            }
+            return $defaultOsmSemugih;
+        }
+    }
+    
+    if (!preg_match('#^https?://#i', $clean)) {
+        return $defaultOsmSemugih;
+    }
+    
+    return $clean;
+}
+
 // Fetch all settings from MySQL table with static in-memory caching
 function getAppSettings($forceRefresh = false) {
     static $cachedSettings = null;
@@ -168,10 +239,10 @@ function getAppSettings($forceRefresh = false) {
             'jumbotron_title' => 'Jumpa Bakti Gembira Palang Merah Remaja',
             'jumbotron_subtitle' => 'Ajang Silaturahmi, Edukasi, Pengabdian, dan Kompetisi Tri Bakti PMR (Mula, Madya, Wira)',
             'event_dates' => '15 - 17 Oktober 2026',
-            'event_location' => 'Buperta Utama PMI Kabupaten',
-            'event_location_address' => 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
-            'event_map_url' => 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
+            'event_location' => 'Bumi Perkemahan PTPN IX Semugih',
+            'event_location_address' => 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354',
+            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411',
+            'event_map_url' => 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang',
             'contact_phone' => '(021) 555-PMR-2026',
             'contact_email' => 'sekretariat@jumbara-pmi.or.id',
             'contact_address' => 'Jl. Palang Merah No. 1, Markas PMI Kabupaten',
@@ -240,18 +311,13 @@ function getAppSettings($forceRefresh = false) {
             'piagam_show_qr' => '1'
         ];
         foreach ($rows as $r) {
-            $val = $r['value'];
-            if ($r['key'] === 'event_map_embed') {
-                $isGoogleRefused = (
-                    (strpos($val, 'google.com') !== false || strpos($val, 'goo.gl') !== false) &&
-                    (strpos($val, '/maps/embed') === false || strpos($val, 'output=embed') !== false || strpos($val, 'iwloc=') !== false || strpos($val, 'q=') !== false)
-                );
-                if ($isGoogleRefused) {
-                    $val = 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
-                }
-            }
-            $settings[$r['key']] = $val;
+            $settings[$r['key']] = $r['value'];
         }
+        $settings['event_map_embed'] = resolveSmartMapEmbed(
+            $settings['event_map_embed'] ?? '',
+            $settings['event_location'] ?? '',
+            $settings['event_map_url'] ?? ''
+        );
         $cachedSettings = $settings;
         return $settings;
     } catch (Exception $e) {
@@ -267,10 +333,10 @@ function getAppSettings($forceRefresh = false) {
             'idcard_event_subtitle' => 'PALANG MERAH INDONESIA TAHUN 2026',
             'idcard_motto' => '#JUMBARAPMR2026',
             'event_dates' => '15 - 17 Oktober 2026',
-            'event_location' => 'Buperta Utama PMI Kabupaten Pemalang',
-            'event_location_address' => 'Markas PMI Kabupaten Pemalang, Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',
-            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437',
-            'event_map_url' => 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang',
+            'event_location' => 'Bumi Perkemahan PTPN IX Semugih',
+            'event_location_address' => 'Jl. Raya Moga - Pulosari Km. 02, Simadu Barat, Banyumudal, Kec. Moga, Kabupaten Pemalang, Jawa Tengah 52354',
+            'event_map_embed' => 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411',
+            'event_map_url' => 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang',
             'contact_phone' => '(0284) 321-PMI',
             'contact_email' => 'sekretariat@jumbara-pmi.or.id',
             'contact_address' => 'Jl. Gatot Subroto No. 23, Bojongbata, Pemalang',

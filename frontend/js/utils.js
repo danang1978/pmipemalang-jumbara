@@ -1208,15 +1208,24 @@ ${rows.map((row, idx) => `
     return 'PMR';
   },
 
-  sanitizeMapEmbedUrl(url) {
-    const defaultOsm = 'https://www.openstreetmap.org/export/embed.html?bbox=109.378%2C-6.916%2C109.388%2C-6.907&layer=mapnik&marker=-6.911763%2C109.383437';
+  sanitizeMapEmbedUrl(url, currentSettings = null) {
+    const defaultOsm = 'https://www.openstreetmap.org/export/embed.html?bbox=109.240%2C-7.150%2C109.268%2C-7.128&layer=mapnik&marker=-7.13952%2C109.25411';
     if (!url || typeof url !== 'string') {
       return defaultOsm;
     }
     let clean = url.trim();
     if (clean.includes('<iframe')) {
       const match = clean.match(/src=["']([^"']+)["']/i);
-      if (match && match[1]) clean = match[1];
+      if (match && match[1]) clean = match[1].trim();
+    }
+
+    const locContext = (currentSettings?.event_location || '') + ' ' + (currentSettings?.event_map_url || '');
+    const isSemugih = /semugih|moga|ptpn/i.test(clean) || /semugih|moga|ptpn/i.test(locContext);
+    const isOldMarkas = clean.includes('-6.911763') || clean.includes('109.383437') || clean.includes('109.378');
+
+    // Upgrade old Markas PMI embed to Semugih if in Semugih context or default
+    if (isOldMarkas && (isSemugih || !currentSettings?.event_location || currentSettings?.event_location.includes('Buperta'))) {
+      return defaultOsm;
     }
 
     // Tangani link Google Maps yang diblokir oleh header SAMEORIGIN (refused to connect):
@@ -1230,6 +1239,17 @@ ${rows.map((row, idx) => `
     if (isGoogle) {
       const isOfficialEmbed = clean.includes('/maps/embed');
       if (!isOfficialEmbed || clean.includes('output=embed') || clean.includes('iwloc=') || clean.includes('q=')) {
+        // Coba ekstrak koordinat lat,lng dari URL Google Maps (@lat,lng atau q=lat,lng atau ll=lat,lng)
+        const matchCoord = clean.match(/(?:@|q=|ll=)(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (matchCoord) {
+          const lat = parseFloat(matchCoord[1]);
+          const lon = parseFloat(matchCoord[2]);
+          const minLon = (lon - 0.014).toFixed(3);
+          const maxLon = (lon + 0.014).toFixed(3);
+          const minLat = (lat - 0.011).toFixed(3);
+          const maxLat = (lat + 0.011).toFixed(3);
+          return `https://www.openstreetmap.org/export/embed.html?bbox=${minLon}%2C${minLat}%2C${maxLon}%2C${maxLat}&layer=mapnik&marker=${lat.toFixed(5)}%2C${lon.toFixed(5)}`;
+        }
         return defaultOsm;
       }
     }

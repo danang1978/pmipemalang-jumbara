@@ -34,7 +34,7 @@ $settings = getAppSettings();
           <p><i class="fa-solid fa-clock"></i> <span id="footerHours"><?php echo htmlspecialchars($settings['contact_hours']); ?></span></p>
         <?php endif; ?>
         <p style="margin-top: 0.5rem;">
-          <a href="<?php echo htmlspecialchars($settings['event_map_url'] ?? 'https://maps.google.com/?q=Markas+PMI+Kabupaten+Pemalang'); ?>" target="_blank" rel="noopener noreferrer" style="color: #ef4444; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
+          <a href="<?php echo htmlspecialchars($settings['event_map_url'] ?? 'https://maps.google.com/?q=PTPN+IX+Kebun+Semugih+Moga+Pemalang'); ?>" target="_blank" rel="noopener noreferrer" style="color: #ef4444; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
             <i class="fa-solid fa-map-location-dot"></i> Buka Google Maps &rarr;
           </a>
         </p>
